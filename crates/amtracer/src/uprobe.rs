@@ -1,6 +1,7 @@
 use crate::{
     Common, RunControl, emit,
     target::{ProbeSpec, ProcessMaps},
+    unwind::{NativeUnwinder, Snapshot},
     wait_readable,
 };
 use amtracer_abi::{
@@ -48,6 +49,7 @@ unsafe impl aya::Pod for MapConfig {}
 pub fn run(options: Options) -> Result<()> {
     let pid = options.common.pid;
     let maps = ProcessMaps::read(pid)?;
+    let mut unwinder = options.stack.then(|| NativeUnwinder::new(&maps));
     ensure!(
         options.expressions.len() <= MAX_CAPTURES,
         "at most {MAX_CAPTURES} expressions per probe"
@@ -134,6 +136,8 @@ pub fn run(options: Options) -> Result<()> {
             );
             ensure!(
                 header.length as usize == record.len()
+                    && header.stack_len as usize <= amtracer_abi::MAX_STACK
+                    && header.capture_bytes as usize <= MAX_CAPTURE_BYTES
                     && header.stack_len as usize + header.capture_bytes as usize
                         == record.len() - PREFIX_SIZE
                     && header.capture_count as usize == options.expressions.len(),
@@ -143,6 +147,15 @@ pub fn run(options: Options) -> Result<()> {
                 "cpu":header.cpu,"probe":header.cookie,"pc":format!("{:#x}",header.regs.pc),"flags":header.flags,"stack_bytes":header.stack_len});
             if options.regs {
                 event["registers"] = json!({"x":header.regs.x,"sp":header.regs.sp,"pc":header.regs.pc,"pstate":header.regs.pstate});
+            }
+            if let Some(unwinder) = &mut unwinder {
+                event["stack"] = unwinder.unwind(Snapshot {
+                    pc: header.regs.pc,
+                    sp: header.regs.sp,
+                    fp: header.regs.x[29],
+                    lr: header.regs.x[30],
+                    bytes: &record[PREFIX_SIZE..PREFIX_SIZE + header.stack_len as usize],
+                });
             }
             let mut captures = Vec::new();
             let memory = &record[PREFIX_SIZE + header.stack_len as usize..];

@@ -37,7 +37,9 @@ Binder 的 PID 过滤是事件发生进程，不保证另一端回复也被捕�
 `--print` 可以重复使用，支持寄存器、加减常量、最多四层解引用、类型后缀与 bytes/cstr。
 每个表达式暂支持一条寄存器/指针链，不支持 `x0+x1`；每探针最多 16 项、额外内存总量 4 KiB。
 B/W/D/Q 是 1/2/4/8 字节偏移，默认解引用宽度为 u64。读取故障、截断和溢出分别显示状态。
-`--stack` 已采集快照，解栈仍在后续实现中。
+uprobe 和 syscall 的 `--stack` 使用 framehop 解栈并输出模块、符号、偏移和停止原因。
+只读取命中时的栈快照。syscall 驱动的 nofault 栈采集失败会显示 `capture_fault`，可缩小
+`--stack-bytes`；uprobe 的跨页读取保留有效前缀。
 APK 内库定位尚未接入，遇到 APK 文件会报告解析错误。
 
 ## UAPI 和检查
@@ -64,4 +66,5 @@ python3 tests/device_smoke.py --serial 282eb4e4
 ```
 
 2026-11-24 已在 fuxi 验证符号/绝对地址 uprobe、x13、syscall getpid ENTER/EXIT、Binder
-会话开关。该 smoke 不代表 Binder 实际事务、原生解栈或性能基准已完成。
+会话开关、16 项表达式和 uprobe/syscall 原生回溯；有/无帧指针 fixture 均通过。
+该 smoke 不代表 Binder 实际事务、PAC 完整矩阵或性能基准已完成。

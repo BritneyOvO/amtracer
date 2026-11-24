@@ -26,6 +26,20 @@ fault、overflow。脚本为 tests/device_smoke.py，原始输出为本地 artif
 
 ## 待完成
 
-原生解栈与符号化、syscall 参数 blob 解码与有界配对、Binder 实际事务与关联、APK、
+Binder 实际事务与关联、完整 syscall 名称和参数语义、APK、
 混合会话、有界处理队列、生命周期完整矩阵及性能基准。
 当前验证不能代替这些验收，特别是 Binder 开关通过不代表真实事务已经覆盖。
+
+## 快照解栈阶段
+
+framehop 已接入 uprobe 和 syscall；从原始映射 inode 读取 ELF、CFI 和符号，按照
+PT_LOAD 的文件/虚拟地址求 load bias，输出当前 PC/返回地址、模块偏移、符号和 build ID。
+仅使用捕获窗口，最多 128 帧。返回地址 mask 从目标可执行映射推导，并验证每帧属于
+可执行映射；这是当前启发式方案，不宣称已覆盖所有 PAC/TBI 配置。
+
+syscall blob 校验表、数据偏移、有效长度、重叠和栈地址；展示字符串/原始字节。
+入口配对限 4096 线程、事件时间 300 秒过期；丢失使旧配对失效，restart 与 errno 分离。
+
+主机 11 项测试通过。实机有/无帧指针两个 fixture 均验证 5 层递归与线程入口，
+uprobe 9 帧、syscall 512 字节窗口回溯包含 worker。证据分别保存于
+artifacts/device-smoke.json 和 artifacts/device-smoke-no-fp.json。

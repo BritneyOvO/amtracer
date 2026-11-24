@@ -16,6 +16,7 @@ pub struct Mapping {
     pub offset: u64,
     pub executable: bool,
     pub inode: u64,
+    pub device: (u32, u32),
     pub path: PathBuf,
 }
 
@@ -34,7 +35,11 @@ impl FromStr for Mapping {
         let (start, end) = token(&mut rest)?.split_once('-').context("maps range")?;
         let permissions = token(&mut rest)?;
         let offset = u64::from_str_radix(token(&mut rest)?, 16)?;
-        let _device = token(&mut rest)?;
+        let (major, minor) = token(&mut rest)?.split_once(':').context("maps device")?;
+        let device = (
+            u32::from_str_radix(major, 16)?,
+            u32::from_str_radix(minor, 16)?,
+        );
         let inode = token(&mut rest)?.parse()?;
         let mapping = Self {
             start: u64::from_str_radix(start, 16)?,
@@ -42,10 +47,40 @@ impl FromStr for Mapping {
             offset,
             executable: permissions.contains('x'),
             inode,
+            device,
             path: PathBuf::from(rest.trim_start()),
         };
         ensure!(mapping.start < mapping.end, "empty maps range");
         Ok(mapping)
+    }
+}
+
+impl Mapping {
+    pub fn open_backing_file(&self, pid: u32) -> Result<File> {
+        let original = self.path.to_string_lossy();
+        let clean = original.strip_suffix(" (deleted)").unwrap_or(&original);
+        let paths = [
+            PathBuf::from(format!("/proc/{pid}/root{clean}")),
+            PathBuf::from(format!(
+                "/proc/{pid}/map_files/{:x}-{:x}",
+                self.start, self.end
+            )),
+        ];
+        for path in paths {
+            if let Ok(file) = File::open(path) {
+                let metadata = file.metadata()?;
+                if metadata.ino() == self.inode
+                    && i64::from(libc::major(metadata.dev())) == i64::from(self.device.0)
+                    && i64::from(libc::minor(metadata.dev())) == i64::from(self.device.1)
+                {
+                    return Ok(file);
+                }
+            }
+        }
+        bail!(
+            "cannot open original mapped inode for {}",
+            self.path.display()
+        )
     }
 }
 
@@ -156,22 +191,7 @@ impl ProcessMaps {
             mapping.inode != 0 && mapping.path.is_absolute(),
             "anonymous/JIT mapping cannot use standard uprobe"
         );
-        let original_path = mapping.path.to_string_lossy();
-        let clean_path = original_path
-            .strip_suffix(" (deleted)")
-            .unwrap_or(&original_path);
-        let rooted = PathBuf::from(format!("/proc/{}/root{clean_path}", self.pid));
-        let fallback = format!(
-            "/proc/{}/map_files/{:x}-{:x}",
-            self.pid, mapping.start, mapping.end
-        );
-        let mut file = File::open(rooted)
-            .or_else(|_| File::open(fallback))
-            .context("opening original mapped file")?;
-        ensure!(
-            file.metadata()?.ino() == mapping.inode,
-            "mapped inode changed; retry resolution"
-        );
+        let mut file = mapping.open_backing_file(self.pid)?;
         let mut bytes = Vec::new();
         file.read_to_end(&mut bytes)?;
         let elf = object::File::parse(bytes.as_slice())

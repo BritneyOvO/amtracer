@@ -1,6 +1,7 @@
 mod expr;
 mod ktools;
 mod target;
+mod unwind;
 mod uprobe;
 
 use anyhow::{Context, Result, ensure};

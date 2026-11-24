@@ -4,6 +4,7 @@
 // regeneration remains mechanical and reviewable.
 #[allow(dead_code, non_upper_case_globals, clippy::undocumented_unsafe_blocks)]
 pub mod bindings;
+mod syscall;
 
 use crate::{Common, RunControl, emit, wait_readable};
 use anyhow::{Context, Result, ensure};
@@ -123,39 +124,20 @@ pub fn run_syscall(
         ioctl(file.as_raw_fd(), AMT_SCT_IOC_SET_NR_FILTER, &mut filter)?;
     }
     let mut run = RunControl::new(&common)?;
+    let mut unwinder = if stack {
+        Some(crate::unwind::NativeUnwinder::new(
+            &crate::target::ProcessMaps::read(common.pid)?,
+        ))
+    } else {
+        None
+    };
     ioctl(file.as_raw_fd(), AMT_SCT_IOC_START, &mut 0_u32)?;
     let mut buffer = vec![0; 32768];
-    let mut pending = std::collections::HashMap::new();
-    let mut last_lost = 0;
+    let mut decoder = syscall::Decoder::default();
     while run.running() {
         if let Some(n) = read_record(&mut file, &mut buffer)? {
-            let header: sct_event_header = prefix(&buffer[..n])?;
-            ensure!(
-                header.magic == SCT_EVENT_MAGIC
-                    && u32::from(header.version) == SCT_EVENT_VERSION
-                    && header.size as usize == n,
-                "invalid syscall event ABI/length"
-            );
-            if header.lost_before != last_lost {
-                pending.clear();
-                last_lost = header.lost_before;
-            }
-            let enter = u32::from(header.type_) == sct_event_type_SCT_EV_ENTER;
-            let duration = if enter {
-                pending.insert(header.tid, (header.nr, header.ts_ns));
-                None
-            } else {
-                pending.remove(&header.tid).and_then(|(nr, time)| {
-                    if nr == header.nr {
-                        header.ts_ns.checked_sub(time)
-                    } else {
-                        None
-                    }
-                })
-            };
-            let event = json!({"source":"syscall","timestamp_ns":header.ts_ns,"tgid":header.pid,"tid":header.tid,"nr":header.nr,
-                "phase":if enter {"enter"} else {"exit"},"args":header.args,"return":if enter {None} else {Some(header.ret)},
-                "duration_ns":duration,"flags":header.flags,"lost_before":header.lost_before,"pc":header.user_pc,"sp":header.user_sp});
+            let record = syscall::Record::try_from(&buffer[..n])?;
+            let event = decoder.event(record, unwinder.as_mut());
             emit(&event, common.json)?;
             run.emitted();
         } else {
