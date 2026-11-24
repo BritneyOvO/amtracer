@@ -104,6 +104,59 @@ python3 tests/binder_pair_smoke.py --serial "$SERIAL"
 
 `binder_pair_smoke.py` 会自行上传工具，并在结束时删除共享测试目录中的 `amtracer`、`amtracer-ebpf.o` 和 `binder-pair`。依赖这些文件的其他脚本应先执行，或在之后重新部署。
 
+## recomp 指令 trace
+
+此功能目前没有设备验收结果。先执行 `cargo xtask build`，再构建专用 fixture；其汇编
+按 4 KiB 页隔离，含分支/循环、间接调用、跨页调用、80 NOP、可恢复访存异常和拒绝样例：
+
+```sh
+"$AMTRACER_CC" -O2 -g -Wall -Wextra -Werror \
+  -Wl,--export-dynamic -Wl,-z,max-page-size=4096 -pthread \
+  tests/fixtures/instruction.c tests/fixtures/instruction.S \
+  -o target/amtracer-instruction-fixture
+
+python3 tests/instruction_smoke.py --serial "$SERIAL"
+```
+
+脚本使用唯一的 `/data/local/tmp/amtracer-itrace-*` 目录，上传工具、`amtracer-itrace.o`
+和 fixture；等待 `itrace: ready` 后再驱动目标。核对每 TID 的实际 PC 序列、序号、
+原始 LR、寄存器返回值和丢失统计，覆盖重复范围、已有/新线程、跨 CPU、超过 64 点、
+跨页、信号异常、排他/SVC 拒绝、原生后端回退、count、目标退出与再次安装。
+它不使用系统进程；清理仅向仍指向自己目录下程序的 PID 发信号。
+输出为 `artifacts/instruction-smoke.json`，原始 JSONL/stderr 留在同名子目录。
+
+性能脚本每组使用新目标 mm，先预热，再比较基线、PC/寄存器 summary-only、PC JSONL。
+默认重复三次，包含不节流吞吐以及目标 1k/10k/50k 指令事件率：
+
+```sh
+python3 tests/instruction_bench.py --serial "$SERIAL"
+# 可选：增加寄存器 JSONL 输出成本
+python3 tests/instruction_bench.py --serial "$SERIAL" \
+  --modes baseline,pc,regs,pc-json,regs-json \
+  --seconds 2 --repeats 3 --report artifacts/instruction-bench-full.json
+```
+
+保存实际吞吐、目标 elapsed/CPU、最多 1024 个均匀采样调用的 p50/p95/p99、工具 CPU
+ticks/峰值 RSS、安装时间、输出量、丢失和原始命令。节流率是目标值，不代表设备达到
+该吞吐；原始 CPU ticks 保留 CLK_TCK 查询结果，不假定 100 Hz。trace 丢失率非零时
+必须连同吞吐一起比较。脚本不运行普通 stackplz 对照，不能据此声称完成整个项目的
+性能 roadmap。当前没有设备数据，不能把下面仿真中的时间用作性能数字。
+
+没有设备时，可独立检查 fixture。主机需安装 `unicorn` Python 包、QEMU user 和
+AArch64 GNU 工具链及运行库；NDK fixture 仍按前面的命令构建：
+
+```sh
+aarch64-linux-gnu-gcc -O2 -g -Wall -Wextra -Werror \
+  -Wl,--export-dynamic -Wl,-z,max-page-size=4096 -pthread \
+  tests/fixtures/instruction.c tests/fixtures/instruction.S \
+  -o target/amtracer-instruction-fixture-linux
+python3 tests/instruction_host.py
+```
+
+Unicorn 核对 Android ELF 中的 4 组真实指令路径；QEMU 执行 Linux fixture 的 7 组命令，
+核对线程、信号恢复、迁移、节流和结果。输出 `artifacts/instruction-host.json` 的
+`kernel_uprobe_verified` 固定为 false：这项检查不运行目标内核或 BPF verifier。
+
 ## 报告与覆盖边界
 
 测试生成的 JSON 报告位于本地 `artifacts/`，部分生命周期 / 映射测试只输出验证结果。该目录被 Git 忽略；[validation-2026-11-24.json](validation-2026-11-24.json) 是已有一次验证的工具链、产物与报告哈希清单，不会随测试自动更新。

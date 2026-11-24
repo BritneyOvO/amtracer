@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-24",
+  "source_revision": "4f2b6e8a96c8aaf99953eb5baa827767c2366363",
+  "toolchain": {
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+    "bpf_rustc": "rustc 1.102.0-nightly (59cbdee2e 2026-11-17)",
+    "android_ndk": "r23b (23.1.7779620)",
+    "qemu": "qemu-aarch64 version 6.2.0 (Debian 1:6.2+dfsg-2ubuntu6.31)"
+  },
+  "checks": {
+    "cargo_fmt_all_check": "passed",
+    "cargo_clippy_all_targets_locked_D_warnings": "passed",
+    "cargo_test_locked": {
+      "passed": 34,
+      "failed": 0
+    },
+    "bpf_clippy_release_D_warnings": "passed",
+    "cargo_xtask_build": "passed",
+    "android_fixture_Wall_Wextra_Werror": "passed",
+    "linux_fixture_Wall_Wextra_Werror": "passed",
+    "python_syntax": "passed",
+    "unicorn_android_instruction_paths": 4,
+    "qemu_linux_fixture_commands": 7
+  },
+  "artifacts": {
+    "amtracer": {
+      "bytes": 2901304,
+      "sha256": "ed2096b4f19584a1318441d4f6969bf0c24f996d7fd41abd5afd692758db1cc3"
+    },
+    "amtracer-ebpf.o": {
+      "bytes": 8792,
+      "sha256": "6456378a57444a4b11294beb9d8c7a5002095acb48c69e735a8ecbc1e9701122"
+    },
+    "amtracer-itrace.o": {
+      "bytes": 3720,
+      "sha256": "99aa644a143a65d7a7662f13ba0ebe4656d58e9c44845972a9764aa2163d8d14"
+    },
+    "instruction-host.json": {
+      "bytes": 2971,
+      "sha256": "aac12e7086dd929adb5aa842230939db8fd52bae26cba7638a16a3e493d5909a"
+    }
+  },
+  "fixtures": {
+    "amtracer-instruction-fixture": {
+      "bytes": 70080,
+      "sha256": "7d0fd892d8c7348fb0381ac9c54e28b7b2b0b5273d21176edd4a941e7944e3e4"
+    },
+    "amtracer-instruction-fixture-linux": {
+      "bytes": 77880,
+      "sha256": "e564c6f2ce145c4fde75669ce55c707c5a3b0a77f2ec1fda2e7d44654d39dfb7"
+    }
+  },
+  "device": {
+    "serial": "282eb4e4",
+    "tested": false,
+    "kernel_uprobe_verified": false,
+    "reason": "指定设备不在 ADB；用户确认暂不可用。未进行逐指令 BPF verifier/UXN 真机测试或性能基准。"
+  },
+  "notes": [
+    "仿真仅验证受控 fixture，不运行目标内核。",
+    "生产代码与测试对应 source_revision；随后提交只更新文档和此清单。"
+  ]
+}

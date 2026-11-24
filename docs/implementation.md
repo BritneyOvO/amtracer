@@ -119,3 +119,33 @@ artifacts/session-smoke.json，哈希见 validation-2026-11-24.json。Binder 可
 完成设备矩阵。
 
 下一项为设备正确性矩阵和性能基准，混合会话验收仍继续补充。
+
+## recomp 指令 trace
+
+新增独立 `itrace` 命令、`resolve --range` 与 `amtracer-itrace.o`。范围支持
+`START..END`/`START:BYTES`，按原始文件位置去重，预先反汇编、检查映射/段/对齐及
+不支持指令。1024 个文件点位、4096 个运行时地址上限与普通 uprobe 的 64 项配置独立。
+不修改内核，不增加 /dev，不手动注册或激活 UXN；通过现有 prctl INFO/STAT 只读确认
+每个源页已激活 recomp，回退原生 BRK/XOL 时拒绝启动。
+
+指令事件为独立 ABI v1，默认 64 字节、通用寄存器模式 336 字节；采集门控在全部挂载
+后开启。按 TID 生成序号，raw sched_process_exit 清理状态，epoch 区分 TID 重用。
+解析器检查完整布局、flags、cookie/PC、寄存器 PC 和线程序号。停止时关闭采集、卸载、
+消费剩余 ringbuf；count 超出部分记 discarded，序号、ringbuf 和线程状态丢失分开统计。
+输出使用有界缓冲，提供文本、JSONL 和 summary-only；表达式/内存/栈和混合会话接入
+不在本阶段范围。
+
+提交链：`e00611d` 设计，`ae96a5b` 范围，`d3baca4` 事件/BPF，`edec649` 挂载/输出，
+`852605b` 后端确认与清理校验，`cedb2a8` fixture 和测试/基准脚本，
+`4f2b6e8` 激活前复核文件指令字节，拒绝解析后已变化的反汇编来源。
+
+2026-11-24 主机 34 项测试、fmt、用户态与 eBPF Clippy、Android/eBPF release 构建通过。
+Android fixture 使用 NDK 编译并以 Unicorn 对照 4 组真实指令路径；Linux fixture
+在 QEMU 下通过 7 组线程、访存异常恢复、CPU 迁移、跨页调用和节流命令。原始结果
+`artifacts/instruction-host.json` 明确标记 `kernel_uprobe_verified=false`。
+本次工具链、产物/报告哈希见 [validation-instruction-2026-11-24.json](validation-instruction-2026-11-24.json)。
+
+指定 fuxi（282eb4e4）不在 ADB，用户确认暂不可用。**未执行指令 trace 实机测试，
+未验证 5.15 verifier/UXN 分发，未得到真实性能数据。** `instruction_smoke.py` 和
+`instruction_bench.py` 已就绪，参数和复现步骤见 testing.md。仿真只证明 fixture
+行为，不能将已有普通 uprobe 真机结果移作这次逐指令功能的验收。

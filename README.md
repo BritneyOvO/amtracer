@@ -10,6 +10,7 @@
 - [构建](#构建)
 - [部署与快速开始](#部署与快速开始)
 - [uprobe：定位、多探针与表达式](#uprobe定位多探针与表达式)
+- [逐指令 trace](#逐指令-trace)
 - [syscall：过滤、参数与调用栈](#syscall过滤参数与调用栈)
 - [Binder：事务与回复关联](#binder事务与回复关联)
 - [混合会话](#混合会话)
@@ -22,6 +23,7 @@
 | 功能 | 当前实现 | 设备要求 |
 | --- | --- | --- |
 | 用户态 uprobe | 库名 + ELF 地址、库名 + 符号、符号内偏移、绝对虚拟地址；同一进程最多 64 个探针 | uprobe/perf、eBPF、RingBuf、attach cookie 支持及相应权限 |
+| 指令 trace（待设备验收） | 范围内每条原始指令执行前的 PC、反汇编、线程内序号、可选通用寄存器；最多 1024 个唯一点位 | 配套 UXN-uprobe 内核、UXN 查询 ABI v4、4 KiB 页、raw sched_process_exit |
 | 寄存器与内存 | x0–x30、sp、pc、pstate；有界指针链、整数、字符串和字节读取 | 随 uprobe 在命中时采集 |
 | 原生调用栈 | uprobe / syscall 栈快照，framehop CFI / FP 解栈，模块与符号输出 | 可访问目标的映射和原始 ELF；syscall 栈另需对应驱动 |
 | 系统调用 | 名称 / 编号过滤、ENTER / EXIT 配对、返回值、errno、耗时、参数采集 | ktools 控制 ABI v1 与 syscall_trace v2 |
@@ -78,7 +80,8 @@ cargo xtask build
 ```text
 artifacts/
 ├── amtracer         # Android ARM64 可执行文件
-└── amtracer-ebpf.o  # uprobe 采集程序
+├── amtracer-ebpf.o  # 普通 uprobe 采集程序
+└── amtracer-itrace.o # 指令 trace 采集程序
 ```
 
 普通构建使用已提交的 UAPI 绑定，不需要父内核源码或单独运行 bindgen。`xtask` 包含绑定生成依赖；只有显式生成绑定时才需要可用的 libclang。`artifacts/` 和 `target/` 不进入 Git。
@@ -109,6 +112,8 @@ cd /data/local/tmp/amtracer
 示例中的 `1234`、库名、符号和地址均需替换为实际目标。`doctor` 显示架构、内核 BTF 文件是否存在及 ktools ABI / 功能位；其中 `ktools.error` 表示该接口不可用或访问失败，不等同于 uprobe 不可用。它不执行 BPF 加载或探针附加测试。
 
 默认从可执行文件同目录加载 `amtracer-ebpf.o`，uprobe 也可用 `--object /path/to/amtracer-ebpf.o` 指定路径。所有命令的完整参数可通过 `./amtracer <命令> --help` 查看。
+
+使用 `itrace` 时同样部署 `amtracer-itrace.o` 到可执行文件目录，或用该命令的 `--object` 指定。
 
 ## uprobe：定位、多探针与表达式
 
@@ -188,6 +193,54 @@ cd /data/local/tmp/amtracer
 uprobe 与 syscall 共用 framehop 解栈，使用 DWARF CFI / FP，输出 `stack.frames`、模块、符号、偏移、build ID 和 `stack.end`。栈窗口默认 **8192 字节**，范围 **1–16384 字节**，最多 **128 帧**。
 
 解栈只从捕获的栈窗口读取内存，窗口不足时停止，不会事后从活进程补读。符号是否可见取决于原始 ELF；当前支持原生栈，Java / ART 栈不在支持范围内。
+
+## 逐指令 trace
+
+`itrace` 通过现有 UXN-uprobe 在 `recomp` 中为范围内每条原始指令激活 BRK 前缀。
+命中后采集执行前状态，再执行当前指令的重定位 body。重定位展开出的辅助指令不会
+单独产生事件。范围外代码不输出指令事件，返回范围后继续。
+
+先预览点位，再挂载。范围左闭右开，起点沿用普通 uprobe 的地址语义：
+
+```sh
+./amtracer resolve -p 1234 --range 'libfoo.so+func..func_end'
+./amtracer itrace -p 1234 --range 'libfoo.so+func..func_end' --duration 5 --json
+./amtracer itrace -p 1234 --range 'libfoo.so+0x1200:0x40' --regs --count 1000 --json
+./amtracer itrace -p 1234 --range '0x7a12345000..0x7a12345040' --duration 5
+```
+
+`START:BYTES` 使用显式字节长度，必须为正的 4 字节倍数。`START..END` 的 END
+可省略起点已有的库名前缀；数字仍为 ELF 地址，符号可以加偏移。可重复 `--range`，
+重叠点位按原始 inode 和文件偏移去重；最多 1024 个文件点位、4096 个已解析运行时地址。
+每个位置仍使用一个 perf uprobe，共享 BPF 程序和配置；没有增加内核范围注册接口。
+实际可挂载数量还受进程 FD 限额和内核页/代际预算约束，资源不足时整次安装回滚。
+
+事件的 `source` 为 `instruction`，包含原始运行时 `pc`、`module`、`elf_address`、
+`opcode`、反汇编 `instruction`、TID、`thread_epoch` 和 `sequence`。默认内核记录
+为 64 字节；`--regs` 后为 336 字节，附带 x0–x30、sp、pc、pstate。
+`--summary-only` 消费并校验事件，仅输出 stderr 统计，供衡量采集/消费开销使用。
+指令模式暂不接入 `run --config`，也不在每条指令上采集表达式、内存窗口或调用栈。
+
+事件表示执行前命中，不保证指令成功完成；故障重试可能重复 PC。序号只在同一
+`tid` + `thread_epoch` 中比较；线程退出 hook 清理内核状态，避免 TID 重用串接。
+`missed_before` 表示发现的序号缺口，之后事件的 `incomplete` 保持 true。
+最终统计还包含 `ring_lost`、`state_failed`、`discarded`、`queued` 和 `incomplete`；
+序号检测不到最后一条之后的丢失，也不能证明 consumer 从未触发的点位没有遗漏。
+
+安装时采集门控关闭；全部挂载、原始指令字节/映射复核和 UXN `INFO/STAT` 查询通过后才打印
+`itrace: ready` 并开始采集。只读查询确认原页已有激活的 recomp，不手动注册/激活 UXN。
+原生 BRK/XOL 回退会报错并回滚。运行中每 250 ms 检查映射和 recomp 代际，不能发现
+所有瞬时变化。停止时关闭采集、卸载并消费剩余记录；`--count` 仍限制输出条数，
+超出部分计入 `discarded`。采集中途进入或结束，可能得到一次调用的部分路径。
+
+首版保守拒绝不支持的指令、异常指令、部分系统/认证指令，以及接触页包含排他指令的
+范围。跨页或动态跳转形成的任意排他区仍不能证明安全；不能把它用于要求零扰动的
+原子序列调试。仅支持当前映射的独立 AArch64 ELF、4 KiB 完整私有只读可执行页。
+每线程状态和用户态观察表均有容量限制，耗尽时明确报告。原始 ELF 与私有代码可能
+不一致、信号/exec、PAC/BTI、反调试和并发边界仍须设备验证。
+
+**当前已通过主机检查、Android/eBPF 构建和 fixture 仿真；尚未在 fuxi 上验收。**
+设备测试与性能复现见 [testing.md](docs/testing.md)，设计见 [instruction-trace.md](docs/instruction-trace.md)。
 
 ## syscall：过滤、参数与调用栈
 
@@ -301,12 +354,12 @@ uprobe 与 syscall 共用 framehop 解栈，使用 DWARF CFI / FP，输出 `stac
 | `-p, --pid` | 目标进程 TGID，单源命令必填 |
 | `--duration` | 持续秒数，默认 0 表示不限 |
 | `--count` | 输出事件条数，默认 0 表示不限；多探针共用此上限 |
-| `--json` | 每行一个 JSON 对象；省略时为多行格式化 JSON |
-| `source` | `uprobe`、`syscall` 或 `binder` |
+| `--json` | 每行一个 JSON 对象；省略时普通命令为多行 JSON，itrace 为指令文本 |
+| `source` | `uprobe`、`instruction`、`syscall` 或 `binder` |
 | `tgid` / `tid` | 进程 ID / 线程 ID |
 | `timestamp_ns` | 内核单调时钟时间戳，单位纳秒，不是日历时间 |
 
-混合会话始终输出 JSONL。事件写 stdout，诊断和统计写 stderr，可分别保存；当前没有独立的格式化文本视图。
+混合会话始终输出 JSONL。事件写 stdout，诊断和统计写 stderr，可分别保存；itrace 提供独立的逐行指令文本视图。
 
 Ctrl-C、达到时长 / 条数上限、目标退出或检测到身份变化时结束会话并释放本次资源。每种内核 trace 同时仅允许一个会话；已被占用时返回 `EBUSY`，工具不会接管它。
 

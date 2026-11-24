@@ -16,6 +16,7 @@
 | 10 | feat: consume binder trace events | 已覆盖同步成功/失败、oneway、数据与顺序正常时的请求/回复关联；逆序关联和丢失压力待补 |
 | 11 | feat: integrate tracing sessions | 初版 JSON 配置、跨来源 JSONL、全局 duration/count 和退出传播已实现；双来源、count 和 uprobe 启动失败回滚真机 smoke 已通过，慢输出、EBUSY 和生命周期矩阵待补 |
 | 12 | test: add device correctness and benchmarks | 可复现真机正确性和性能报告 |
+| 13 | feat: add recomp instruction tracing | 范围/事件/BPF/挂载/校验与 fixture/基准脚本已提交，主机与构建通过；设备不可用，真机正确性和性能待验收，见 instruction-trace.md |
 
 允许按依赖关系拆分较大的提交；每项状态在实施记录中更新，未完成验收不得标为通过。
 

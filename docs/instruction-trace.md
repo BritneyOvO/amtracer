@@ -53,7 +53,7 @@ count、目标退出、映射变化、信号、输出错误均释放挂载资源
 2. `feat: resolve and validate arm64 instruction ranges`：范围解析、去重、边界和指令检查；主机测试。
 3. `feat: capture compact instruction trace events`：ABI、BPF 配置门控、线程序号、可选寄存器和丢失；eBPF 构建。
 4. `feat: attach and render instruction trace sessions`：CLI、Aya 挂载、后端确认、输出与清理；主机与 Android 构建。
-5. `test: add instruction trace device fixtures and benchmarks`：受控分支、循环、调用/返回、线程、故障、挂卸和性能脚本。
+5. `test: add instruction trace fixtures and performance harness`：受控分支、循环、调用/返回、线程、故障、挂卸和性能脚本。
 6. `docs: record instruction trace validation and usage`：实际检查结果、限制、复现方法和 README。
 
 每个提交完成相关检查后及时提交。真机只使用 `adb -s 282eb4e4`，不刷机。
@@ -62,3 +62,18 @@ count、目标退出、映射变化、信号、输出错误均释放挂载资源
 性能区分安装时间、目标吞吐、PC/寄存器采集、消费/格式化开销及丢失；保留设备、
 内核、boot ID、提交、命令和原始结果。是否增加按页批量启用或范围级 consumer，
 在这次数据的基础上单独决定。
+
+## 实施状态
+
+设计、范围解析、紧凑 ABI/BPF、CLI 挂载、UXN 只读确认、停止关闭/卸载/消费、
+序号校验以及受控 fixture/smoke/基准脚本均已提交。退出 hook 使用 raw tracepoint，
+覆盖所有 CPU，不依赖挂载 tracefs。`--summary-only` 用于单独衡量采集与消费。
+
+主机共有 34 项测试通过，用户态及 eBPF Clippy、Android/eBPF release 构建通过。
+Unicorn 验证编译后 Android fixture 的实际指令路径，QEMU 验证 Linux fixture 协议、
+线程、信号恢复与迁移。这些不运行目标内核，不能验证 BPF verifier、uprobe consumer
+或 UXN BRK 分发。用户确认设备暂不可用，设备验收和实测性能保持待完成。
+
+当前 UXN STAT 只返回最多 32 个 site；工具按页确认 active/recomp/generation，再依赖
+各位置标准 uprobe 的成功安装确认绑定。不会把截断的 STAT sites 当作完整点位表。
+查询与映射监控是周期性检测；不能宣称任意瞬时变化下无遗漏。
