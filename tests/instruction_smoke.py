@@ -47,6 +47,7 @@ def main():
     records = {}
     try:
         with Device(args.serial, args.report.parent / "instruction-smoke", args.fixture) as device:
+            records["environment"] = device.report
             info = device.start_fixture()
             scope = "fixture+amtracer_trace..amtracer_trace_end"
             preview = json.loads(device.shell(f"{device.remote}/amtracer", "resolve", "-p", info["pid"], "--range", scope).stdout)
@@ -106,7 +107,6 @@ def main():
             trace.process.wait(timeout=10)
             assert trace.stop()["returncode"] == 0
             records["target_exit"] = trace.stop()
-            records["environment"] = device.report
     except BaseException as error:
         records["error"] = repr(error)
         raise

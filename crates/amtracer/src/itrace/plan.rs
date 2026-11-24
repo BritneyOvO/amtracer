@@ -200,6 +200,21 @@ impl Plan {
                 "instruction":p.assembly, "addresses":p.addresses.iter().map(|pc|format!("{pc:#x}")).collect::<Vec<_>>()})
         }).collect::<Vec<_>>()})
     }
+
+    pub fn verify_words(&self) -> Result<()> {
+        for point in &self.points {
+            let target = &self.targets[point.target];
+            let mut bytes = [0; 4];
+            target.file.read_exact_at(&mut bytes, point.file_offset)?;
+            ensure!(
+                u32::from_le_bytes(bytes) == point.word,
+                "instruction bytes changed during setup at {}+{:#x}",
+                target.path.display(),
+                point.elf_address
+            );
+        }
+        Ok(())
+    }
 }
 
 impl RangeSpec {
@@ -432,6 +447,12 @@ mod tests {
         assert_eq!(plan.points[0].addresses, [0x7000]);
         assert!(Plan::resolve(&maps, &["0x7000..0x6ffc".parse().unwrap()]).is_err());
         assert!(Plan::resolve(&maps, &["0x7000:4100".parse().unwrap()]).is_err());
+        plan.verify_words().unwrap();
+        let changed = fs::OpenOptions::new().write(true).open(&path).unwrap();
+        changed
+            .write_all_at(&0x91000400_u32.to_le_bytes(), 4096)
+            .unwrap();
+        assert!(plan.verify_words().is_err());
         fs::remove_file(path).unwrap();
     }
 }

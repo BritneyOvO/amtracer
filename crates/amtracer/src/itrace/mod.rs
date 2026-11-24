@@ -160,6 +160,7 @@ pub fn run(options: Options) -> Result<()> {
             })?;
     }
     let mut backend = uxn::Backend::verify(pid, &plan)?;
+    plan.verify_words()?;
     process.verify()?;
     ensure!(
         !matches!(mappings.check(true)?, MappingChange::ProbeRemoved),
