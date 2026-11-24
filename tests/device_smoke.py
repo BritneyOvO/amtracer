@@ -50,6 +50,36 @@ def main():
             assert len(events) == 3, (name, result.stdout, result.stderr)
             assert all(e["tgid"] == pid and e["registers"]["x"][13] == int(info["memory"], 16) for e in events)
             results[name] = {"events": events, "stats": result.stderr}
+        expressions = ["r13", "*r13", "*(r13+1B)", "*(r13+1W)", "*(r13+1D)",
+                       "*(r13+1Q)", "*(r13+1W):u16", "*r13:i8",
+                       f"**{info['pointer']}", f"cstr({info['string']},32)",
+                       f"cstr({info['string']},5)", "bytes(r13,16)",
+                       f"bytes({info['boundary']},16)", "*0", "r13-9223372036854775807",
+                       f"*{info['boundary']}"]
+        command = [tool, "uprobe", "-p", str(pid), "--probe", "fixture+amtracer_point",
+                   "--duration", "2", "--count", "3", "--json"]
+        for expression in expressions:
+            command += ["--print", expression]
+        result = shell(*command)
+        events = [json.loads(line) for line in result.stdout.splitlines() if line]
+        assert len(events) == 3
+        raw = bytes.fromhex("88776655443322111122334455667788")
+        expected = [int(info["memory"], 16), int.from_bytes(raw[:8], "little")]
+        expected += [int.from_bytes(raw[offset:offset + 8], "little") for offset in [1, 2, 4, 8]]
+        expected += [0x5566, -120, 0x1122334455667788]
+        for event in events:
+            captures = event["captures"]
+            assert len(captures) == 16
+            for capture, value in zip(captures, expected):
+                assert capture["status"] == "ok" and capture["value"]["decimal"] == value, capture
+            assert captures[9]["value"] == "amtracer-test" and captures[9]["status"] == "ok"
+            assert captures[10]["value"] == "amtr" and captures[10]["status"] == "truncated"
+            assert captures[11]["value"] == list(raw) and captures[11]["status"] == "ok"
+            assert captures[12]["value"] == [0x5a] * 8 and captures[12]["status"] == "fault"
+            assert captures[13]["value"] is None and captures[13]["status"] == "fault"
+            assert captures[14]["value"] is None and captures[14]["status"] == "overflow"
+            assert captures[15]["value"]["decimal"] == 0x5a5a5a5a5a5a5a5a
+        results["expressions"] = {"events": events, "stats": result.stderr}
         result = shell(tool, "syscall", "-p", str(pid), "--syscalls", "getpid", "--duration", "2", "--count", "4", "--json")
         events = [json.loads(line) for line in result.stdout.splitlines() if line]
         assert len(events) == 4 and all(e["source"] == "syscall" and e["nr"] == 172 for e in events)

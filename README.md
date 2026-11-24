@@ -25,6 +25,8 @@ cargo xtask build
 ./amtracer doctor
 ./amtracer resolve -p 1234 --probe 'libfoo.so+target'
 ./amtracer uprobe -p 1234 --probe 'libfoo.so+target' --regs --duration 5 --json
+./amtracer uprobe -p 1234 --probe 'libfoo.so+target' --print '*r13' --print '*(r13+1Q):u16'
+./amtracer uprobe -p 1234 --probe 'libfoo.so+target' --print 'cstr(x0,128)' --print 'bytes(x1,64)'
 ./amtracer syscall -p 1234 --syscalls openat,read,write --duration 5 --json
 ./amtracer binder -p 1234 --duration 5 --json
 ```
@@ -32,7 +34,10 @@ cargo xtask build
 `--count` 限制事件数，`--duration` 单位为秒，0 表示不限。Ctrl-C 关闭本次会话。
 Binder 的 PID 过滤是事件发生进程，不保证另一端回复也被捕获。
 本阶段文本暂为格式化 JSON，`--json` 为逐行 JSON。
-`--stack` 已采集快照，解栈与内存表达式仍在后续实现中。
+`--print` 可以重复使用，支持寄存器、加减常量、最多四层解引用、类型后缀与 bytes/cstr。
+每个表达式暂支持一条寄存器/指针链，不支持 `x0+x1`；每探针最多 16 项、额外内存总量 4 KiB。
+B/W/D/Q 是 1/2/4/8 字节偏移，默认解引用宽度为 u64。读取故障、截断和溢出分别显示状态。
+`--stack` 已采集快照，解栈仍在后续实现中。
 APK 内库定位尚未接入，遇到 APK 文件会报告解析错误。
 
 ## UAPI 和检查

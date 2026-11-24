@@ -1,12 +1,13 @@
 #![no_std]
 #![no_main]
 
-use amtracer_abi::{EVENT_MAGIC, EVENT_VERSION, Header, MAX_PROBES, ProbeConfig, Record};
+use amtracer_abi::*;
 use aya_ebpf::{
     EbpfContext,
     helpers::{
-        bpf_get_current_pid_tgid, bpf_get_smp_processor_id, bpf_ktime_get_ns,
-        bpf_probe_read_user_buf, generated::bpf_get_attach_cookie,
+        bpf_get_current_pid_tgid, bpf_get_smp_processor_id, bpf_ktime_get_ns, bpf_probe_read_user,
+        bpf_probe_read_user_buf,
+        generated::{bpf_get_attach_cookie, bpf_probe_read_user_str},
     },
     macros::{map, uprobe},
     maps::{HashMap, PerCpuArray, RingBuf},
@@ -74,24 +75,36 @@ unsafe fn try_capture(ctx: &ProbeContext) {
         h.regs.pc = user.pc;
         h.regs.sp = user.sp;
         h.regs.pstate = user.pstate;
-        let bytes = (config.stack_bytes as usize).min(amtracer_abi::MAX_STACK);
-        let mut captured_len = 0_usize;
-        if bytes != 0 {
-            if bpf_probe_read_user_buf(user.sp as *const u8, &mut (&mut (*record).stack)[..bytes])
-                .is_ok()
-            {
-                captured_len = bytes;
-            } else {
-                h.flags |= 1;
-            }
-        }
-        // Keep length in a scalar and recheck after all helper calls: the 5.15
-        // verifier does not preserve bounds of scalar fields reloaded from maps.
-        if captured_len > amtracer_abi::MAX_STACK {
-            return;
+        (*record).results = [CaptureResult::default(); MAX_CAPTURES];
+        let bytes = (config.stack_bytes as usize).min(MAX_STACK);
+        let captured_len = copy_pages::<MAX_STACK, 5>(user.sp, record, 0, bytes);
+        if captured_len < bytes {
+            h.flags |= 1;
         }
         h.stack_len = captured_len as u32;
-        let length = core::mem::size_of::<Header>() + captured_len;
+        let count = (config.capture_count as usize).min(MAX_CAPTURES);
+        h.capture_count = count as u32;
+        let mut extra = 0_usize;
+        for index in 0..MAX_CAPTURES {
+            if index >= count {
+                break;
+            }
+            let read_len = amt_capture_item(cookie, index as u32, captured_len + extra);
+            // Preserve a simple local bound across BPF-to-BPF calls.
+            let read_len = core::ptr::read_volatile(&read_len) & 8191;
+            if read_len > MAX_CAPTURE_BYTES || extra > MAX_CAPTURE_BYTES - read_len {
+                return;
+            }
+            (*record).results[index].data_offset = extra as u32;
+            extra += read_len;
+        }
+        // Recheck bounds after helper calls; 5.15 does not preserve bounds of
+        // scalar fields reloaded from map values.
+        if captured_len > MAX_STACK || extra > MAX_CAPTURE_BYTES {
+            return;
+        }
+        h.capture_bytes = extra as u32;
+        let length = PREFIX_SIZE + captured_len + extra;
         h.length = length as u32;
         let data = core::slice::from_raw_parts(record.cast::<u8>(), length);
         if EVENTS.output(data, 0).is_err() {
@@ -99,6 +112,192 @@ unsafe fn try_capture(ctx: &ProbeContext) {
                 *lost += 1;
             }
         }
+    }
+}
+
+// A global scalar-only function is verified once on 5.15. Keeping the bounded
+// plan evaluator out of the caller prevents exponential states across 16 items.
+#[unsafe(no_mangle)]
+#[inline(never)]
+pub unsafe extern "C" fn amt_capture_item(cookie: u64, index: u32, offset: usize) -> usize {
+    if index as usize >= MAX_CAPTURES {
+        return 0;
+    }
+    // SAFETY: configs remain immutable while attached; scratch is per CPU.
+    unsafe {
+        let Some(config) = CONFIGS.get(&cookie) else {
+            return 0;
+        };
+        let Some(record) = SCRATCH.get_ptr_mut(0) else {
+            return 0;
+        };
+        let plan = &config.captures[index as usize];
+        let result = &mut (*record).results[index as usize];
+        evaluate(plan, &(*record).header.regs, result);
+        if result.status != STATUS_OK || plan.kind == KIND_SCALAR {
+            return 0;
+        }
+        capture_memory(plan, result, record, offset)
+    }
+}
+
+#[inline(never)]
+unsafe fn capture_memory(
+    plan: &CapturePlan,
+    result: &mut CaptureResult,
+    record: *mut Record,
+    offset: usize,
+) -> usize {
+    if offset > MAX_STACK + MAX_CAPTURE_BYTES {
+        result.status = STATUS_OVERFLOW;
+        return 0;
+    }
+    let requested = (plan.byte_length as usize).min(MAX_CAPTURE_BYTES);
+    if requested == 0 {
+        result.status = STATUS_OVERFLOW;
+        return 0;
+    }
+    // SAFETY: offset <= the logical payload capacity and the map has a full
+    // 4 KiB tail. Both helper arguments therefore have independent bounds.
+    unsafe {
+        result.address = result.value;
+        let length = if plan.kind == KIND_STRING {
+            let ret = bpf_probe_read_user_str(
+                (*record).payload.as_mut_ptr().add(offset).cast(),
+                requested as u32,
+                result.value as *const _,
+            );
+            if ret < 0 {
+                result.status = STATUS_FAULT;
+                0
+            } else {
+                let length = (ret as usize).min(requested);
+                if length == requested {
+                    result.status = STATUS_TRUNCATED;
+                }
+                length.saturating_sub(1)
+            }
+        } else {
+            let length =
+                copy_pages::<MAX_CAPTURE_BYTES, 2>(result.value, record, offset, requested);
+            if length < requested {
+                result.status = STATUS_FAULT;
+            }
+            length
+        };
+        let length = core::ptr::read_volatile(&length) & 8191;
+        if length > MAX_CAPTURE_BYTES {
+            result.status = STATUS_OVERFLOW;
+            return 0;
+        }
+        result.data_len = length as u32;
+        length
+    }
+}
+
+#[inline(never)]
+unsafe fn copy_pages<const LIMIT: usize, const PAGES: usize>(
+    address: u64,
+    record: *mut Record,
+    offset: usize,
+    requested: usize,
+) -> usize {
+    if requested > LIMIT || offset > MAX_STACK + MAX_CAPTURE_BYTES {
+        return 0;
+    }
+    let mut copied = 0_usize;
+    for _ in 0..PAGES {
+        if copied >= requested {
+            break;
+        }
+        let Some(current) = address.checked_add(copied as u64) else {
+            break;
+        };
+        let chunk = (4096 - (current as usize & 4095)).min(requested - copied);
+        // LLVM can prove the subtraction cannot underflow, while the 5.15
+        // verifier loses that relationship on later iterations. Keep a scalar
+        // mask in the emitted instructions, even after loop unrolling.
+        let chunk = unsafe { core::ptr::read_volatile(&chunk) } & 8191;
+        if chunk == 0 || chunk > 4096 || copied > MAX_STACK {
+            break;
+        }
+        let destination_offset = offset + copied;
+        if destination_offset > MAX_STACK + MAX_CAPTURE_BYTES {
+            break;
+        }
+        // SAFETY: the destination window is explicitly bounded in the map value. Each
+        // iteration reads at most the current 4 KiB page; only successes count.
+        if unsafe {
+            bpf_probe_read_user_buf(
+                current as *const u8,
+                core::slice::from_raw_parts_mut(
+                    (*record).payload.as_mut_ptr().add(destination_offset),
+                    chunk,
+                ),
+            )
+        }
+        .is_err()
+        {
+            break;
+        }
+        copied += chunk;
+    }
+    copied
+}
+
+#[inline(always)]
+fn offset(value: u64, delta: i64) -> Option<u64> {
+    if delta >= 0 {
+        value.checked_add(delta as u64)
+    } else {
+        value.checked_sub(delta.unsigned_abs())
+    }
+}
+
+#[inline(never)]
+unsafe fn evaluate(plan: &CapturePlan, regs: &Registers, result: &mut CaptureResult) {
+    let mut value = match plan.base_register {
+        index if index < 31 => regs.x[index as usize],
+        31 => regs.sp,
+        32 => regs.pc,
+        33 => regs.pstate,
+        _ => plan.immediate,
+    };
+    for index in 0..MAX_READS {
+        if index >= plan.read_count as usize {
+            break;
+        }
+        let step = &plan.reads[index];
+        let Some(address) = offset(value, step.offset) else {
+            result.status = STATUS_OVERFLOW;
+            return;
+        };
+        result.address = address;
+        // SAFETY: probe_read_user validates the target pointer and reports faults;
+        // each helper writes only its fixed-size local integer result.
+        let read = unsafe {
+            match step.width {
+                1 => bpf_probe_read_user(address as *const u8).map(u64::from),
+                2 => bpf_probe_read_user(address as *const u16).map(u64::from),
+                4 => bpf_probe_read_user(address as *const u32).map(u64::from),
+                8 => bpf_probe_read_user(address as *const u64),
+                _ => {
+                    result.status = STATUS_OVERFLOW;
+                    return;
+                }
+            }
+        };
+        match read {
+            Ok(next) => value = next,
+            Err(_) => {
+                result.status = STATUS_FAULT;
+                return;
+            }
+        }
+    }
+    match offset(value, plan.final_offset) {
+        Some(value) => result.value = value,
+        None => result.status = STATUS_OVERFLOW,
     }
 }
 

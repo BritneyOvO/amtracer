@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
@@ -11,6 +13,9 @@ extern uint64_t amtracer_target(const uint64_t *value);
 extern void amtracer_point(void);
 static volatile int stop;
 static const uint64_t values[] = { 0x1122334455667788ULL, 0x8877665544332211ULL };
+static const char message[] = "amtracer-test";
+static const void *pointer = values;
+static void *boundary;
 
 __attribute__((noinline)) static uint64_t call_chain(unsigned depth) {
     if (depth) return call_chain(depth - 1) + 1;
@@ -29,8 +34,15 @@ static void *worker(void *unused) {
 
 int main(int argc, char **argv) {
     unsigned seconds = argc > 1 ? (unsigned)strtoul(argv[1], NULL, 10) : 60;
-    printf("{\"pid\":%d,\"target\":\"%p\",\"point\":\"%p\",\"memory\":\"%p\"}\n",
-           getpid(), amtracer_target, amtracer_point, values);
+    size_t page = (size_t)sysconf(_SC_PAGESIZE);
+    char *pages = mmap(NULL, page * 2, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (pages == MAP_FAILED) return 1;
+    memset(pages, 0x5a, page);
+    if (mprotect(pages + page, page, PROT_NONE)) return 1;
+    boundary = pages + page - 8;
+    printf("{\"pid\":%d,\"target\":\"%p\",\"point\":\"%p\",\"memory\":\"%p\","
+           "\"string\":\"%p\",\"pointer\":\"%p\",\"boundary\":\"%p\"}\n",
+           getpid(), amtracer_target, amtracer_point, values, message, &pointer, boundary);
     fflush(stdout);
     pthread_t first, later;
     if (pthread_create(&first, NULL, worker, NULL)) return 1;
