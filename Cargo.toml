@@ -1,0 +1,22 @@
+[workspace]
+members = ["crates/amtracer", "crates/amtracer-abi", "crates/amtracer-ebpf", "xtask"]
+default-members = ["crates/amtracer", "crates/amtracer-abi", "xtask"]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+publish = false
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+cast_possible_truncation = "warn"
+undocumented_unsafe_blocks = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[profile.release.package.amtracer-ebpf]
+debug = 2
+codegen-units = 1

@@ -1,0 +1,18 @@
+[package]
+name = "amtracer-ebpf"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+amtracer-abi = { path = "../amtracer-abi" }
+aya-ebpf = "0.3.0"
+
+[[bin]]
+name = "amtracer-ebpf"
+path = "src/main.rs"
+test = false
+bench = false
+
+[lints]
+workspace = true

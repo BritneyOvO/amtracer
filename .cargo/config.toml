@@ -1,0 +1,6 @@
+[alias]
+xtask = "run --package xtask --"
+
+[target.bpfel-unknown-none]
+linker = "bpf-linker"
+rustflags = ["--cfg=bpf_target_arch=\"aarch64\""]
