@@ -30,6 +30,18 @@ Binder 成功事务与请求/回复关联、完整 syscall 参数语义、
 混合会话、有界处理队列、生命周期完整矩阵及性能基准。
 当前验证不能代替这些验收，尤其不能将失败请求测试当成成功请求/回复测试。
 
+## syscall 参数规则
+
+用户态已绑定现有 `SCT_IOC_SET_CAPTURE_RULES`，支持重复的
+`--capture SYSCALL:ARG:KIND[:BYTES]`（string/bytes/sockaddr）和
+`--capture SYSCALL:stack:BYTES`。参数规则由驱动在 ENTER 读取，同一参数会覆盖其内置规则；
+read 等输出缓冲区只能看到调用前内容。已加入对规则数量、长度、参数范围和重复项的校验，
+事件 JSON 输出 blob 类型、地址、数据和 fault 状态；capture 规则会自动扩展 syscall 过滤
+列表。主机单测覆盖解析、限制、重复项和过滤扩展。fuxi（282eb4e4）受控 fixture 已验证
+openat `/dev/null` 路径与 write 输入数据，12 个事件均正确，kernel_lost=0、
+invalidated_pairs=0；原始报告为 artifacts/syscall-capture-smoke.json。自定义规则只在 ENTER
+采集；驱动原有的 read 输出捕获仍在 EXIT 阶段执行。队列丢失压力矩阵尚未完成。
+
 ## 进程生命周期
 
 三类会话以 250 ms 为间隔检查目标启动时间与可执行文件身份，并在设置结束后复核。

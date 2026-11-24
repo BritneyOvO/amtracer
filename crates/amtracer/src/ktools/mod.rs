@@ -94,9 +94,28 @@ fn read_record(file: &mut File, bytes: &mut [u8]) -> Result<Option<usize>> {
 pub fn run_syscall(
     common: Common,
     names: Vec<String>,
+    capture_specs: Vec<String>,
     stack: bool,
     stack_bytes: u32,
 ) -> Result<()> {
+    let capture_rules = capture_specs
+        .iter()
+        .map(|spec| syscall::CaptureRule::try_from(spec.as_str()))
+        .collect::<Result<Vec<_>>>()?;
+    ensure!(
+        capture_rules.len() <= SCT_MAX_CAPTURE_RULES as usize,
+        "too many syscall capture rules"
+    );
+    syscall::validate_capture_rules(&capture_rules)?;
+    let filter_numbers = syscall::filter_numbers(&names, &capture_rules)?;
+    ensure!(
+        filter_numbers.len() <= SCT_MAX_NR_FILTERS as usize,
+        "too many syscall filters after adding capture rules"
+    );
+    let capture_stack = stack
+        || capture_rules
+            .iter()
+            .any(|rule| u32::from(rule.kind) == sct_blob_kind_SCT_BLOB_USER_STACK);
     let mut process = ProcessMonitor::new(common.pid)?;
     let control = Control::open()?;
     ensure!(
@@ -115,22 +134,28 @@ pub fn run_syscall(
         ret_filter: SCT_RETFILTER_ANY,
     };
     ioctl(file.as_raw_fd(), AMT_SCT_IOC_SET_CONFIG, &mut config)?;
-    if !names.is_empty() {
-        ensure!(
-            names.len() <= SCT_MAX_NR_FILTERS as usize,
-            "too many syscall filters"
-        );
+    if !filter_numbers.is_empty() {
         let mut filter = sct_nr_filter {
-            count: u32::try_from(names.len())?,
+            count: u32::try_from(filter_numbers.len())?,
             ..Default::default()
         };
-        for (slot, name) in filter.nr.iter_mut().zip(names) {
-            *slot = syscall_number(&name)?;
+        for (slot, number) in filter.nr.iter_mut().zip(filter_numbers) {
+            *slot = number;
         }
         ioctl(file.as_raw_fd(), AMT_SCT_IOC_SET_NR_FILTER, &mut filter)?;
     }
+    if !capture_rules.is_empty() {
+        let mut rules = sct_capture_rules {
+            count: u32::try_from(capture_rules.len())?,
+            ..Default::default()
+        };
+        for (slot, rule) in rules.rules.iter_mut().zip(capture_rules) {
+            *slot = rule.into();
+        }
+        ioctl(file.as_raw_fd(), AMT_SCT_IOC_SET_CAPTURE_RULES, &mut rules)?;
+    }
     let mut run = RunControl::new(&common)?;
-    let (mut unwinder, mut mappings) = if stack {
+    let (mut unwinder, mut mappings) = if capture_stack {
         let maps = crate::target::ProcessMaps::read(common.pid)?;
         (
             Some(crate::unwind::NativeUnwinder::new(&maps)),

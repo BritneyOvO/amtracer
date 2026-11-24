@@ -118,6 +118,20 @@ def main():
         assert all(e["stack"]["snapshot_bytes"] == 512 for e in events), events
         assert all(any(f.get("symbol") == "worker" for f in e["stack"]["frames"]) for e in events), events
         results["syscall_stack"] = {"events": events, "stats": result.stderr}
+        result = shell(tool, "syscall", "-p", str(pid),
+                       "--capture", "openat:1:string:32", "--capture", "write:1:bytes:16",
+                       "--duration", "2", "--count", "12", "--json")
+        events = [json.loads(line) for line in result.stdout.splitlines() if line]
+        assert len(events) == 12
+        path_captures = [blob for event in events for blob in event["blobs"]
+                         if event["nr"] == 56 and blob["index"] == 1]
+        write_captures = [blob for event in events for blob in event["blobs"]
+                          if event["nr"] == 64 and blob["index"] == 1]
+        assert path_captures and all(blob["kind"] == "string" and blob["text"] == "/dev/null"
+                                     and not blob["fault"] for blob in path_captures), path_captures
+        assert write_captures and all(blob["kind"] == "bytes" and blob["data"] == list(b"amtracer-write-d")
+                                      and not blob["fault"] for blob in write_captures), write_captures
+        results["syscall_captures"] = {"events": events, "stats": result.stderr}
         # No Binder traffic is created yet: opening and stopping exercises its ABI
         # without issuing transactions to any system service.
         result = shell(tool, "binder", "-p", str(pid), "--duration", "1", "--json")

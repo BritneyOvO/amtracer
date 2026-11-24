@@ -28,11 +28,20 @@ cargo xtask build
 ./amtracer uprobe -p 1234 --probe 'libfoo.so+target' --print '*r13' --print '*(r13+1Q):u16'
 ./amtracer uprobe -p 1234 --probe 'libfoo.so+target' --print 'cstr(x0,128)' --print 'bytes(x1,64)'
 ./amtracer syscall -p 1234 --syscalls openat,read,write --duration 5 --json
+./amtracer syscall -p 1234 --syscalls openat,write \
+  --capture openat:1:string:128 --capture write:1:bytes:32 --duration 5 --json
 ./amtracer binder -p 1234 --duration 5 --json
 ```
 
 `--count` 限制事件数，`--duration` 单位为秒，0 表示不限。Ctrl-C 关闭本次会话。
 Binder 的 PID 过滤是事件发生进程，不保证另一端回复也被捕获。
+`--capture SYSCALL:ARG:KIND[:BYTES]` 可重复指定 syscall 用户参数，参数编号从 0 开始，
+类型为 `string`、`bytes` 或 `sockaddr`，默认上限分别为 256、256、128 字节；例如
+`openat:1:string:128`。`--capture SYSCALL:stack:BYTES` 为单个 syscall 采集栈窗口。
+采集规则覆盖驱动对同一 syscall 参数的内置采集，并会自动将对应 syscall 加入过滤列表。
+自定义参数规则在 ENTER 时读取，因此 `--capture read:1:bytes:64` 是调用前快照；驱动已有的
+`read` 输出采集仍会在 EXIT 事件中单独提供返回数据。`write` 输入 buffer 则适合用自定义
+规则在入口采集。
 本阶段文本暂为格式化 JSON，`--json` 为逐行 JSON。
 `--print` 可以重复使用，支持寄存器、加减常量、最多四层解引用、类型后缀与 bytes/cstr。
 每个表达式暂支持一条寄存器/指针链，不支持 `x0+x1`；每探针最多 16 项、额外内存总量 4 KiB。

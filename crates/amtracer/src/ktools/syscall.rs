@@ -1,8 +1,126 @@
 use super::{bindings::*, prefix};
 use crate::unwind::{NativeUnwinder, Snapshot};
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result, bail, ensure};
 use serde_json::{Value, json};
 use std::collections::HashMap;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CaptureRule {
+    pub nr: i32,
+    pub arg_index: u16,
+    pub kind: u16,
+    pub max_len: u32,
+}
+
+impl TryFrom<&str> for CaptureRule {
+    type Error = anyhow::Error;
+
+    fn try_from(spec: &str) -> Result<Self> {
+        let fields = spec.split(':').collect::<Vec<_>>();
+        ensure!(
+            (fields.len() == 3 || fields.len() == 4)
+                && fields.iter().all(|field| !field.is_empty()),
+            "invalid capture rule '{spec}'; expected SYSCALL:ARG:KIND[:BYTES] or SYSCALL:stack:BYTES"
+        );
+        let nr = super::syscall_number(fields[0])?;
+        let (arg_index, kind, max_len) = if fields[1] == "stack" {
+            ensure!(
+                fields.len() == 3,
+                "stack capture syntax is SYSCALL:stack:BYTES"
+            );
+            let bytes = fields[2]
+                .parse::<u32>()
+                .context("invalid stack capture length")?;
+            ensure!(
+                (1..=16384).contains(&bytes),
+                "stack capture length must be 1..=16384"
+            );
+            (
+                u16::MAX,
+                u16::try_from(sct_blob_kind_SCT_BLOB_USER_STACK)?,
+                bytes,
+            )
+        } else {
+            let arg_index = fields[1]
+                .parse::<u16>()
+                .context("invalid syscall argument index")?;
+            ensure!(arg_index < 6, "syscall argument index must be 0..=5");
+            let kind_id = match fields[2] {
+                "string" => sct_blob_kind_SCT_BLOB_USER_STRING,
+                "bytes" => sct_blob_kind_SCT_BLOB_USER_BYTES,
+                "sockaddr" => sct_blob_kind_SCT_BLOB_SOCKADDR,
+                value => bail!("unknown capture kind '{value}'; use string, bytes, or sockaddr"),
+            };
+            let limit = if kind_id == sct_blob_kind_SCT_BLOB_USER_STRING
+                || kind_id == sct_blob_kind_SCT_BLOB_USER_BYTES
+            {
+                256
+            } else if kind_id == sct_blob_kind_SCT_BLOB_SOCKADDR {
+                128
+            } else {
+                bail!("unsupported argument capture kind")
+            };
+            let max_len = fields
+                .get(3)
+                .map_or(Ok(limit), |value| value.parse::<u32>())
+                .context("invalid capture length")?;
+            ensure!(
+                (1..=limit).contains(&max_len),
+                "capture length must be 1..={limit}"
+            );
+            (arg_index, u16::try_from(kind_id)?, max_len)
+        };
+        Ok(Self {
+            nr,
+            arg_index,
+            kind,
+            max_len,
+        })
+    }
+}
+
+impl From<CaptureRule> for sct_capture_rule {
+    fn from(rule: CaptureRule) -> Self {
+        Self {
+            nr: rule.nr,
+            arg_index: rule.arg_index,
+            kind: rule.kind,
+            max_len: rule.max_len,
+        }
+    }
+}
+
+pub fn validate_capture_rules(rules: &[CaptureRule]) -> Result<()> {
+    for (index, rule) in rules.iter().enumerate() {
+        ensure!(
+            !rules[..index].iter().any(|previous| {
+                previous.nr == rule.nr
+                    && ((u32::from(previous.kind) == sct_blob_kind_SCT_BLOB_USER_STACK
+                        && u32::from(rule.kind) == sct_blob_kind_SCT_BLOB_USER_STACK)
+                        || (u32::from(previous.kind) != sct_blob_kind_SCT_BLOB_USER_STACK
+                            && u32::from(rule.kind) != sct_blob_kind_SCT_BLOB_USER_STACK
+                            && previous.arg_index == rule.arg_index))
+            }),
+            "duplicate capture rule for syscall {} argument {}",
+            rule.nr,
+            rule.arg_index
+        );
+    }
+    Ok(())
+}
+
+pub fn filter_numbers(names: &[String], rules: &[CaptureRule]) -> Result<Vec<i32>> {
+    let mut numbers = names
+        .iter()
+        .map(|name| super::syscall_number(name))
+        .collect::<Result<Vec<_>>>()?;
+    for rule in rules {
+        if !numbers.contains(&rule.nr) {
+            numbers.push(rule.nr);
+        }
+    }
+    Ok(numbers)
+}
 
 pub struct Blob<'a> {
     header: sct_blob,
@@ -155,7 +273,17 @@ impl Decoder {
             if u32::from(blob.header.kind) == sct_blob_kind_SCT_BLOB_USER_STACK {
                 stack = Some(blob);
             } else {
-                let mut arg = json!({"index":blob.header.arg_index,"kind":blob.header.kind,"address":format!("{:#x}",blob.header.user_addr),"flags":blob.header.flags,"data":blob.bytes});
+                let kind_id = u32::from(blob.header.kind);
+                let kind = if kind_id == sct_blob_kind_SCT_BLOB_USER_STRING {
+                    "string"
+                } else if kind_id == sct_blob_kind_SCT_BLOB_USER_BYTES {
+                    "bytes"
+                } else if kind_id == sct_blob_kind_SCT_BLOB_SOCKADDR {
+                    "sockaddr"
+                } else {
+                    "unknown"
+                };
+                let mut arg = json!({"index":blob.header.arg_index,"kind":kind,"kind_id":blob.header.kind,"address":format!("{:#x}",blob.header.user_addr),"flags":blob.header.flags,"fault":u32::from(blob.header.flags) & SCT_BLOB_F_FAULT != 0,"data":blob.bytes});
                 if u32::from(blob.header.kind) == sct_blob_kind_SCT_BLOB_USER_STRING {
                     let end = blob
                         .bytes
@@ -192,6 +320,45 @@ impl Decoder {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_argument_and_stack_capture_rules() {
+        let openat = CaptureRule::try_from("openat:1:string:128").unwrap();
+        assert_eq!(openat.nr, 56);
+        assert_eq!(openat.arg_index, 1);
+        assert_eq!(u32::from(openat.kind), sct_blob_kind_SCT_BLOB_USER_STRING);
+        assert_eq!(openat.max_len, 128);
+
+        let write = CaptureRule::try_from("write:1:bytes").unwrap();
+        assert_eq!(write.max_len, 256);
+
+        let stack = CaptureRule::try_from("getpid:stack:512").unwrap();
+        assert_eq!(u32::from(stack.kind), sct_blob_kind_SCT_BLOB_USER_STACK);
+        assert_eq!(stack.arg_index, u16::MAX);
+    }
+
+    #[test]
+    fn rejects_invalid_and_duplicate_capture_rules() {
+        for spec in [
+            "openat:6:string",
+            "openat:1:raw",
+            "write:1:bytes:257",
+            "getpid:stack:0",
+            "getpid:stack:512:extra",
+        ] {
+            assert!(CaptureRule::try_from(spec).is_err(), "{spec}");
+        }
+        let rule = CaptureRule::try_from("openat:1:string").unwrap();
+        assert!(validate_capture_rules(&[rule, rule]).is_err());
+    }
+
+    #[test]
+    fn capture_rules_extend_the_syscall_filter() {
+        let names = vec!["openat".to_owned()];
+        let rules = [CaptureRule::try_from("write:1:bytes").unwrap()];
+        assert_eq!(filter_numbers(&names, &rules).unwrap(), [56, 64]);
+    }
+
     fn empty(phase: u32, tid: u32, ts: u64) -> Record<'static> {
         Record {
             header: sct_event_header {

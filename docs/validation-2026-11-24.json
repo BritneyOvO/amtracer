@@ -6,8 +6,8 @@
   },
   "artifacts": {
     "amtracer": {
-      "bytes": 2422952,
-      "sha256": "f35cfb53d248ba9270d9ed4b6a5fde6b7ef1d2593542e286c0e0fe7cd8726ffd"
+      "bytes": 2450800,
+      "sha256": "c9f3aa306f674bdb4b64b22ff2e0c94a21748f860d92304b7415cd6d491910b5"
     },
     "amtracer-ebpf.o": {
       "bytes": 8792,
@@ -50,6 +50,15 @@
         "syscall": 4,
         "syscall_stack": 4
       }
+    },
+    "syscall-capture-smoke.json": {
+      "sha256": "51dc03c43b26fcca5402511b68a7b698be1e5f6677915890f7799675caad5fcb",
+      "serial": "282eb4e4",
+      "boot_id": "718edf5f-4e39-44e5-94b5-a34ebe95725c",
+      "sections": ["syscall_captures"],
+      "events": {"total": 12, "openat": 6, "write": 6},
+      "kernel_lost": 0,
+      "invalidated_pairs": 0
     },
     "device-smoke-no-fp.json": {
       "sha256": "e92e32bbaeb306a50b39a9db4e4eb918fb6b2d065731839858e76446b4d30391",

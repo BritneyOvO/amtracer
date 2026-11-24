@@ -480,6 +480,7 @@ pub const AMT_SCT_IOC_SET_CONFIG: _bindgen_ty_1 = 1075335937;
 pub const AMT_SCT_IOC_START: _bindgen_ty_1 = 21251;
 pub const AMT_SCT_IOC_STOP: _bindgen_ty_1 = 21252;
 pub const AMT_SCT_IOC_SET_NR_FILTER: _bindgen_ty_1 = 1082675973;
+pub const AMT_SCT_IOC_SET_CAPTURE_RULES: _bindgen_ty_1 = 1099453190;
 pub const AMT_BT_IOC_GET_FEATURE: _bindgen_ty_1 = 2149597701;
 pub const AMT_BT_IOC_SET_CONFIG: _bindgen_ty_1 = 1076904449;
 pub type _bindgen_ty_1 = ::std::os::raw::c_uint;

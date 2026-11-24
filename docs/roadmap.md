@@ -12,7 +12,7 @@
 | 6 | feat: compile debug expressions | 优先级、嵌套、类型、负偏移、溢出和错误定位 |
 | 7 | feat: capture uprobe memory | 标量、字符串、字节、指针链、跨页/缺页/截断 |
 | 8 | feat: unwind native stack snapshots | CFI/FP、符号化、无 FP、递归、PAC、中间指令 |
-| 9 | feat: consume syscall trace events | 现有驱动、参数、配对、errno、耗时、栈、丢失 |
+| 9 | feat: consume syscall trace events | 参数规则和受控输入设备验证已完成；返回缓冲区语义及丢失矩阵待补 |
 | 10 | feat: consume binder trace events | 现有驱动、同步/oneway、结果、数据与关联缺失 |
 | 11 | feat: integrate tracing sessions | 组合配置、文本/JSONL、慢输出、启动失败、生命周期 |
 | 12 | test: add device correctness and benchmarks | 可复现真机正确性和性能报告 |

@@ -41,6 +41,8 @@ enum Command {
         common: Common,
         #[arg(long, value_delimiter = ',')]
         syscalls: Vec<String>,
+        #[arg(long = "capture", value_name = "SYSCALL:ARG:KIND[:BYTES]")]
+        captures: Vec<String>,
         #[arg(long)]
         stack: bool,
         #[arg(long, default_value_t = 8192, value_parser = clap::value_parser!(u32).range(1..=16384))]
@@ -150,9 +152,10 @@ fn main() -> Result<()> {
         Command::Syscall {
             common,
             syscalls,
+            captures,
             stack,
             stack_bytes,
-        } => ktools::run_syscall(common, syscalls, stack, stack_bytes),
+        } => ktools::run_syscall(common, syscalls, captures, stack, stack_bytes),
         Command::Binder { common } => ktools::run_binder(common),
     }
 }

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <fcntl.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
@@ -14,6 +15,7 @@ extern void amtracer_point(void);
 static volatile int stop;
 static const uint64_t values[] = { 0x1122334455667788ULL, 0x8877665544332211ULL };
 static const char message[] = "amtracer-test";
+static const char syscall_message[] = "amtracer-write-data";
 static const void *pointer = values;
 static void *boundary;
 
@@ -26,6 +28,11 @@ static void *worker(void *unused) {
     (void)unused;
     while (!__atomic_load_n(&stop, __ATOMIC_RELAXED)) {
         (void)call_chain(4);
+        int fd = openat(AT_FDCWD, "/dev/null", O_WRONLY | O_CLOEXEC);
+        if (fd >= 0) {
+            (void)write(fd, syscall_message, sizeof(syscall_message) - 1);
+            close(fd);
+        }
         (void)syscall(__NR_getpid);
         usleep(10000);
     }
