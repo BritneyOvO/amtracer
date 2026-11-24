@@ -1,4 +1,5 @@
 mod expr;
+mod itrace;
 mod ktools;
 mod process;
 mod session;
@@ -37,8 +38,10 @@ enum Command {
     Resolve {
         #[arg(short, long)]
         pid: u32,
-        #[arg(long)]
-        probe: target::ProbeSpec,
+        #[arg(long, required_unless_present = "range", conflicts_with = "range")]
+        probe: Option<target::ProbeSpec>,
+        #[arg(long, required_unless_present = "probe")]
+        range: Option<itrace::plan::RangeSpec>,
     },
     Uprobe(uprobe::Options),
     Syscall {
@@ -149,12 +152,20 @@ fn main() -> Result<()> {
             )
         }
         Command::Run { config } => session::run(config),
-        Command::Resolve { pid, probe } => {
-            let resolved = target::ProcessMaps::read(pid)?.resolve(&probe)?;
-            emit(
-                &json!({"path":resolved.path,"file_offset":format!("{:#x}",resolved.file_offset),"elf_address":format!("{:#x}",resolved.elf_address)}),
-                true,
-            )
+        Command::Resolve { pid, probe, range } => {
+            let maps = target::ProcessMaps::read(pid)?;
+            if let Some(range) = range {
+                emit(
+                    &itrace::plan::Plan::resolve(&maps, &[range])?.preview(),
+                    true,
+                )
+            } else {
+                let resolved = maps.resolve(&probe.context("missing probe or range")?)?;
+                emit(
+                    &json!({"path":resolved.path,"file_offset":format!("{:#x}",resolved.file_offset),"elf_address":format!("{:#x}",resolved.elf_address)}),
+                    true,
+                )
+            }
         }
         Command::Uprobe(options) => uprobe::run(options),
         Command::Syscall {
