@@ -44,6 +44,7 @@ enum Command {
         range: Option<itrace::plan::RangeSpec>,
     },
     Uprobe(uprobe::Options),
+    Itrace(itrace::Options),
     Syscall {
         #[command(flatten)]
         common: Common,
@@ -168,6 +169,7 @@ fn main() -> Result<()> {
             }
         }
         Command::Uprobe(options) => uprobe::run(options),
+        Command::Itrace(options) => itrace::run(options),
         Command::Syscall {
             common,
             syscalls,
