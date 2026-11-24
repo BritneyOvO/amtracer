@@ -1,5 +1,7 @@
 #![no_std]
 
+pub mod instruction;
+
 pub const EVENT_MAGIC: u32 = 0x414d5431;
 pub const EVENT_VERSION: u16 = 2;
 pub const MAX_PROBES: u32 = 64;

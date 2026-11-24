@@ -14,5 +14,11 @@ path = "src/main.rs"
 test = false
 bench = false
 
+[[bin]]
+name = "amtracer-itrace"
+path = "src/itrace.rs"
+test = false
+bench = false
+
 [lints]
 workspace = true

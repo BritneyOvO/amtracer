@@ -6,8 +6,8 @@ use std::{collections::BTreeMap, os::unix::fs::FileExt, str::FromStr};
 use yaxpeax_arch::{Decoder, U8Reader};
 use yaxpeax_arm::armv8::a64::InstDecoder;
 
-pub const MAX_SITES: usize = 1024;
-pub const MAX_ADDRESSES: usize = 4096;
+pub const MAX_SITES: usize = amtracer_abi::instruction::MAX_SITES as usize;
+pub const MAX_ADDRESSES: usize = amtracer_abi::instruction::MAX_ADDRESSES as usize;
 const PAGE_BYTES: u64 = 4096;
 
 #[derive(Clone, Debug)]

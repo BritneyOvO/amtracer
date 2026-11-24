@@ -79,6 +79,10 @@ fn build(root: &Path) -> Result<()> {
         root.join("target/bpfel-unknown-none/release/amtracer-ebpf"),
         output.join("amtracer-ebpf.o"),
     )?;
+    fs::copy(
+        root.join("target/bpfel-unknown-none/release/amtracer-itrace"),
+        output.join("amtracer-itrace.o"),
+    )?;
     eprintln!("Android artifacts: {}", output.display());
     Ok(())
 }
