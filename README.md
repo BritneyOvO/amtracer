@@ -42,7 +42,9 @@ uprobe 和 syscall 的 `--stack` 使用 framehop 解栈并输出模块、符号�
 `--stack-bytes`；uprobe 的跨页读取保留有效前缀。
 不支持直接从 APK 映射的库；仅支持可访问的独立 ELF 文件。
 会话定期检查目标的启动时间与可执行文件身份，发现进程退出、PID 复用或可执行文件
-身份变化时退出。动态库映射变化及同一可执行文件的 exec 尚未完整检测。
+身份变化时退出。探针对应的可执行映射变化时会停止 uprobe；开启栈回溯时，可执行映射
+变化会重建解栈缓存。检查间隔为 250 ms，无法检测两次检查之间完成的瞬时变化，也不能
+保证队列中旧事件使用采集时的映射；同一可执行文件的 exec 尚未完整检测。
 
 ## UAPI 和检查
 
@@ -66,6 +68,16 @@ fixture 构建示例（从项目目录）：
   tests/fixtures/native.c tests/fixtures/native.S -o target/amtracer-fixture
 python3 tests/device_smoke.py --serial 282eb4e4
 python3 tests/process_smoke.py --serial 282eb4e4
+```
+
+动态映射测试还需构建受控的两个 so 和加载程序：
+
+```sh
+CC="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang"
+"$CC" -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -shared -fPIC tests/fixtures/mapping_lib.c -o target/libmap_a.so
+"$CC" -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -shared -fPIC tests/fixtures/mapping_lib.c -o target/libmap_b.so
+"$CC" -O1 -g -fno-omit-frame-pointer -Wall -Wextra tests/fixtures/mapping_runner.c -ldl -pthread -o target/mapping-runner
+python3 tests/mapping_smoke.py --serial 282eb4e4
 ```
 
 2026-11-24 已在 fuxi 验证符号/绝对地址 uprobe、x13、syscall getpid ENTER/EXIT、Binder

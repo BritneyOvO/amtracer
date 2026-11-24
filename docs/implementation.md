@@ -6,7 +6,7 @@
 
 * 独立 main 仓库、Cargo workspace、Android/Aya 构建和固定 UAPI 绑定。
 * 独立 ELF 的三种 uprobe 定位、cookie、TGID 过滤、完整 AArch64 通用寄存器与栈窗口。
-  不支持 APK 直接映射的库；动态映射生命周期尚待完善。
+  不支持 APK 直接映射的库。
 * syscall_trace v2、binder_trace v3 会话打开、配置、读取、停止与关闭；使用既有
   PR_KTOOLS，不增加 /dev 或修改内核。
 * uprobe 表达式：一条寄存器/指针链加减常量、负偏移、四层解引用、八种整数类型、
@@ -35,8 +35,11 @@ Binder 成功事务与请求/回复关联、完整 syscall 参数语义、
 三类会话以 250 ms 为间隔检查目标启动时间与可执行文件身份，并在设置结束后复核。
 在事件持续到达时也会检查，发现退出或身份变化后结束会话。fuxi 的受控进程退出测试
 验证了 uprobe、syscall 和 Binder 会话退出，以及后两者可以再次打开；脚本为
-`tests/process_smoke.py`。轮询不能保证发现瞬时变化，不覆盖同一可执行文件的 exec，
-也不检测 dlopen、dlclose 或映射变更；栈映射缓存仍可能过期。
+`tests/process_smoke.py`。uprobe 会话记录每个探针对应的可执行映射，映射变化时停止；
+uprobe 和 syscall 在启用栈回溯时随可执行映射变化重建缓存。fuxi 上的
+`tests/mapping_smoke.py` 验证 dlopen 后 syscall 栈解析新库，dlclose 后 uprobe 会话退出。
+轮询不能保证发现瞬时变化，不覆盖同一可执行文件的 exec；队列中的旧事件也可能在缓存
+更新后按新的映射解析，因此不能保证动态变化期间的栈符号完全准确。
 
 ## 快照解栈阶段
 

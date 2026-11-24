@@ -9,7 +9,7 @@ use std::{
     str::FromStr,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Mapping {
     pub start: u64,
     pub end: u64,
@@ -140,6 +140,7 @@ pub struct ResolvedProbe {
     pub path: PathBuf,
     pub file_offset: u64,
     pub elf_address: u64,
+    pub mappings: Vec<Mapping>,
 }
 impl ResolvedProbe {
     pub fn attach_path(&self) -> PathBuf {
@@ -239,10 +240,31 @@ impl ProcessMaps {
             }),
             "probe outside executable PT_LOAD"
         );
+        let mappings: Vec<_> = self
+            .mappings
+            .iter()
+            .filter(|m| {
+                m.executable
+                    && m.device == mapping.device
+                    && m.inode == mapping.inode
+                    && file_offset >= m.offset
+                    && file_offset - m.offset < m.end - m.start
+                    && match spec.location {
+                        Location::RuntimeAddress(address) => m.start <= address && address < m.end,
+                        Location::ElfAddress(_) | Location::Symbol(_, _) => true,
+                    }
+            })
+            .cloned()
+            .collect();
+        ensure!(
+            !mappings.is_empty(),
+            "probe offset is not mapped executable"
+        );
         Ok(ResolvedProbe {
             file,
             path: mapping.path.clone(),
             file_offset,
+            mappings,
             elf_address: elf
                 .segments()
                 .filter(|s| Self::executable(s.flags()))

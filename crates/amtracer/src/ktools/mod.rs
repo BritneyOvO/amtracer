@@ -8,7 +8,11 @@ pub mod bindings;
 mod syscall;
 mod syscall_names;
 
-use crate::{Common, RunControl, emit, process::ProcessMonitor, wait_readable};
+use crate::{
+    Common, RunControl, emit,
+    process::{MappingChange, MappingMonitor, ProcessMonitor},
+    wait_readable,
+};
 use anyhow::{Context, Result, ensure};
 use bindings::*;
 use std::{
@@ -126,20 +130,32 @@ pub fn run_syscall(
         ioctl(file.as_raw_fd(), AMT_SCT_IOC_SET_NR_FILTER, &mut filter)?;
     }
     let mut run = RunControl::new(&common)?;
-    let mut unwinder = if stack {
-        Some(crate::unwind::NativeUnwinder::new(
-            &crate::target::ProcessMaps::read(common.pid)?,
-        ))
+    let (mut unwinder, mut mappings) = if stack {
+        let maps = crate::target::ProcessMaps::read(common.pid)?;
+        (
+            Some(crate::unwind::NativeUnwinder::new(&maps)),
+            Some(MappingMonitor::new(&maps, Vec::new())),
+        )
     } else {
-        None
+        (None, None)
     };
     ioctl(file.as_raw_fd(), AMT_SCT_IOC_START, &mut 0_u32)?;
     process.verify()?;
+    if let Some(monitor) = &mut mappings
+        && let MappingChange::Changed(maps) = monitor.check(true)?
+    {
+        unwinder = Some(crate::unwind::NativeUnwinder::new(&maps));
+    }
     let mut buffer = vec![0; 32768];
     let mut decoder = syscall::Decoder::default();
     while run.running() {
         if !process.check()? {
             break;
+        }
+        if let Some(monitor) = &mut mappings
+            && let MappingChange::Changed(maps) = monitor.check(false)?
+        {
+            unwinder = Some(crate::unwind::NativeUnwinder::new(&maps));
         }
         if let Some(n) = read_record(&mut file, &mut buffer)? {
             let record = syscall::Record::try_from(&buffer[..n])?;

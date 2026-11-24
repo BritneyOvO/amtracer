@@ -1,6 +1,6 @@
 use crate::{
     Common, RunControl, emit,
-    process::ProcessMonitor,
+    process::{MappingChange, MappingMonitor, ProcessMonitor},
     target::{ProbeSpec, ProcessMaps},
     unwind::{NativeUnwinder, Snapshot},
     wait_readable,
@@ -74,6 +74,13 @@ pub fn run(options: Options) -> Result<()> {
         .iter()
         .map(|p| maps.resolve(p))
         .collect::<Result<Vec<_>>>()?;
+    let mut mappings = MappingMonitor::new(
+        &maps,
+        resolved
+            .iter()
+            .map(|probe| probe.mappings.clone())
+            .collect(),
+    );
     let object = match options.object {
         Some(path) => path,
         None => std::env::current_exe()?.with_file_name("amtracer-ebpf.o"),
@@ -126,10 +133,28 @@ pub fn run(options: Options) -> Result<()> {
     let mut events = RingBuf::try_from(ebpf.take_map("EVENTS").context("EVENTS map missing")?)?;
     let mut control = RunControl::new(&options.common)?;
     process.verify()?;
+    match mappings.check(true)? {
+        MappingChange::Unchanged => {}
+        MappingChange::Changed(maps) => {
+            if options.stack {
+                unwinder = Some(NativeUnwinder::new(&maps));
+            }
+        }
+        MappingChange::ProbeRemoved => anyhow::bail!("probe mapping changed during setup"),
+    }
     while control.running() {
         while let Some(record) = events.next() {
             if !process.check()? {
                 break;
+            }
+            match mappings.check(false)? {
+                MappingChange::Unchanged => {}
+                MappingChange::Changed(maps) => {
+                    if options.stack {
+                        unwinder = Some(NativeUnwinder::new(&maps));
+                    }
+                }
+                MappingChange::ProbeRemoved => break,
             }
             ensure!(record.len() >= PREFIX_SIZE, "short uprobe record");
             // SAFETY: Header is repr(C) with integer/array fields only; all bit
@@ -215,6 +240,15 @@ pub fn run(options: Options) -> Result<()> {
         }
         if !process.check()? {
             break;
+        }
+        match mappings.check(false)? {
+            MappingChange::Unchanged => {}
+            MappingChange::Changed(maps) => {
+                if options.stack {
+                    unwinder = Some(NativeUnwinder::new(&maps));
+                }
+            }
+            MappingChange::ProbeRemoved => break,
         }
         wait_readable(events.as_raw_fd())?;
     }
