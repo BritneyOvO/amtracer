@@ -2,6 +2,7 @@
 #include <linux/prctl.h>
 #include <linux/syscall_trace.h>
 #include <linux/binder_trace.h>
+#include <linux/uxn_probe.h>
 
 /* bindgen evaluates enum values; sizeof-based ioctl macros are not constants
  * in bindgen's macro parser. Keep their values derived from the original UAPI. */

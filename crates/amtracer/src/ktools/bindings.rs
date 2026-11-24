@@ -7,6 +7,7 @@ pub const KT_FEATURE_VTOUCH: u32 = 2;
 pub const KT_FEATURE_SYSCALL_TRACE: u32 = 4;
 pub const KT_FEATURE_BINDER_TRACE: u32 = 8;
 pub const KT_FEATURE_UXN: u32 = 16;
+pub const PR_UXN_PROBE: u32 = 1398032459;
 pub const PR_KTOOLS: u32 = 1263816524;
 pub const SCT_EVENT_MAGIC: u32 = 1398031173;
 pub const SCT_EVENT_VERSION: u32 = 2;
@@ -38,6 +39,26 @@ pub const BT_EVENT_KIND_BINDER_TRANSACTION: u32 = 1;
 pub const BT_MAX_INLINE_DATA: u32 = 256;
 pub const BT_CAPTURE_POINT_TRANSACTION: u32 = 4;
 pub const BT_IOC_MAX_NR: u32 = 5;
+pub const UXN_BP_MODE_DBI: u32 = 1;
+pub const UXN_BP_MODE_INSTRUMENT: u32 = 2;
+pub const UXN_BP_MODE_INLINE_PROBE: u32 = 3;
+pub const UXN_BP_MODE_BRK: u32 = 4;
+pub const UXN_BP_FLAG_NO_NEARBY: u32 = 1;
+pub const UXN_BP_FLAG_NO_PREFIX: u32 = 2;
+pub const UXN_BP_FLAG_UXN_ONLY: u32 = 4;
+pub const UXN_BP_FLAG_DEFER_UXN: u32 = 8;
+pub const UXN_BP_FLAG_UPROBE: u32 = 16;
+pub const UXN_PROBE_MAX_SITES: u32 = 32;
+pub const UXN_PROBE_MAX_PAGES: u32 = 4096;
+pub const UXN_PROBE_ABI_VERSION: u32 = 4;
+pub const UXN_PROBE_FAR_MAGIC: u32 = 1398032454;
+pub const UXN_PROBE_RET_MAGIC: u32 = 21332;
+pub const UXN_PROBE_CMD_REGISTER: u32 = 1;
+pub const UXN_PROBE_CMD_UNREGISTER: u32 = 2;
+pub const UXN_PROBE_CMD_STAT: u32 = 3;
+pub const UXN_PROBE_CMD_INFO: u32 = 4;
+pub const UXN_PROBE_CMD_CLEAR_PID: u32 = 5;
+pub const UXN_PROBE_CMD_ACTIVATE: u32 = 6;
 pub type __u8 = ::std::os::raw::c_uchar;
 pub type __u16 = ::std::os::raw::c_ushort;
 pub type __s32 = ::std::os::raw::c_int;
@@ -472,6 +493,160 @@ impl Default for bt_binder_event {
         }
     }
 }
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct uxn_probe_site {
+    pub offset: __u32,
+    pub mode: __u32,
+    pub flags: __u32,
+    pub reserved: __u32,
+    pub handler: __u64,
+    pub user_data: __u64,
+    pub entry_out: __u64,
+    pub body_out: __u64,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of uxn_probe_site"][::std::mem::size_of::<uxn_probe_site>() - 48usize];
+    ["Alignment of uxn_probe_site"][::std::mem::align_of::<uxn_probe_site>() - 8usize];
+    ["Offset of field: uxn_probe_site::offset"]
+        [::std::mem::offset_of!(uxn_probe_site, offset) - 0usize];
+    ["Offset of field: uxn_probe_site::mode"]
+        [::std::mem::offset_of!(uxn_probe_site, mode) - 4usize];
+    ["Offset of field: uxn_probe_site::flags"]
+        [::std::mem::offset_of!(uxn_probe_site, flags) - 8usize];
+    ["Offset of field: uxn_probe_site::reserved"]
+        [::std::mem::offset_of!(uxn_probe_site, reserved) - 12usize];
+    ["Offset of field: uxn_probe_site::handler"]
+        [::std::mem::offset_of!(uxn_probe_site, handler) - 16usize];
+    ["Offset of field: uxn_probe_site::user_data"]
+        [::std::mem::offset_of!(uxn_probe_site, user_data) - 24usize];
+    ["Offset of field: uxn_probe_site::entry_out"]
+        [::std::mem::offset_of!(uxn_probe_site, entry_out) - 32usize];
+    ["Offset of field: uxn_probe_site::body_out"]
+        [::std::mem::offset_of!(uxn_probe_site, body_out) - 40usize];
+};
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct uxn_probe_reg {
+    pub pid: __u32,
+    pub nr_sites: __u32,
+    pub flags: __u32,
+    pub generation: __u32,
+    pub page_addr: __u64,
+    pub recomp_out: __u64,
+    pub sites: [uxn_probe_site; 32usize],
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of uxn_probe_reg"][::std::mem::size_of::<uxn_probe_reg>() - 1568usize];
+    ["Alignment of uxn_probe_reg"][::std::mem::align_of::<uxn_probe_reg>() - 8usize];
+    ["Offset of field: uxn_probe_reg::pid"][::std::mem::offset_of!(uxn_probe_reg, pid) - 0usize];
+    ["Offset of field: uxn_probe_reg::nr_sites"]
+        [::std::mem::offset_of!(uxn_probe_reg, nr_sites) - 4usize];
+    ["Offset of field: uxn_probe_reg::flags"]
+        [::std::mem::offset_of!(uxn_probe_reg, flags) - 8usize];
+    ["Offset of field: uxn_probe_reg::generation"]
+        [::std::mem::offset_of!(uxn_probe_reg, generation) - 12usize];
+    ["Offset of field: uxn_probe_reg::page_addr"]
+        [::std::mem::offset_of!(uxn_probe_reg, page_addr) - 16usize];
+    ["Offset of field: uxn_probe_reg::recomp_out"]
+        [::std::mem::offset_of!(uxn_probe_reg, recomp_out) - 24usize];
+    ["Offset of field: uxn_probe_reg::sites"]
+        [::std::mem::offset_of!(uxn_probe_reg, sites) - 32usize];
+};
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct uxn_probe_unreg {
+    pub pid: __u32,
+    pub generation: __u32,
+    pub page_addr: __u64,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of uxn_probe_unreg"][::std::mem::size_of::<uxn_probe_unreg>() - 16usize];
+    ["Alignment of uxn_probe_unreg"][::std::mem::align_of::<uxn_probe_unreg>() - 8usize];
+    ["Offset of field: uxn_probe_unreg::pid"]
+        [::std::mem::offset_of!(uxn_probe_unreg, pid) - 0usize];
+    ["Offset of field: uxn_probe_unreg::generation"]
+        [::std::mem::offset_of!(uxn_probe_unreg, generation) - 4usize];
+    ["Offset of field: uxn_probe_unreg::page_addr"]
+        [::std::mem::offset_of!(uxn_probe_unreg, page_addr) - 8usize];
+};
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct uxn_probe_stat {
+    pub pid: __u32,
+    pub nr_sites: __u32,
+    pub flags: __u32,
+    pub active: __u32,
+    pub page_addr: __u64,
+    pub recomp_addr: __u64,
+    pub hit_count: __u64,
+    pub sites: [uxn_probe_site; 32usize],
+    pub generation: __u32,
+    pub reserved: __u32,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of uxn_probe_stat"][::std::mem::size_of::<uxn_probe_stat>() - 1584usize];
+    ["Alignment of uxn_probe_stat"][::std::mem::align_of::<uxn_probe_stat>() - 8usize];
+    ["Offset of field: uxn_probe_stat::pid"][::std::mem::offset_of!(uxn_probe_stat, pid) - 0usize];
+    ["Offset of field: uxn_probe_stat::nr_sites"]
+        [::std::mem::offset_of!(uxn_probe_stat, nr_sites) - 4usize];
+    ["Offset of field: uxn_probe_stat::flags"]
+        [::std::mem::offset_of!(uxn_probe_stat, flags) - 8usize];
+    ["Offset of field: uxn_probe_stat::active"]
+        [::std::mem::offset_of!(uxn_probe_stat, active) - 12usize];
+    ["Offset of field: uxn_probe_stat::page_addr"]
+        [::std::mem::offset_of!(uxn_probe_stat, page_addr) - 16usize];
+    ["Offset of field: uxn_probe_stat::recomp_addr"]
+        [::std::mem::offset_of!(uxn_probe_stat, recomp_addr) - 24usize];
+    ["Offset of field: uxn_probe_stat::hit_count"]
+        [::std::mem::offset_of!(uxn_probe_stat, hit_count) - 32usize];
+    ["Offset of field: uxn_probe_stat::sites"]
+        [::std::mem::offset_of!(uxn_probe_stat, sites) - 40usize];
+    ["Offset of field: uxn_probe_stat::generation"]
+        [::std::mem::offset_of!(uxn_probe_stat, generation) - 1576usize];
+    ["Offset of field: uxn_probe_stat::reserved"]
+        [::std::mem::offset_of!(uxn_probe_stat, reserved) - 1580usize];
+};
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct uxn_probe_info {
+    pub version: __u32,
+    pub page_count: __u32,
+    pub abort_hits: __u64,
+    pub abort_misses: __u64,
+    pub far_redirects: __u64,
+    pub recomp_allocs: __u64,
+    pub hot_rebuilds: __u64,
+    pub write_traps: __u64,
+    pub vma_events: __u64,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of uxn_probe_info"][::std::mem::size_of::<uxn_probe_info>() - 64usize];
+    ["Alignment of uxn_probe_info"][::std::mem::align_of::<uxn_probe_info>() - 8usize];
+    ["Offset of field: uxn_probe_info::version"]
+        [::std::mem::offset_of!(uxn_probe_info, version) - 0usize];
+    ["Offset of field: uxn_probe_info::page_count"]
+        [::std::mem::offset_of!(uxn_probe_info, page_count) - 4usize];
+    ["Offset of field: uxn_probe_info::abort_hits"]
+        [::std::mem::offset_of!(uxn_probe_info, abort_hits) - 8usize];
+    ["Offset of field: uxn_probe_info::abort_misses"]
+        [::std::mem::offset_of!(uxn_probe_info, abort_misses) - 16usize];
+    ["Offset of field: uxn_probe_info::far_redirects"]
+        [::std::mem::offset_of!(uxn_probe_info, far_redirects) - 24usize];
+    ["Offset of field: uxn_probe_info::recomp_allocs"]
+        [::std::mem::offset_of!(uxn_probe_info, recomp_allocs) - 32usize];
+    ["Offset of field: uxn_probe_info::hot_rebuilds"]
+        [::std::mem::offset_of!(uxn_probe_info, hot_rebuilds) - 40usize];
+    ["Offset of field: uxn_probe_info::write_traps"]
+        [::std::mem::offset_of!(uxn_probe_info, write_traps) - 48usize];
+    ["Offset of field: uxn_probe_info::vma_events"]
+        [::std::mem::offset_of!(uxn_probe_info, vma_events) - 56usize];
+};
 pub const AMT_KT_IOC_GET_INFO: _bindgen_ty_1 = 2148551424;
 pub const AMT_KT_IOC_OPEN_SYSCALL_TRACE: _bindgen_ty_1 = 19203;
 pub const AMT_KT_IOC_OPEN_BINDER_TRACE: _bindgen_ty_1 = 19204;

@@ -8,9 +8,9 @@ use aya_ebpf::{
         bpf_get_current_pid_tgid, bpf_get_smp_processor_id, bpf_ktime_get_ns,
         generated::bpf_get_attach_cookie,
     },
-    macros::{map, tracepoint, uprobe},
+    macros::{map, raw_tracepoint, uprobe},
     maps::{Array, HashMap, PerCpuArray, RingBuf},
-    programs::{ProbeContext, TracePointContext},
+    programs::{ProbeContext, RawTracePointContext},
 };
 
 #[map]
@@ -112,8 +112,8 @@ unsafe fn capture(ctx: &ProbeContext) {
             version: VERSION,
             flags,
             length: u32::try_from(length).unwrap_or(0),
-            tgid: (identity >> 32) as u32,
-            tid: identity as u32,
+            tgid: u32::try_from(identity >> 32).unwrap_or(0),
+            tid: u32::try_from(identity & 0xffff_ffff).unwrap_or(0),
             cpu: bpf_get_smp_processor_id(),
             timestamp_ns: timestamp,
             sequence,
@@ -144,10 +144,16 @@ unsafe fn capture(ctx: &ProbeContext) {
     }
 }
 
-#[tracepoint]
-pub fn instruction_thread_exit(_ctx: TracePointContext) -> u32 {
+#[raw_tracepoint]
+pub fn instruction_thread_exit(_ctx: RawTracePointContext) -> u32 {
     let identity = bpf_get_current_pid_tgid();
-    // SAFETY: removal is synchronous on the exiting task. This lifecycle hook
+    let Some(config) = IT_SETTINGS.get(0) else {
+        return 0;
+    };
+    if identity >> 32 != u64::from(config.tgid) {
+        return 0;
+    }
+    // Removal is synchronous on the exiting task. This lifecycle hook
     // is attached before any sites are enabled and held until after detach.
     let _ = IT_THREADS.remove(&identity);
     0

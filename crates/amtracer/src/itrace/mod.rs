@@ -1,30 +1,35 @@
+mod event;
 pub mod plan;
+mod uxn;
 
 use crate::{
-    Common, RunControl, emit,
+    Common, RunControl,
     process::{MappingChange, MappingMonitor, ProcessMonitor},
     wait_readable,
 };
-use amtracer_abi::instruction::{self, Address, Config, Header, Record, Stats};
+use amtracer_abi::instruction::{self, Address, Config, Stats};
 use anyhow::{Context, Result, ensure};
 use aya::{
     Ebpf,
     maps::{Array, HashMap, PerCpuArray, RingBuf},
     programs::{
-        TracePoint, UProbe,
+        RawTracePoint, UProbe,
         uprobe::{UProbeAttachLocation, UProbeAttachPoint, UProbeScope},
     },
 };
 use clap::Args;
-use serde_json::json;
 use std::{
-    collections::HashMap as StdHashMap, mem::size_of, num::NonZeroU32, os::fd::AsRawFd,
+    io::{self, BufWriter, Write},
+    num::NonZeroU32,
+    os::fd::AsRawFd,
     path::PathBuf,
+    sync::atomic::Ordering,
+    time::Instant,
 };
 
 #[derive(Args)]
 pub struct Options {
-    #[arg(long = "range", required = true)]
+    #[arg(long = "range", required = true, value_name = "START..END|START:BYTES")]
     pub ranges: Vec<plan::RangeSpec>,
     #[command(flatten)]
     pub common: Common,
@@ -32,6 +37,9 @@ pub struct Options {
     pub object: Option<PathBuf>,
     #[arg(long)]
     pub regs: bool,
+    /// Collect and validate records, reporting statistics without writing each event.
+    #[arg(long, conflicts_with = "json")]
+    pub summary_only: bool,
 }
 
 #[repr(transparent)]
@@ -43,12 +51,21 @@ struct MapAddress(Address);
 #[repr(transparent)]
 #[derive(Clone, Copy)]
 struct MapStats(Stats);
-// SAFETY: each wrapper is a fixed integer-only repr(C) value with no invalid bit patterns.
+// SAFETY: Config is a fixed repr(C) integer value without padding/invalid bit patterns.
 unsafe impl aya::Pod for MapConfig {}
-// SAFETY: each wrapper is a fixed integer-only repr(C) value with no invalid bit patterns.
+// SAFETY: Address is a fixed repr(C) integer value without padding/invalid bit patterns.
 unsafe impl aya::Pod for MapAddress {}
-// SAFETY: each wrapper is a fixed integer-only repr(C) value with no invalid bit patterns.
+// SAFETY: Stats is a fixed repr(C) integer value without padding/invalid bit patterns.
 unsafe impl aya::Pod for MapStats {}
+
+fn settings(ebpf: &mut Ebpf, config: Config) -> Result<()> {
+    Array::<_, MapConfig>::try_from(
+        ebpf.map_mut("IT_SETTINGS")
+            .context("IT_SETTINGS map missing")?,
+    )?
+    .set(0, &MapConfig(config), 0)?;
+    Ok(())
+}
 
 pub fn run(options: Options) -> Result<()> {
     let pid = options.common.pid;
@@ -62,43 +79,55 @@ pub fn run(options: Options) -> Result<()> {
             .map(|target| target.mappings.clone())
             .collect(),
     );
-    let object = options.object.unwrap_or_else(|| {
-        std::env::current_exe()
-            .unwrap_or_else(|_| PathBuf::from("amtracer"))
-            .with_file_name("amtracer-itrace.o")
-    });
+    let object = match options.object {
+        Some(path) => path,
+        None => std::env::current_exe()?.with_file_name("amtracer-itrace.o"),
+    };
     let mut ebpf =
         Ebpf::load_file(&object).with_context(|| format!("loading {}", object.display()))?;
+    let config = Config {
+        tgid: pid,
+        enabled: 0,
+        flags: if options.regs {
+            u32::from(instruction::FLAG_REGS)
+        } else {
+            0
+        },
+        site_count: u32::try_from(plan.points.len())?,
+    };
+    settings(&mut ebpf, config)?;
     {
-        let mut settings = Array::<_, MapConfig>::try_from(
-            ebpf.map_mut("IT_SETTINGS")
-                .context("IT_SETTINGS map missing")?,
-        )?;
-        settings.set(
-            0,
-            &MapConfig(Config {
-                tgid: pid,
-                enabled: 0,
-                flags: if options.regs {
-                    u32::from(instruction::FLAG_REGS)
-                } else {
-                    0
-                },
-                site_count: u32::try_from(plan.points.len())?,
-            }),
-            0,
-        )?;
         let mut allowed = HashMap::<_, MapAddress, u8>::try_from(
             ebpf.map_mut("IT_ALLOWED")
                 .context("IT_ALLOWED map missing")?,
         )?;
         for (index, point) in plan.points.iter().enumerate() {
-            let cookie = u64::try_from(index + 1)?;
             for pc in &point.addresses {
-                allowed.insert(&MapAddress(Address { cookie, pc: *pc }), &1, 0)?;
+                allowed.insert(
+                    &MapAddress(Address {
+                        cookie: u64::try_from(index + 1)?,
+                        pc: *pc,
+                    }),
+                    &1,
+                    0,
+                )?;
             }
         }
     }
+    // The raw lifecycle hook covers exits on all CPUs without a tracefs mount.
+    // It must be attached before capture can create any thread entries.
+    let exit_program: &mut RawTracePoint = ebpf
+        .program_mut("instruction_thread_exit")
+        .context("instruction_thread_exit program missing")?
+        .try_into()?;
+    exit_program
+        .load()
+        .context("verifying instruction exit hook")?;
+    exit_program
+        .attach("sched_process_exit")
+        .context("attaching sched_process_exit")?;
+    let mut control = RunControl::new(&options.common)?;
+    let setup_started = Instant::now();
     let program: &mut UProbe = ebpf
         .program_mut("instruction_trace")
         .context("instruction_trace program missing")?
@@ -107,6 +136,10 @@ pub fn run(options: Options) -> Result<()> {
         .load()
         .context("verifying instruction trace uprobe program")?;
     for (index, point) in plan.points.iter().enumerate() {
+        ensure!(
+            !control.stop.load(Ordering::Relaxed),
+            "instruction trace setup interrupted"
+        );
         let target = &plan.targets[point.target];
         program
             .attach(
@@ -119,134 +152,152 @@ pub fn run(options: Options) -> Result<()> {
             )
             .with_context(|| {
                 format!(
-                    "attaching instruction {}+{:#x}",
+                    "attaching instruction {}+{:#x} ({})",
                     target.path.display(),
-                    point.file_offset
+                    point.file_offset,
+                    point.assembly
                 )
             })?;
     }
-    // The lifecycle hook prevents a reused TID from inheriting a previous
-    // sequence. Its link is retained by the loaded program until drop.
-    let exit_program: &mut TracePoint = ebpf
-        .program_mut("instruction_thread_exit")
-        .context("instruction_thread_exit program missing")?
-        .try_into()?;
-    exit_program
-        .load()
-        .context("verifying instruction exit tracepoint")?;
-    exit_program
-        .attach("sched", "sched_process_exit")
-        .context("attaching sched_process_exit")?;
-    let mut settings = Array::<_, MapConfig>::try_from(
-        ebpf.map_mut("IT_SETTINGS")
-            .context("IT_SETTINGS map missing")?,
-    )?;
-    settings.set(
-        0,
-        &MapConfig(Config {
-            tgid: pid,
-            enabled: 1,
-            flags: if options.regs {
-                u32::from(instruction::FLAG_REGS)
-            } else {
-                0
-            },
-            site_count: u32::try_from(plan.points.len())?,
-        }),
-        0,
-    )?;
+    let mut backend = uxn::Backend::verify(pid, &plan)?;
+    process.verify()?;
+    ensure!(
+        !matches!(mappings.check(true)?, MappingChange::ProbeRemoved),
+        "instruction trace mapping changed during setup"
+    );
     let mut events = RingBuf::try_from(
         ebpf.take_map("IT_EVENTS")
             .context("IT_EVENTS map missing")?,
     )?;
-    let mut control = RunControl::new(&options.common)?;
-    let mut metadata = StdHashMap::new();
-    for (index, point) in plan.points.iter().enumerate() {
-        metadata.insert(
-            u64::try_from(index + 1)?,
-            (point.elf_address, point.word, point.assembly.clone()),
-        );
-    }
-    process.verify()?;
-    match mappings.check(true)? {
-        MappingChange::Unchanged => {}
-        MappingChange::Changed(_) => {}
-        MappingChange::ProbeRemoved => {
-            anyhow::bail!("instruction trace mapping changed during setup")
-        }
-    }
-    while control.running() {
-        while let Some(record) = events.next() {
-            if !process.check()? {
+    let mut sequences = event::Sequences::default();
+    let stdout = io::stdout();
+    let mut output = BufWriter::with_capacity(256 * 1024, stdout.lock());
+    control.started = Instant::now();
+    settings(
+        &mut ebpf,
+        Config {
+            enabled: 1,
+            ..config
+        },
+    )?;
+    eprintln!(
+        "itrace: ready pid={pid} sites={} pages={} backend=uxn setup_ns={}",
+        plan.points.len(),
+        backend.pages(),
+        setup_started.elapsed().as_nanos()
+    );
+    let mut received = 0_u64;
+    let mut discarded = 0_u64;
+    let result = (|| -> Result<()> {
+        'capture: while control.running() {
+            if !process.check()? || matches!(mappings.check(false)?, MappingChange::ProbeRemoved) {
                 break;
             }
-            if matches!(mappings.check(false)?, MappingChange::ProbeRemoved) {
-                break;
+            backend.check()?;
+            while control.running() {
+                if !process.check()?
+                    || matches!(mappings.check(false)?, MappingChange::ProbeRemoved)
+                {
+                    break 'capture;
+                }
+                backend.check()?;
+                let Some(record) = events.next() else {
+                    break;
+                };
+                received += 1;
+                let event = event::Event::decode(&record, pid, options.regs, &plan)?;
+                let missed = sequences.observe(&event.header)?;
+                if !options.summary_only {
+                    event.write(
+                        &plan,
+                        missed,
+                        sequences.incomplete,
+                        options.common.json,
+                        &mut output,
+                    )?;
+                }
+                control.emitted();
             }
-            let header = parse_header(&record)?;
-            ensure!(
-                header.magic == instruction::MAGIC && header.version == instruction::VERSION,
-                "unsupported instruction trace ABI"
-            );
-            ensure!(
-                header.length as usize == record.len(),
-                "invalid instruction trace length"
-            );
-            let (elf, word, assembly) = metadata
-                .get(&header.cookie)
-                .context("unknown instruction trace cookie")?;
-            let mut event = json!({"source":"instruction","timestamp_ns":header.timestamp_ns,"tgid":header.tgid,"tid":header.tid,"cpu":header.cpu,"sequence":header.sequence,"thread_epoch":header.thread_epoch,"probe":header.cookie,"pc":format!("{:#x}",header.pc),"elf_address":format!("{:#x}",elf),"opcode":format!("{word:08x}"),"instruction":assembly});
-            if header.flags & instruction::FLAG_REGS != 0 {
-                let record = parse_record(&record)?;
-                event["registers"] = json!({"x":record.regs.x,"sp":record.regs.sp,"pc":record.regs.pc,"pstate":record.regs.pstate});
-            }
-            emit(&event, options.common.json)?;
-            control.emitted();
+            output.flush()?;
             if !control.running() {
                 break;
             }
+            wait_readable(events.as_raw_fd())?;
         }
-        if !control.running() {
-            break;
+        Ok(())
+    })();
+    // Disable and detach on malformed records, output errors, exit, Ctrl-C and
+    // count. Dropping Ebpf also releases links when setup fails before enable.
+    let disable_result = settings(&mut ebpf, config);
+    let detach_result = (|| -> Result<()> {
+        let program: &mut UProbe = ebpf
+            .program_mut("instruction_trace")
+            .context("instruction_trace program missing")?
+            .try_into()?;
+        program.unload().context("detaching instruction trace")?;
+        Ok(())
+    })();
+    let mut drain_error = None;
+    while let Some(record) = events.next() {
+        received += 1;
+        let count_reached = options.common.count != 0 && control.events >= options.common.count;
+        if result.is_err() || drain_error.is_some() || count_reached {
+            discarded += 1;
+            continue;
         }
-        if !process.check()? {
-            break;
+        let drain = (|| -> Result<()> {
+            let event = event::Event::decode(&record, pid, options.regs, &plan)?;
+            let missed = sequences.observe(&event.header)?;
+            if !options.summary_only {
+                event.write(
+                    &plan,
+                    missed,
+                    sequences.incomplete,
+                    options.common.json,
+                    &mut output,
+                )?;
+            }
+            control.emitted();
+            Ok(())
+        })();
+        if let Err(error) = drain {
+            drain_error = Some(error);
+            discarded += 1;
         }
-        if matches!(mappings.check(false)?, MappingChange::ProbeRemoved) {
-            break;
-        }
-        wait_readable(events.as_raw_fd())?;
     }
+    let flush_result = output.flush().context("flushing instruction trace output");
     let stats = PerCpuArray::<_, MapStats>::try_from(
         ebpf.map("IT_STATS").context("IT_STATS map missing")?,
     )?
     .get(&0, 0)?;
+    let submitted = stats.iter().map(|s| s.0.submitted).sum::<u64>();
+    let ring_lost = stats.iter().map(|s| s.0.ring_lost).sum::<u64>();
+    let state_failed = stats.iter().map(|s| s.0.state_failed).sum::<u64>();
+    let queued = submitted.saturating_sub(received);
+    let incomplete = sequences.incomplete
+        || ring_lost != 0
+        || state_failed != 0
+        || queued != 0
+        || discarded != 0
+        || result.is_err()
+        || disable_result.is_err()
+        || detach_result.is_err()
+        || drain_error.is_some()
+        || flush_result.is_err();
     eprintln!(
-        "itrace: sites={} events={} hits={} submitted={} ring_lost={} state_failed={}",
+        "itrace: sites={} events={} received={} hits={} submitted={} ring_lost={ring_lost} state_failed={state_failed} sequence_missing={} discarded={discarded} queued={queued} incomplete={incomplete}",
         plan.points.len(),
         control.events,
-        stats.iter().map(|s| s.0.submitted).sum::<u64>(),
+        received,
         stats.iter().map(|s| s.0.hits).sum::<u64>(),
-        stats.iter().map(|s| s.0.ring_lost).sum::<u64>(),
-        stats.iter().map(|s| s.0.state_failed).sum::<u64>()
+        submitted,
+        sequences.missed
     );
-    Ok(())
-}
-
-fn parse_header(bytes: &[u8]) -> Result<Header> {
-    ensure!(
-        bytes.len() >= size_of::<Header>(),
-        "short instruction trace event"
-    );
-    // SAFETY: the caller checked the complete fixed integer-only header.
-    Ok(unsafe { bytes.as_ptr().cast::<Header>().read_unaligned() })
-}
-
-fn parse_record(bytes: &[u8]) -> Result<Record> {
-    ensure!(
-        bytes.len() >= size_of::<Record>(),
-        "short register instruction trace event"
-    );
-    // SAFETY: the caller checked the complete fixed integer-only record.
-    Ok(unsafe { bytes.as_ptr().cast::<Record>().read_unaligned() })
+    result?;
+    disable_result?;
+    detach_result?;
+    if let Some(error) = drain_error {
+        return Err(error);
+    }
+    flush_result
 }

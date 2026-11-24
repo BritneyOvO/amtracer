@@ -88,7 +88,13 @@ fn build(root: &Path) -> Result<()> {
 }
 
 fn sync_uapi(root: &Path, kernel: &Path) -> Result<()> {
-    let names = ["ktools.h", "syscall_trace.h", "binder_trace.h", "prctl.h"];
+    let names = [
+        "ktools.h",
+        "syscall_trace.h",
+        "binder_trace.h",
+        "prctl.h",
+        "uxn_probe.h",
+    ];
     fs::create_dir_all(root.join("uapi/linux"))?;
     let mut provenance = String::from(
         "# UAPI source snapshot\n\nExplicitly refreshed by cargo xtask sync-uapi.\n\n",
@@ -139,9 +145,9 @@ fn generate_uapi(root: &Path) -> Result<()> {
         .clang_arg("--target=aarch64-linux-android30")
         .clang_arg(format!("--sysroot={}", sysroot.display()))
         .clang_arg(format!("-I{}", root.join("uapi").display()))
-        .allowlist_type("(kt_info|kt_trace_stats|sct_.*|bt_.*)")
+        .allowlist_type("(kt_info|kt_trace_stats|sct_.*|bt_.*|uxn_probe_.*)")
         .allowlist_var(
-            "(AMT_.*|SCT_.*|BT_.*|KT_FEATURE_.*|KT_ABI_VERSION|KT_OPEN_CONTROL|PR_KTOOLS)",
+            "(AMT_.*|SCT_.*|BT_.*|KT_FEATURE_.*|KT_ABI_VERSION|KT_OPEN_CONTROL|PR_KTOOLS|PR_UXN_PROBE|UXN_.*)",
         )
         .derive_default(true)
         .layout_tests(true)
