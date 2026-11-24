@@ -45,7 +45,9 @@ def main():
         tool = f"{remote}/amtracer"
         resolve = json.loads(shell(tool, "resolve", "-p", str(pid), "--probe", "fixture+amtracer_point").stdout)
         results["resolve"] = resolve
-        for name, probe in [("symbol", "fixture+amtracer_point"), ("absolute", info["point"])]:
+        for name, probe in [("symbol", "fixture+amtracer_point"), ("absolute", info["point"]),
+                            ("elf_offset", "fixture+" + resolve["elf_address"]),
+                            ("symbol_offset", "fixture+amtracer_target+0x4")]:
             result = shell(tool, "uprobe", "-p", str(pid), "--probe", probe,
                            "--regs", "--duration", "2", "--count", "3", "--json")
             events = [json.loads(line) for line in result.stdout.splitlines() if line]
@@ -83,6 +85,11 @@ def main():
             assert captures[15]["value"]["decimal"] == 0x5a5a5a5a5a5a5a5a
         results["expressions"] = {"events": events, "stats": result.stderr}
         result = shell(tool, "uprobe", "-p", str(pid), "--probe", "fixture+amtracer_point",
+                       "--print", f"cstr({info['string']},14)", "--duration", "2", "--count", "1", "--json")
+        event = json.loads(result.stdout)
+        assert event["captures"][0]["status"] == "ok" and event["captures"][0]["value"] == "amtracer-test", event
+        results["exact_string"] = {"events": [event], "stats": result.stderr}
+        result = shell(tool, "uprobe", "-p", str(pid), "--probe", "fixture+amtracer_point",
                        "--stack", "--duration", "2", "--count", "3", "--json")
         events = [json.loads(line) for line in result.stdout.splitlines() if line]
         assert len(events) == 3
@@ -90,6 +97,16 @@ def main():
             frames = event["stack"]["frames"]
             assert sum(f.get("symbol") == "call_chain" for f in frames) >= 5, event
         results["uprobe_stack"] = {"events": events, "stats": result.stderr}
+        result = shell(tool, "uprobe", "-p", str(pid), "--probe", "fixture+amtracer_target",
+                       "--probe", "fixture+amtracer_point", "--duration", "2", "--count", "8", "--json")
+        events = [json.loads(line) for line in result.stdout.splitlines() if line]
+        assert len(events) == 8 and {e["probe"] for e in events} == {1, 2}, events
+        results["multiple_probes"] = {"events": events, "stats": result.stderr}
+        result = shell(tool, "uprobe", "-p", str(pid), "--probe", "fixture+amtracer_point",
+                       "--duration", "4", "--json")
+        events = [json.loads(line) for line in result.stdout.splitlines() if line]
+        assert len({e["tid"] for e in events}) >= 2, "existing/new worker coverage failed"
+        results["threads"] = {"tids": sorted({e["tid"] for e in events}), "count": len(events), "stats": result.stderr}
         result = shell(tool, "syscall", "-p", str(pid), "--syscalls", "getpid", "--duration", "2", "--count", "4", "--json")
         events = [json.loads(line) for line in result.stdout.splitlines() if line]
         assert len(events) == 4 and all(e["source"] == "syscall" and e["nr"] == 172 for e in events)

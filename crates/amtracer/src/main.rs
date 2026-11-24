@@ -141,7 +141,7 @@ fn main() -> Result<()> {
         Command::Resolve { pid, probe } => {
             let resolved = target::ProcessMaps::read(pid)?.resolve(&probe)?;
             emit(
-                &json!({"path":resolved.path,"file_offset":format!("{:#x}",resolved.file_offset)}),
+                &json!({"path":resolved.path,"file_offset":format!("{:#x}",resolved.file_offset),"elf_address":format!("{:#x}",resolved.elf_address)}),
                 true,
             )
         }

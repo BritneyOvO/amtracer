@@ -60,7 +60,7 @@ unsafe fn try_capture(ctx: &ProbeContext) {
         h.cookie = cookie;
         h.timestamp_ns = bpf_ktime_get_ns();
         h.tgid = tgid;
-        h.tid = pid_tgid as u32;
+        h.tid = (pid_tgid & 0xffff_ffff) as u32;
         h.cpu = bpf_get_smp_processor_id();
         h.stack_len = 0;
         // Constant, volatile loads prevent LLVM from lowering the register
@@ -81,21 +81,25 @@ unsafe fn try_capture(ctx: &ProbeContext) {
         if captured_len < bytes {
             h.flags |= 1;
         }
-        h.stack_len = captured_len as u32;
+        h.stack_len = u32::try_from(captured_len).unwrap_or(0);
         let count = (config.capture_count as usize).min(MAX_CAPTURES);
-        h.capture_count = count as u32;
+        h.capture_count = u32::try_from(count).unwrap_or(0);
         let mut extra = 0_usize;
         for index in 0..MAX_CAPTURES {
             if index >= count {
                 break;
             }
-            let read_len = amt_capture_item(cookie, index as u32, captured_len + extra);
+            let read_len = amt_capture_item(
+                cookie,
+                u32::try_from(index).unwrap_or(0),
+                captured_len + extra,
+            );
             // Preserve a simple local bound across BPF-to-BPF calls.
             let read_len = core::ptr::read_volatile(&read_len) & 8191;
             if read_len > MAX_CAPTURE_BYTES || extra > MAX_CAPTURE_BYTES - read_len {
                 return;
             }
-            (*record).results[index].data_offset = extra as u32;
+            (*record).results[index].data_offset = u32::try_from(extra).unwrap_or(0);
             extra += read_len;
         }
         // Recheck bounds after helper calls; 5.15 does not preserve bounds of
@@ -103,20 +107,23 @@ unsafe fn try_capture(ctx: &ProbeContext) {
         if captured_len > MAX_STACK || extra > MAX_CAPTURE_BYTES {
             return;
         }
-        h.capture_bytes = extra as u32;
+        h.capture_bytes = u32::try_from(extra).unwrap_or(0);
         let length = PREFIX_SIZE + captured_len + extra;
-        h.length = length as u32;
+        h.length = u32::try_from(length).unwrap_or(0);
         let data = core::slice::from_raw_parts(record.cast::<u8>(), length);
-        if EVENTS.output(data, 0).is_err() {
-            if let Some(lost) = LOST.get_ptr_mut(0) {
-                *lost += 1;
-            }
+        if EVENTS.output(data, 0).is_err()
+            && let Some(lost) = LOST.get_ptr_mut(0)
+        {
+            *lost += 1;
         }
     }
 }
 
 // A global scalar-only function is verified once on 5.15. Keeping the bounded
 // plan evaluator out of the caller prevents exponential states across 16 items.
+/// # Safety
+/// Must run in a serialized uprobe BPF invocation on its current CPU, with
+/// CONFIGS immutable and the SCRATCH record initialized by the caller.
 #[unsafe(no_mangle)]
 #[inline(never)]
 pub unsafe extern "C" fn amt_capture_item(cookie: u64, index: u32, offset: usize) -> usize {
@@ -164,16 +171,23 @@ unsafe fn capture_memory(
         let length = if plan.kind == KIND_STRING {
             let ret = bpf_probe_read_user_str(
                 (*record).payload.as_mut_ptr().add(offset).cast(),
-                requested as u32,
+                u32::try_from(requested).unwrap_or(0),
                 result.value as *const _,
             );
             if ret < 0 {
                 result.status = STATUS_FAULT;
                 0
             } else {
-                let length = (ret as usize).min(requested);
+                let length = usize::try_from(ret).unwrap_or(0).min(requested);
                 if length == requested {
-                    result.status = STATUS_TRUNCATED;
+                    // A full helper result can also mean the NUL fit exactly.
+                    // Check that original last byte before labeling truncation.
+                    let last = result.value.checked_add((requested - 1) as u64);
+                    match last.map(|address| bpf_probe_read_user(address as *const u8)) {
+                        Some(Ok(0)) => {}
+                        Some(Ok(_)) => result.status = STATUS_TRUNCATED,
+                        Some(Err(_)) | None => result.status = STATUS_FAULT,
+                    }
                 }
                 length.saturating_sub(1)
             }
@@ -190,7 +204,7 @@ unsafe fn capture_memory(
             result.status = STATUS_OVERFLOW;
             return 0;
         }
-        result.data_len = length as u32;
+        result.data_len = u32::try_from(length).unwrap_or(0);
         length
     }
 }
@@ -213,10 +227,11 @@ unsafe fn copy_pages<const LIMIT: usize, const PAGES: usize>(
         let Some(current) = address.checked_add(copied as u64) else {
             break;
         };
-        let chunk = (4096 - (current as usize & 4095)).min(requested - copied);
+        let chunk = (4096 - usize::try_from(current & 4095).unwrap_or(0)).min(requested - copied);
         // LLVM can prove the subtraction cannot underflow, while the 5.15
         // verifier loses that relationship on later iterations. Keep a scalar
         // mask in the emitted instructions, even after loop unrolling.
+        // SAFETY: chunk is an initialized local scalar.
         let chunk = unsafe { core::ptr::read_volatile(&chunk) } & 8191;
         if chunk == 0 || chunk > 4096 || copied > MAX_STACK {
             break;

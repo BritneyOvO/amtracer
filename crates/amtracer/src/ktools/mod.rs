@@ -2,14 +2,15 @@
 
 // Generated from fixed UAPI headers; unused constants are retained so ABI
 // regeneration remains mechanical and reviewable.
+mod binder;
 #[allow(dead_code, non_upper_case_globals, clippy::undocumented_unsafe_blocks)]
 pub mod bindings;
 mod syscall;
+mod syscall_names;
 
 use crate::{Common, RunControl, emit, wait_readable};
 use anyhow::{Context, Result, ensure};
 use bindings::*;
-use serde_json::json;
 use std::{
     fs::File,
     io::{self, Read},
@@ -148,6 +149,7 @@ pub fn run_syscall(
         }
     }
     ioctl(file.as_raw_fd(), AMT_SCT_IOC_STOP, &mut 0_u32)?;
+    eprintln!("syscall: invalidated_pairs={}", decoder.invalidated);
     report_stats(&file, run.events)
 }
 
@@ -180,25 +182,7 @@ pub fn run_binder(common: Common) -> Result<()> {
                 "invalid Binder record size"
             );
             let h: bt_binder_event = prefix(&buffer[..n])?;
-            ensure!(
-                h.kind == BT_EVENT_KIND_BINDER_TRANSACTION && h.data_len <= BT_MAX_INLINE_DATA,
-                "invalid Binder record"
-            );
-            let outcome = if feature.feature_flags & BT_FEATURE_TRANSACTION_RESULT == 0 {
-                "unknown"
-            } else {
-                match u32::from(h.outcome) {
-                    BT_OUTCOME_SUBMITTED => "submitted",
-                    BT_OUTCOME_FAILED => "failed",
-                    _ => "unknown",
-                }
-            };
-            emit(
-                &json!({"source":"binder","timestamp_ns":h.timestamp_ns,"tgid":h.tgid,"tid":h.pid,"transaction_id":h.transaction_debug_id,
-                "reply_to_id":h.reply_to_debug_id,"reply":h.reply != 0,"code":h.code,"flags":h.flags,"sender_pid":h.sender_pid,"sender_euid":h.sender_euid,
-                "outcome":outcome,"error":h.error,"data_size":h.data_size,"data":h.data[..h.data_len as usize],"truncated":h.data_truncated != 0,"lost_before":h.lost_before}),
-                common.json,
-            )?;
+            emit(&binder::event(h, feature.feature_flags)?, common.json)?;
             run.emitted();
         } else {
             if !std::path::Path::new(&format!("/proc/{}", common.pid)).exists() {
@@ -227,26 +211,9 @@ fn syscall_number(name: &str) -> Result<i32> {
         ensure!(number >= 0, "negative syscall number");
         return Ok(number);
     }
-    // AArch64 numbers from the vendored asm-generic UAPI. A generated full table
-    // will replace this small initial set before general decoder integration.
-    Ok(match name {
-        "openat" => 56,
-        "close" => 57,
-        "read" => 63,
-        "write" => 64,
-        "readv" => 65,
-        "writev" => 66,
-        "ioctl" => 29,
-        "getpid" => 172,
-        "gettid" => 178,
-        "futex" => 98,
-        "mmap" => 222,
-        "munmap" => 215,
-        "mprotect" => 226,
-        "clone" => 220,
-        "execve" => 221,
-        "exit" => 93,
-        "exit_group" => 94,
-        _ => anyhow::bail!("unknown syscall name {name}; use its AArch64 number"),
-    })
+    syscall_names::NAMES
+        .iter()
+        .find(|(_, entry)| *entry == name)
+        .map(|(number, _)| *number)
+        .with_context(|| format!("unknown syscall name {name}; use its AArch64 number"))
 }

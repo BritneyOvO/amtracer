@@ -26,9 +26,9 @@ fault、overflow。脚本为 tests/device_smoke.py，原始输出为本地 artif
 
 ## 待完成
 
-Binder 实际事务与关联、完整 syscall 名称和参数语义、APK、
+Binder 成功事务与请求/回复关联、完整 syscall 参数语义、APK、
 混合会话、有界处理队列、生命周期完整矩阵及性能基准。
-当前验证不能代替这些验收，特别是 Binder 开关通过不代表真实事务已经覆盖。
+当前验证不能代替这些验收，尤其不能将失败请求测试当成成功请求/回复测试。
 
 ## 快照解栈阶段
 
@@ -43,3 +43,20 @@ syscall blob 校验表、数据偏移、有效长度、重叠和栈地址；展�
 主机 11 项测试通过。实机有/无帧指针两个 fixture 均验证 5 层递归与线程入口，
 uprobe 9 帧、syscall 512 字节窗口回溯包含 worker。证据分别保存于
 artifacts/device-smoke.json 和 artifacts/device-smoke-no-fp.json。
+
+## 驱动事件解码阶段
+
+从固化的 ARM64/asm-generic UAPI 生成 304 项 syscall 名称表，保留源文件哈希。
+过滤和事件显示使用同一表；未包含的编号仍可直接指定。
+
+Binder 输出 sequence、target_handle、oneway 和原始数据；识别 Android 13 的
+SYST/String16 interface token，严格检查长度、UTF-16、结束符，未知布局保持 raw。
+读取 feature 后决定 outcome 是否可用，不以 error==0 推断成功。
+
+受控进程向无效 Binder 句柄发送 6 次事务（交替同步/oneway），验证 FAILED/-EINVAL、
+真实发送者、320→256 字节截断和完整 interface token。请求不发往任何系统服务。
+证据为 artifacts/binder-smoke.json。此路径尚不覆盖成功 Binder 事务和回复配对。
+主机测试增至 13 项；依赖关闭未使用的 Mach-O/PE 特性，移除未使用的直接依赖。
+实机另验证 ELF 偏移、符号内偏移、多探针及已有和新建线程；字符串刚好放入缓冲区
+时不标为截断。用户态和 eBPF 的 Clippy 均通过。构建产物、三份原始测试报告的哈希及
+工具链版本保存在 validation-2026-11-24.json；原始报告在本地 artifacts 目录。

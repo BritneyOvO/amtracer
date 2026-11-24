@@ -139,6 +139,7 @@ pub struct ResolvedProbe {
     pub file: File,
     pub path: PathBuf,
     pub file_offset: u64,
+    pub elf_address: u64,
 }
 impl ResolvedProbe {
     pub fn attach_path(&self) -> PathBuf {
@@ -242,6 +243,17 @@ impl ProcessMaps {
             file,
             path: mapping.path.clone(),
             file_offset,
+            elf_address: elf
+                .segments()
+                .filter(|s| Self::executable(s.flags()))
+                .find_map(|s| {
+                    let (offset, size) = s.file_range();
+                    let relative = file_offset.checked_sub(offset)?;
+                    (relative < size)
+                        .then(|| s.address().checked_add(relative))
+                        .flatten()
+                })
+                .context("no ELF address for probe")?,
         })
     }
 

@@ -67,4 +67,14 @@ python3 tests/device_smoke.py --serial 282eb4e4
 
 2026-11-24 已在 fuxi 验证符号/绝对地址 uprobe、x13、syscall getpid ENTER/EXIT、Binder
 会话开关、16 项表达式和 uprobe/syscall 原生回溯；有/无帧指针 fixture 均通过。
-该 smoke 不代表 Binder 实际事务、PAC 完整矩阵或性能基准已完成。
+另有 `tests/binder_smoke.py --serial 282eb4e4`，验证受控进程无效句柄事务的结果、
+同步/oneway 标记、发送者、数据截断与 Android 13 interface token。先构建对应 fixture：
+
+```sh
+"$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang" \
+  -O2 -Wall -Wextra tests/fixtures/binder.c -o target/amtracer-binder-fixture
+python3 tests/binder_smoke.py --serial 282eb4e4
+```
+
+Binder 成功事务及请求/回复关联、PAC 完整矩阵、APK、混合会话和性能基准仍未完成。
+完整进度与限制见 [docs/implementation.md](docs/implementation.md)。

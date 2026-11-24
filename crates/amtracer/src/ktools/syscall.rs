@@ -143,6 +143,12 @@ impl Decoder {
         let mut event = json!({"source":"syscall","timestamp_ns":h.ts_ns,"sequence":h.seq,"tgid":h.pid,"tid":h.tid,"cpu":h.cpu,"nr":h.nr,
             "phase":if lost {"lost"}else if enter {"enter"}else{"exit"},"args":h.args,"return":if enter||lost {None}else{Some(h.ret)},
             "errno":errno,"restart":restart,"duration_ns":duration,"flags":h.flags,"lost_before":h.lost_before,"pc":h.user_pc,"sp":h.user_sp});
+        event["name"] = json!(
+            super::syscall_names::NAMES
+                .binary_search_by_key(&h.nr, |(number, _)| *number)
+                .ok()
+                .map(|i| super::syscall_names::NAMES[i].1)
+        );
         let mut args = Vec::new();
         let mut stack = None;
         for blob in record.blobs {

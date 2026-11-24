@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-24",
+  "toolchain": {
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+    "bpf_rustc": "rustc 1.102.0-nightly (59cbdee2e 2026-11-17)"
+  },
+  "artifacts": {
+    "amtracer": {
+      "bytes": 2422952,
+      "sha256": "f35cfb53d248ba9270d9ed4b6a5fde6b7ef1d2593542e286c0e0fe7cd8726ffd"
+    },
+    "amtracer-ebpf.o": {
+      "bytes": 8792,
+      "sha256": "6456378a57444a4b11294beb9d8c7a5002095acb48c69e735a8ecbc1e9701122"
+    }
+  },
+  "reports": {
+    "device-smoke.json": {
+      "sha256": "3f4ee55aad0d2f592e2cda181644e0099f8ba50700e5c56a34aa640b2eae28e9",
+      "serial": "282eb4e4",
+      "boot_id": "718edf5f-4e39-44e5-94b5-a34ebe95725c",
+      "sections": [
+        "serial",
+        "boot_id",
+        "doctor",
+        "fixture",
+        "resolve",
+        "symbol",
+        "absolute",
+        "elf_offset",
+        "symbol_offset",
+        "expressions",
+        "exact_string",
+        "uprobe_stack",
+        "multiple_probes",
+        "threads",
+        "syscall",
+        "syscall_stack",
+        "binder_session"
+      ],
+      "events": {
+        "symbol": 3,
+        "absolute": 3,
+        "elf_offset": 3,
+        "symbol_offset": 3,
+        "expressions": 3,
+        "exact_string": 1,
+        "uprobe_stack": 3,
+        "multiple_probes": 8,
+        "syscall": 4,
+        "syscall_stack": 4
+      }
+    },
+    "device-smoke-no-fp.json": {
+      "sha256": "e92e32bbaeb306a50b39a9db4e4eb918fb6b2d065731839858e76446b4d30391",
+      "serial": "282eb4e4",
+      "boot_id": "718edf5f-4e39-44e5-94b5-a34ebe95725c",
+      "sections": [
+        "serial",
+        "boot_id",
+        "doctor",
+        "fixture",
+        "resolve",
+        "symbol",
+        "absolute",
+        "elf_offset",
+        "symbol_offset",
+        "expressions",
+        "exact_string",
+        "uprobe_stack",
+        "multiple_probes",
+        "threads",
+        "syscall",
+        "syscall_stack",
+        "binder_session"
+      ],
+      "events": {
+        "symbol": 3,
+        "absolute": 3,
+        "elf_offset": 3,
+        "symbol_offset": 3,
+        "expressions": 3,
+        "exact_string": 1,
+        "uprobe_stack": 3,
+        "multiple_probes": 8,
+        "syscall": 4,
+        "syscall_stack": 4
+      }
+    },
+    "binder-smoke.json": {
+      "sha256": "1868a36b24f6fca6ba94d184fc43bfaeda9722bc7750db5db8c487ef2272e070",
+      "serial": "282eb4e4",
+      "boot_id": null,
+      "sections": [
+        "serial",
+        "fixture",
+        "events",
+        "stats"
+      ],
+      "events": {}
+    }
+  }
+}
