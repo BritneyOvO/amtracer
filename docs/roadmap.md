@@ -13,8 +13,8 @@
 | 7 | feat: capture uprobe memory | 标量、字符串、字节、指针链、跨页/缺页/截断 |
 | 8 | feat: unwind native stack snapshots | CFI/FP、符号化、无 FP、递归、PAC、中间指令 |
 | 9 | feat: consume syscall trace events | 参数规则和受控输入设备验证已完成；返回缓冲区语义及丢失矩阵待补 |
-| 10 | feat: consume binder trace events | 现有驱动、同步/oneway、结果、数据与关联缺失 |
-| 11 | feat: integrate tracing sessions | 组合配置、文本/JSONL、慢输出、启动失败、生命周期 |
+| 10 | feat: consume binder trace events | 已覆盖同步成功/失败、oneway、数据与顺序正常时的请求/回复关联；逆序关联和丢失压力待补 |
+| 11 | feat: integrate tracing sessions | 初版 JSON 配置、跨来源 JSONL、全局 duration/count 和退出传播已实现；双来源、count 和 uprobe 启动失败回滚真机 smoke 已通过，慢输出、EBUSY 和生命周期矩阵待补 |
 | 12 | test: add device correctness and benchmarks | 可复现真机正确性和性能报告 |
 
 允许按依赖关系拆分较大的提交；每项状态在实施记录中更新，未完成验收不得标为通过。
@@ -28,7 +28,7 @@
   有/无 FP、PAC、跨页内存、字符串截断、重复挂卸与目标退出。
 * syscall：受控子进程的 openat/read/write/ioctl、errno、输出容量、入口/返回过滤、
   栈、线程退出与队列丢失。不得抢占已有 trace 会话。
-* Binder：受控 client/service 的同步、oneway、失败、回复 ID、截断和缺失关联。
+* Binder：受控 client/service 的同步成功与回复 ID 配对、oneway，以及原有失败事务、截断和 interface token；队列丢失/序号缺口的失效行为有主机单测。失败回复和 Binder 队列压力矩阵仍待设备覆盖。
 * 生命周期：Ctrl-C、启动中途失败、慢输出、进程退出、exec、映射改变与资源上限。
 
 真机使用指定设备 `adb -s 282eb4e4`，不操作其他在线设备。工具验证不需要刷机。

@@ -1,0 +1,21 @@
+{
+  "pid": 1234,
+  "duration": 10,
+  "count": 0,
+  "uprobe": {
+    "probes": ["libtarget.so+target_func"],
+    "expressions": ["x0", "*r13", "cstr(x1, 128)"],
+    "registers": true,
+    "stack": true,
+    "stack_bytes": 8192
+  },
+  "syscall": {
+    "syscalls": ["openat", "read", "write"],
+    "captures": ["openat:1:string:128", "write:1:bytes:64"],
+    "stack": false,
+    "stack_bytes": 8192
+  },
+  "binder": {
+    "with_replies": false
+  }
+}

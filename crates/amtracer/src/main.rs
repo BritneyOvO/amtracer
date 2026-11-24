@@ -1,6 +1,7 @@
 mod expr;
 mod ktools;
 mod process;
+mod session;
 mod target;
 mod unwind;
 mod uprobe;
@@ -29,6 +30,10 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     Doctor,
+    Run {
+        #[arg(long)]
+        config: PathBuf,
+    },
     Resolve {
         #[arg(short, long)]
         pid: u32,
@@ -51,6 +56,8 @@ enum Command {
     Binder {
         #[command(flatten)]
         common: Common,
+        #[arg(long)]
+        with_replies: bool,
     },
 }
 
@@ -141,6 +148,7 @@ fn main() -> Result<()> {
                 true,
             )
         }
+        Command::Run { config } => session::run(config),
         Command::Resolve { pid, probe } => {
             let resolved = target::ProcessMaps::read(pid)?.resolve(&probe)?;
             emit(
@@ -156,6 +164,9 @@ fn main() -> Result<()> {
             stack,
             stack_bytes,
         } => ktools::run_syscall(common, syscalls, captures, stack, stack_bytes),
-        Command::Binder { common } => ktools::run_binder(common),
+        Command::Binder {
+            common,
+            with_replies,
+        } => ktools::run_binder(common, with_replies),
     }
 }

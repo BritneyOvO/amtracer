@@ -26,9 +26,7 @@ fault、overflow。脚本为 tests/device_smoke.py，原始输出为本地 artif
 
 ## 待完成
 
-Binder 成功事务与请求/回复关联、完整 syscall 参数语义、
-混合会话、有界处理队列、生命周期完整矩阵及性能基准。
-当前验证不能代替这些验收，尤其不能将失败请求测试当成成功请求/回复测试。
+完整 syscall 返回缓冲区语义与丢失压力矩阵、混合会话、有界处理队列、生命周期完整矩阵及性能基准。
 
 ## syscall 参数规则
 
@@ -78,8 +76,46 @@ SYST/String16 interface token，严格检查长度、UTF-16、结束符，未知
 
 受控进程向无效 Binder 句柄发送 6 次事务（交替同步/oneway），验证 FAILED/-EINVAL、
 真实发送者、320→256 字节截断和完整 interface token。请求不发往任何系统服务。
-证据为 artifacts/binder-smoke.json。此路径尚不覆盖成功 Binder 事务和回复配对。
+证据为 artifacts/binder-smoke.json。该路径验证失败 Binder 事务，不替代成功请求/回复测试。
 主机测试增至 13 项；依赖关闭未使用的 Mach-O/PE 特性，移除未使用的直接依赖。
 实机另验证 ELF 偏移、符号内偏移、多探针及已有和新建线程；字符串刚好放入缓冲区
 时不标为截断。用户态和 eBPF 的 Clippy 均通过。构建产物、三份原始测试报告的哈希及
 工具链版本保存在 validation-2026-11-24.json；原始报告在本地 artifacts 目录。
+
+## Binder 成功事务与回复关联
+
+Binder CLI 增加显式 `--with-replies`。默认模式仍保留原有事件过滤和 JSON 形状；启用后
+驱动按全局事件范围采集，用户态只输出目标进程发起的事务和确认属于该事务的回复。
+其他进程事务只进入有界关联表，不输出；目标进程作为服务端回复其他进程请求时也会抑制，
+避免将它误配为目标请求。同步回复按 `reply_to_debug_id` 配对；oneway、FAILED、未知结果
+分别处理。丢失计数变化、序号不连续、超时和 4096 项容量上限会清理待配对项并统计
+`invalidated_pairs`。请求到回复的时间差是两个采集点之差，不表示服务内部执行耗时。
+
+新增 binderfs 私有 client/service fixture 和设备脚本，不连接系统 Binder 服务。fuxi
+（282eb4e4，boot ID `718edf5f-4e39-44e5-94b5-a34ebe95725c`）验证一条成功同步请求及回复
+（通过 debug ID 配对，93.386 µs 采集点差）、两条 oneway；同时重跑原有 6 条失败请求测试，
+默认模式的事件仍为 FAILED/-EINVAL。两个测试均为 kernel_lost=0、invalidated_pairs=0。
+原始报告是 artifacts/binder-pair-smoke.json 与 artifacts/binder-smoke.json，哈希见
+validation-2026-11-24.json。配对测试退出时内核队列尚有 1 条未读取记录，因此不能据此声称
+队列完全排空或完成压力验收；失败回复、丢失压力和不同并发调用场景仍待设备覆盖。
+主机测试覆盖回复成功/失败、oneway、未知能力、无关进程请求抑制、序号重复和丢失失效。
+驱动的事件在事务完成后入队，跨 CPU 时回复记录可能先于请求记录；当前未暂存提前到达的
+回复，这种情况下会漏掉关联，不能将 `pending` 直接视为服务没有回复。
+
+## 混合会话初版
+
+`run --config` 读取 JSON 配置，按需启动 uprobe、syscall、Binder 三种现有 CLI 子进程；
+supervisor 以有界 512 行通道合并 JSONL，统一执行全局 duration/count，转发 stderr，并在
+某个来源退出、输出损坏或收到停止信号时通知其他来源退出。启动失败会终止已启动的 worker。
+单源命令和内核采集实现保持独立。配置字段见 docs/session-example.json。
+
+当前不提供跨来源时间排序或统一内核事件队列；接收顺序只是用户态排队顺序。fuxi 设备
+smoke 验证 uprobe+syscall 同时采集，输出 25 条 uprobe、618 条 syscall，内核丢失均为 0；
+另验证 syscall+空闲 Binder 的全局 `count=12` 恰好输出 12 条，两个 worker 均正常关闭。
+无效 uprobe 库导致启动失败时，syscall worker 退出，随后能立即重新打开 syscall 会话。
+前两次 syscall 停止时内核队列各有 2 条未读取记录，不能据此声称停止时排空队列。原始报告为
+artifacts/session-smoke.json，哈希见 validation-2026-11-24.json。Binder 可按配置加入，但 Binder 全局回复模式
+仍受其特权和队列负载限制。慢输出背压、其他 worker 启动中途失败、EBUSY 和生命周期压力尚未
+完成设备矩阵。
+
+下一项为设备正确性矩阵和性能基准，混合会话验收仍继续补充。

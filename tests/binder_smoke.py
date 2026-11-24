@@ -47,7 +47,10 @@ def main():
         fixture.wait(timeout=5)
         assert fixture.returncode == 0, fixture.stderr.read()
         report = root / "artifacts/binder-smoke.json"
-        report.write_text(json.dumps({"serial":args.serial,"fixture":info,"events":events,"stats":err},indent=2)+"\n")
+        boot_id = subprocess.run(adb + ["shell", "cat", "/proc/sys/kernel/random/boot_id"],
+                                 text=True, capture_output=True, check=True).stdout.strip()
+        report.write_text(json.dumps({"serial":args.serial,"boot_id":boot_id,"fixture":info,
+                                      "events":events,"stats":err},indent=2)+"\n")
         print(report)
     finally:
         if trace is not None and trace.poll() is None:

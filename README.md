@@ -31,10 +31,17 @@ cargo xtask build
 ./amtracer syscall -p 1234 --syscalls openat,write \
   --capture openat:1:string:128 --capture write:1:bytes:32 --duration 5 --json
 ./amtracer binder -p 1234 --duration 5 --json
+./amtracer binder -p 1234 --with-replies --duration 5 --json
+./amtracer run --config docs/session-example.json
 ```
 
 `--count` 限制事件数，`--duration` 单位为秒，0 表示不限。Ctrl-C 关闭本次会话。
 Binder 的 PID 过滤是事件发生进程，不保证另一端回复也被捕获。
+`--with-replies` 会临时捕获跨进程 Binder 事件，再只输出目标发起的事务及匹配回复；
+该模式需要特权，内核队列短时会包含其他进程的事件，因此仅在确需关联时启用。回复时间
+表示请求提交到回复提交的时间差，不代表服务内部执行耗时。未观测到原请求、队列丢失或
+回复方不在采集窗口时会抑制无法确认归属的回复；序号缺口或丢失计数变化会清空待配对状态。
+跨 CPU 时回复记录可能先于请求记录入队，当前这种逆序回复不会关联；`pending` 不代表确定没有回复。
 `--capture SYSCALL:ARG:KIND[:BYTES]` 可重复指定 syscall 用户参数，参数编号从 0 开始，
 类型为 `string`、`bytes` 或 `sockaddr`，默认上限分别为 256、256、128 字节；例如
 `openat:1:string:128`。`--capture SYSCALL:stack:BYTES` 为单个 syscall 采集栈窗口。
@@ -100,5 +107,26 @@ python3 tests/mapping_smoke.py --serial 282eb4e4
 python3 tests/binder_smoke.py --serial 282eb4e4
 ```
 
-Binder 成功事务及请求/回复关联、PAC 完整矩阵、混合会话和性能基准仍未完成。
+成功事务使用临时 binderfs 设备，不连接系统服务：
+
+```sh
+"$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang" \
+  -O2 -Wall -Wextra tests/fixtures/binder_pair.c -pthread -o target/amtracer-binder-pair
+python3 tests/binder_pair_smoke.py --serial 282eb4e4
+```
+
+Binder 同步请求/回复关联已实现并在私有 binderfs fixture 上验证；Binder 队列压力、失败回复，
+PAC 完整矩阵、混合会话和性能基准仍未完成。
 完整进度与限制见 [docs/implementation.md](docs/implementation.md)。
+
+`run --config` 接受 JSON 配置，可组合 uprobe、syscall 和 Binder。混合会话统一输出 JSONL，
+`duration` 和 `count` 是全局限制；任一来源退出或失败时 supervisor 会停止其他来源。
+各驱动仍独立采集和解码，JSONL 接收顺序不代表跨来源的全局因果顺序。
+配置字段示例见 [docs/session-example.json](docs/session-example.json)。真机组合验证：
+
+```sh
+"$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang" \
+  -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls \
+  tests/fixtures/native.c tests/fixtures/native.S -pthread -o target/amtracer-fixture
+python3 tests/session_smoke.py --serial 282eb4e4
+```

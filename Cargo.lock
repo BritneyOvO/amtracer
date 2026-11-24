@@ -29,6 +29,7 @@ dependencies = [
  "framehop",
  "libc",
  "object 0.41.0",
+ "serde",
  "serde_json",
 ]
 

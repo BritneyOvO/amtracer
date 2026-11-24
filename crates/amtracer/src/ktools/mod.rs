@@ -196,7 +196,7 @@ pub fn run_syscall(
     report_stats(&file, run.events)
 }
 
-pub fn run_binder(common: Common) -> Result<()> {
+pub fn run_binder(common: Common, with_replies: bool) -> Result<()> {
     let mut process = ProcessMonitor::new(common.pid)?;
     let control = Control::open()?;
     ensure!(
@@ -210,13 +210,22 @@ pub fn run_binder(common: Common) -> Result<()> {
         feature.magic == BT_DRIVER_FEATURE_MAGIC && feature.abi_version == BT_ABI_VERSION,
         "unsupported binder ABI"
     );
+    ensure!(
+        !with_replies || feature.feature_flags & BT_FEATURE_TRANSACTION_RESULT != 0,
+        "--with-replies requires Binder transaction result and debug ID support"
+    );
     let mut config = bt_capture_config {
         enabled: 1,
         point_mask: BT_CAPTURE_POINT_TRANSACTION,
-        tgid: i32::try_from(common.pid)?,
+        tgid: if with_replies {
+            0
+        } else {
+            i32::try_from(common.pid)?
+        },
         ..Default::default()
     };
     let mut run = RunControl::new(&common)?;
+    let mut decoder = binder::Decoder::new(common.pid, with_replies);
     ioctl(file.as_raw_fd(), AMT_BT_IOC_SET_CONFIG, &mut config)?;
     process.verify()?;
     let mut buffer = vec![0; size_of::<bt_binder_event>()];
@@ -230,14 +239,17 @@ pub fn run_binder(common: Common) -> Result<()> {
                 "invalid Binder record size"
             );
             let h: bt_binder_event = prefix(&buffer[..n])?;
-            emit(&binder::event(h, feature.feature_flags)?, common.json)?;
-            run.emitted();
+            if let Some(event) = decoder.event(h, feature.feature_flags)? {
+                emit(&event, common.json)?;
+                run.emitted();
+            }
         } else {
             wait_readable(file.as_raw_fd())?;
         }
     }
     config.enabled = 0;
     ioctl(file.as_raw_fd(), AMT_BT_IOC_SET_CONFIG, &mut config)?;
+    eprintln!("binder: invalidated_pairs={}", decoder.invalidated);
     report_stats(&file, run.events)
 }
 
