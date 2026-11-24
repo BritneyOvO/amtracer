@@ -79,7 +79,7 @@ amtracer uprobe -p 1234 --probe '0x7a12345678'
 * 使用不同的类型表示运行时 VA、ELF VA 和文件偏移，避免混算。
 * 检查指令 4 字节对齐、文件范围、可执行段、数值溢出和 AArch64 ELF machine。
 * 同名多个库必须列出候选，不能悄悄选择第一项；可以使用完整路径消歧。
-* APK 中直接映射的未压缩 so 需加入 ZIP entry 数据偏移，挂载 backing APK inode。
+* 不支持 APK 中直接映射的 so，目标需为可访问的独立 ELF 文件。
 * deleted/memfd 仅在能够访问原始 backing inode 时支持。匿名/JIT 不支持标准 uprobe 挂载。
   解压到一个新文件不能替代原 inode。
 

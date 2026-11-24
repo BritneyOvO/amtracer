@@ -7,7 +7,7 @@
 | 1 | docs: define architecture and semantics | 独立仓库、架构、地址、表达式及测试计划可评审 |
 | 2 | build: bootstrap android aya workspace | Android 构建；受控进程最小 Aya uprobe 加载命中 |
 | 3 | feat: add ktools session bindings | UAPI 来源、ABI 布局、权限错误、EBUSY、关闭路径 |
-| 4 | feat: resolve arm64 probe targets | 库偏移/符号/绝对 VA 一致；多 PT_LOAD、APK、歧义 |
+| 4 | feat: resolve arm64 probe targets | 独立 ELF 库偏移/符号/绝对 VA 一致；多 PT_LOAD、歧义 |
 | 5 | feat: capture uprobe registers | cookie、多探针、全部通用寄存器、线程与跨 CPU、挂卸 |
 | 6 | feat: compile debug expressions | 优先级、嵌套、类型、负偏移、溢出和错误定位 |
 | 7 | feat: capture uprobe memory | 标量、字符串、字节、指针链、跨页/缺页/截断 |

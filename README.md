@@ -40,7 +40,9 @@ B/W/D/Q 是 1/2/4/8 字节偏移，默认解引用宽度为 u64。读取故障�
 uprobe 和 syscall 的 `--stack` 使用 framehop 解栈并输出模块、符号、偏移和停止原因。
 只读取命中时的栈快照。syscall 驱动的 nofault 栈采集失败会显示 `capture_fault`，可缩小
 `--stack-bytes`；uprobe 的跨页读取保留有效前缀。
-APK 内库定位尚未接入，遇到 APK 文件会报告解析错误。
+不支持直接从 APK 映射的库；仅支持可访问的独立 ELF 文件。
+会话定期检查目标的启动时间与可执行文件身份，发现进程退出、PID 复用或可执行文件
+身份变化时退出。动态库映射变化及同一可执行文件的 exec 尚未完整检测。
 
 ## UAPI 和检查
 
@@ -63,6 +65,7 @@ fixture 构建示例（从项目目录）：
   -O1 -fno-omit-frame-pointer -fno-optimize-sibling-calls -Wl,--export-dynamic -pthread \
   tests/fixtures/native.c tests/fixtures/native.S -o target/amtracer-fixture
 python3 tests/device_smoke.py --serial 282eb4e4
+python3 tests/process_smoke.py --serial 282eb4e4
 ```
 
 2026-11-24 已在 fuxi 验证符号/绝对地址 uprobe、x13、syscall getpid ENTER/EXIT、Binder
@@ -76,5 +79,5 @@ python3 tests/device_smoke.py --serial 282eb4e4
 python3 tests/binder_smoke.py --serial 282eb4e4
 ```
 
-Binder 成功事务及请求/回复关联、PAC 完整矩阵、APK、混合会话和性能基准仍未完成。
+Binder 成功事务及请求/回复关联、PAC 完整矩阵、混合会话和性能基准仍未完成。
 完整进度与限制见 [docs/implementation.md](docs/implementation.md)。

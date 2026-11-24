@@ -1,5 +1,6 @@
 use crate::{
     Common, RunControl, emit,
+    process::ProcessMonitor,
     target::{ProbeSpec, ProcessMaps},
     unwind::{NativeUnwinder, Snapshot},
     wait_readable,
@@ -48,6 +49,7 @@ unsafe impl aya::Pod for MapConfig {}
 
 pub fn run(options: Options) -> Result<()> {
     let pid = options.common.pid;
+    let mut process = ProcessMonitor::new(pid)?;
     let maps = ProcessMaps::read(pid)?;
     let mut unwinder = options.stack.then(|| NativeUnwinder::new(&maps));
     ensure!(
@@ -123,8 +125,12 @@ pub fn run(options: Options) -> Result<()> {
     }
     let mut events = RingBuf::try_from(ebpf.take_map("EVENTS").context("EVENTS map missing")?)?;
     let mut control = RunControl::new(&options.common)?;
+    process.verify()?;
     while control.running() {
         while let Some(record) = events.next() {
+            if !process.check()? {
+                break;
+            }
             ensure!(record.len() >= PREFIX_SIZE, "short uprobe record");
             // SAFETY: Header is repr(C) with integer/array fields only; all bit
             // patterns are valid and the complete prefix was checked above.
@@ -207,7 +213,7 @@ pub fn run(options: Options) -> Result<()> {
         if !control.running() {
             break;
         }
-        if !std::path::Path::new(&format!("/proc/{pid}")).exists() {
+        if !process.check()? {
             break;
         }
         wait_readable(events.as_raw_fd())?;

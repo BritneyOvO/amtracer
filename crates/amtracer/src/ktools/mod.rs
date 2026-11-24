@@ -8,7 +8,7 @@ pub mod bindings;
 mod syscall;
 mod syscall_names;
 
-use crate::{Common, RunControl, emit, wait_readable};
+use crate::{Common, RunControl, emit, process::ProcessMonitor, wait_readable};
 use anyhow::{Context, Result, ensure};
 use bindings::*;
 use std::{
@@ -93,6 +93,7 @@ pub fn run_syscall(
     stack: bool,
     stack_bytes: u32,
 ) -> Result<()> {
+    let mut process = ProcessMonitor::new(common.pid)?;
     let control = Control::open()?;
     ensure!(
         control.info()?.features & KT_FEATURE_SYSCALL_TRACE != 0,
@@ -133,18 +134,19 @@ pub fn run_syscall(
         None
     };
     ioctl(file.as_raw_fd(), AMT_SCT_IOC_START, &mut 0_u32)?;
+    process.verify()?;
     let mut buffer = vec![0; 32768];
     let mut decoder = syscall::Decoder::default();
     while run.running() {
+        if !process.check()? {
+            break;
+        }
         if let Some(n) = read_record(&mut file, &mut buffer)? {
             let record = syscall::Record::try_from(&buffer[..n])?;
             let event = decoder.event(record, unwinder.as_mut());
             emit(&event, common.json)?;
             run.emitted();
         } else {
-            if !std::path::Path::new(&format!("/proc/{}", common.pid)).exists() {
-                break;
-            }
             wait_readable(file.as_raw_fd())?;
         }
     }
@@ -154,6 +156,7 @@ pub fn run_syscall(
 }
 
 pub fn run_binder(common: Common) -> Result<()> {
+    let mut process = ProcessMonitor::new(common.pid)?;
     let control = Control::open()?;
     ensure!(
         control.info()?.features & KT_FEATURE_BINDER_TRACE != 0,
@@ -174,8 +177,12 @@ pub fn run_binder(common: Common) -> Result<()> {
     };
     let mut run = RunControl::new(&common)?;
     ioctl(file.as_raw_fd(), AMT_BT_IOC_SET_CONFIG, &mut config)?;
+    process.verify()?;
     let mut buffer = vec![0; size_of::<bt_binder_event>()];
     while run.running() {
+        if !process.check()? {
+            break;
+        }
         if let Some(n) = read_record(&mut file, &mut buffer)? {
             ensure!(
                 n == size_of::<bt_binder_event>(),
@@ -185,9 +192,6 @@ pub fn run_binder(common: Common) -> Result<()> {
             emit(&binder::event(h, feature.feature_flags)?, common.json)?;
             run.emitted();
         } else {
-            if !std::path::Path::new(&format!("/proc/{}", common.pid)).exists() {
-                break;
-            }
             wait_readable(file.as_raw_fd())?;
         }
     }

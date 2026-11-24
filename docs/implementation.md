@@ -5,8 +5,8 @@
 ## 已落地
 
 * 独立 main 仓库、Cargo workspace、Android/Aya 构建和固定 UAPI 绑定。
-* 三种 uprobe 定位、cookie、TGID 过滤、完整 AArch64 通用寄存器与栈窗口。
-  APK 映射与动态映射生命周期尚待完善。
+* 独立 ELF 的三种 uprobe 定位、cookie、TGID 过滤、完整 AArch64 通用寄存器与栈窗口。
+  不支持 APK 直接映射的库；动态映射生命周期尚待完善。
 * syscall_trace v2、binder_trace v3 会话打开、配置、读取、停止与关闭；使用既有
   PR_KTOOLS，不增加 /dev 或修改内核。
 * uprobe 表达式：一条寄存器/指针链加减常量、负偏移、四层解引用、八种整数类型、
@@ -26,9 +26,17 @@ fault、overflow。脚本为 tests/device_smoke.py，原始输出为本地 artif
 
 ## 待完成
 
-Binder 成功事务与请求/回复关联、完整 syscall 参数语义、APK、
+Binder 成功事务与请求/回复关联、完整 syscall 参数语义、
 混合会话、有界处理队列、生命周期完整矩阵及性能基准。
 当前验证不能代替这些验收，尤其不能将失败请求测试当成成功请求/回复测试。
+
+## 进程生命周期
+
+三类会话以 250 ms 为间隔检查目标启动时间与可执行文件身份，并在设置结束后复核。
+在事件持续到达时也会检查，发现退出或身份变化后结束会话。fuxi 的受控进程退出测试
+验证了 uprobe、syscall 和 Binder 会话退出，以及后两者可以再次打开；脚本为
+`tests/process_smoke.py`。轮询不能保证发现瞬时变化，不覆盖同一可执行文件的 exec，
+也不检测 dlopen、dlclose 或映射变更；栈映射缓存仍可能过期。
 
 ## 快照解栈阶段
 
