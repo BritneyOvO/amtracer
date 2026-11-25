@@ -106,7 +106,8 @@ python3 tests/binder_pair_smoke.py --serial "$SERIAL"
 
 ## recomp 指令 trace
 
-此功能目前没有设备验收结果。先执行 `cargo xtask build`，再构建专用 fixture；其汇编
+2026-11-25 已在指定 fuxi 上通过受控 smoke，完整路径用例共核对 601 条事件且无丢失。
+复现时先执行 `cargo xtask build`，再构建专用 fixture；其汇编
 按 4 KiB 页隔离，含分支/循环、间接调用、跨页调用、80 NOP、可恢复访存异常和拒绝样例：
 
 ```sh

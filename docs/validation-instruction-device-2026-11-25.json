@@ -1,0 +1,272 @@
+{
+  "date": "2026-11-25",
+  "source_revision": "8514ab2171c88e9f9fc0e08f6832dd4441b65ff9",
+  "device": {
+    "serial": "282eb4e4",
+    "boot_id": "78f0daf5-9bf8-47b7-9a59-3d54eed95b53",
+    "kernel": "Linux localhost 5.15.167-android13-8-00014-gbf0a81a7f319-ab13297889 #1 SMP PREEMPT Tue Apr 1 14:07:47 UTC 2025 aarch64 Toybox",
+    "selinux": "Enforcing",
+    "tested": true,
+    "kernel_uprobe_verified": true
+  },
+  "commands": [
+    "cargo xtask build",
+    "aarch64-linux-android30-clang -O2 -g -Wall -Wextra -Werror -Wl,--export-dynamic -Wl,-z,max-page-size=4096 -pthread tests/fixtures/instruction.c tests/fixtures/instruction.S -o target/amtracer-instruction-fixture",
+    "python3 tests/instruction_smoke.py --serial 282eb4e4 --report artifacts/instruction-smoke-2026-11-25.json"
+  ],
+  "artifacts": {
+    "amtracer": {
+      "bytes": 2901304,
+      "sha256": "ed2096b4f19584a1318441d4f6969bf0c24f996d7fd41abd5afd692758db1cc3"
+    },
+    "amtracer-ebpf.o": {
+      "bytes": 8792,
+      "sha256": "6456378a57444a4b11294beb9d8c7a5002095acb48c69e735a8ecbc1e9701122"
+    },
+    "amtracer-itrace.o": {
+      "bytes": 3720,
+      "sha256": "99aa644a143a65d7a7662f13ba0ebe4656d58e9c44845972a9764aa2163d8d14"
+    }
+  },
+  "fixture": {
+    "bytes": 70080,
+    "sha256": "7d0fd892d8c7348fb0381ac9c54e28b7b2b0b5273d21176edd4a941e7944e3e4"
+  },
+  "smoke": {
+    "passed": true,
+    "complete_path_events": 601,
+    "cases": {
+      "flow": {
+        "events": 72,
+        "threads": 1,
+        "cpus": [
+          3
+        ],
+        "stats": {
+          "sites": 17,
+          "events": 72,
+          "received": 72,
+          "hits": 72,
+          "submitted": 72,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "incomplete": false
+        }
+      },
+      "zero": {
+        "events": 63,
+        "threads": 1,
+        "cpus": [
+          6
+        ],
+        "stats": {
+          "sites": 17,
+          "events": 63,
+          "received": 63,
+          "hits": 63,
+          "submitted": 63,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "incomplete": false
+        }
+      },
+      "threads": {
+        "events": 216,
+        "threads": 3,
+        "cpus": [
+          4,
+          5,
+          6
+        ],
+        "stats": {
+          "sites": 17,
+          "events": 216,
+          "received": 216,
+          "hits": 216,
+          "submitted": 216,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "incomplete": false
+        }
+      },
+      "migration": {
+        "events": 72,
+        "threads": 1,
+        "cpus": [
+          0,
+          1,
+          2
+        ],
+        "stats": {
+          "sites": 17,
+          "events": 72,
+          "received": 72,
+          "hits": 72,
+          "submitted": 72,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "incomplete": false
+        }
+      },
+      "many": {
+        "events": 162,
+        "threads": 1,
+        "cpus": [
+          2
+        ],
+        "stats": {
+          "sites": 81,
+          "events": 162,
+          "received": 162,
+          "hits": 162,
+          "submitted": 162,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "incomplete": false
+        }
+      },
+      "cross_page": {
+        "events": 12,
+        "threads": 1,
+        "cpus": [
+          2
+        ],
+        "stats": {
+          "sites": 6,
+          "events": 12,
+          "received": 12,
+          "hits": 12,
+          "submitted": 12,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "incomplete": false
+        }
+      },
+      "fault": {
+        "events": 4,
+        "threads": 1,
+        "cpus": [
+          2
+        ],
+        "stats": {
+          "sites": 2,
+          "events": 4,
+          "received": 4,
+          "hits": 4,
+          "submitted": 4,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "incomplete": false
+        }
+      }
+    },
+    "count_limit": {
+      "returncode": 0,
+      "events": 7,
+      "discarded": 20,
+      "incomplete": true
+    },
+    "rejections": {
+      "exclusive": {
+        "returncode": 1,
+        "stderr": "AMTRACER_PID=29920\nError: exclusive instruction at file offset 0x5000 shares a trace page; BRK may break its reservation\n"
+      },
+      "svc": {
+        "returncode": 1,
+        "stderr": "AMTRACER_PID=29922\nError: /data/local/tmp/amtracer-itrace-cf2d29edae/fixture+0x7000 (d4000001)\n\nCaused by:\n    instruction rejected by ARM64 uprobe preflight: svc #0x0\n"
+      },
+      "fallback": {
+        "returncode": 1,
+        "stderr": "AMTRACER_PID=29924\nError: no active UXN recomp for 0x5b198a3000; native BRK/XOL fallback cannot run itrace\n\nCaused by:\n    No such file or directory (os error 2)\n"
+      }
+    },
+    "target_exit_returncode": 0
+  },
+  "reports": {
+    "artifacts/instruction-smoke-2026-11-25.json": {
+      "bytes": 20679,
+      "sha256": "2d678130597c17577bf2b264c077780cacba96dd3464ff722ab4a64185d7c5f4"
+    },
+    "artifacts/instruction-smoke/flow.jsonl": {
+      "bytes": 49341,
+      "sha256": "9adc3f57a1bd654c542774af5c443ee37cec619a183f32427d9c2e03b2e86dd9"
+    },
+    "artifacts/instruction-smoke/flow.stderr": {
+      "bytes": 233,
+      "sha256": "1296c21e9d8f222de9cc2bc0d006d994e41f1d961d7a43a7e1cb21a707261de0"
+    },
+    "artifacts/instruction-smoke/zero.jsonl": {
+      "bytes": 43227,
+      "sha256": "97e047bdea53560f704706bf1828cb743d43c0adf28d90ed3e31603670cd2420"
+    },
+    "artifacts/instruction-smoke/zero.stderr": {
+      "bytes": 233,
+      "sha256": "1d64d7354eb741e6578d388caf42e7825c0f8e666299d3288a0e04d9454f8a27"
+    },
+    "artifacts/instruction-smoke/threads.jsonl": {
+      "bytes": 71865,
+      "sha256": "3114b6eed13193d3dcb3a1f771fa471690246224833de9cbac912c555fda5597"
+    },
+    "artifacts/instruction-smoke/threads.stderr": {
+      "bytes": 237,
+      "sha256": "82a83341df00d04b7be66a9b3e7e05b7ba63e2b2b1d9861aeef3c09e215585cb"
+    },
+    "artifacts/instruction-smoke/migration.jsonl": {
+      "bytes": 23955,
+      "sha256": "778b7ece42fe3ac7e4c55d3be455f1babb3296610080e1812c759f275078f92b"
+    },
+    "artifacts/instruction-smoke/migration.stderr": {
+      "bytes": 233,
+      "sha256": "b281aaa71c94c5fbcea5b4c384930f47980e2ba2e61e31c5806404813bf99743"
+    },
+    "artifacts/instruction-smoke/many.jsonl": {
+      "bytes": 52686,
+      "sha256": "b5b5fa2ce4bf786bdd76774dcc2cde04d836879d45390e6859824980c8c6ec52"
+    },
+    "artifacts/instruction-smoke/many.stderr": {
+      "bytes": 237,
+      "sha256": "ccf215c72e702e580a74c5db3e39bbce93928096b56cb6015b9a484358241afe"
+    },
+    "artifacts/instruction-smoke/cross_page.jsonl": {
+      "bytes": 3951,
+      "sha256": "e828568cc9fd2551e74a376bcab30ef1e58d881504287b8191d971a19d07fdce"
+    },
+    "artifacts/instruction-smoke/cross_page.stderr": {
+      "bytes": 231,
+      "sha256": "423702a1301e9cbf4c2b6c2588a200cab63e64ea3a83bee367495722b041ec15"
+    },
+    "artifacts/instruction-smoke/fault.jsonl": {
+      "bytes": 1310,
+      "sha256": "571db334475d01a47ddec91033a15f199e3fdecbe928abcec64fe45371d7b304"
+    },
+    "artifacts/instruction-smoke/fault.stderr": {
+      "bytes": 227,
+      "sha256": "0b7bb6f496559613d384cc0b68ec29e27faff5e1c9a0869344d194f77bc4ce77"
+    }
+  },
+  "limits": [
+    "受控 fixture 结果，不等于任意指令或完整 PAC/BTI/fork/exec/信号压力验收。",
+    "没有单独测量预留 NOP 对非命中代码的开销。"
+  ]
+}

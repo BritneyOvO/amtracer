@@ -23,7 +23,7 @@
 | 功能 | 当前实现 | 设备要求 |
 | --- | --- | --- |
 | 用户态 uprobe | 库名 + ELF 地址、库名 + 符号、符号内偏移、绝对虚拟地址；同一进程最多 64 个探针 | uprobe/perf、eBPF、RingBuf、attach cookie 支持及相应权限 |
-| 指令 trace（待设备验收） | 范围内每条原始指令执行前的 PC、反汇编、线程内序号、可选通用寄存器；最多 1024 个唯一点位 | 配套 UXN-uprobe 内核、UXN 查询 ABI v4、4 KiB 页、raw sched_process_exit |
+| 指令 trace | 范围内每条原始指令执行前的 PC、反汇编、线程内序号、可选通用寄存器；最多 1024 个唯一点位 | 配套 UXN-uprobe 内核、UXN 查询 ABI v4、4 KiB 页、raw sched_process_exit |
 | 寄存器与内存 | x0–x30、sp、pc、pstate；有界指针链、整数、字符串和字节读取 | 随 uprobe 在命中时采集 |
 | 原生调用栈 | uprobe / syscall 栈快照，framehop CFI / FP 解栈，模块与符号输出 | 可访问目标的映射和原始 ELF；syscall 栈另需对应驱动 |
 | 系统调用 | 名称 / 编号过滤、ENTER / EXIT 配对、返回值、errno、耗时、参数采集 | ktools 控制 ABI v1 与 syscall_trace v2 |
@@ -239,7 +239,10 @@ uprobe 与 syscall 共用 framehop 解栈，使用 DWARF CFI / FP，输出 `stac
 每线程状态和用户态观察表均有容量限制，耗尽时明确报告。原始 ELF 与私有代码可能
 不一致、信号/exec、PAC/BTI、反调试和并发边界仍须设备验证。
 
-**当前已通过主机检查、Android/eBPF 构建和 fixture 仿真；尚未在 fuxi 上验收。**
+**2026-11-25 已在 fuxi 上通过受控逐指令 smoke**：分支/循环、BL/BLR/RET、寄存器、
+多线程、CPU 0/1/2 迁移、81 点位、跨页和访存异常恢复，共核对 601 条完整事件，
+没有 ringbuf 丢失或序号缺口；排他/SVC/原生回退拒绝、count 和目标退出检查通过。
+这项结果不覆盖任意用户代码、PAC/BTI 完整矩阵或持续高负载下零丢失。
 设备测试与性能复现见 [testing.md](docs/testing.md)，设计见 [instruction-trace.md](docs/instruction-trace.md)。
 
 ## syscall：过滤、参数与调用栈

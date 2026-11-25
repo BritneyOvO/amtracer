@@ -145,7 +145,12 @@ Android fixture 使用 NDK 编译并以 Unicorn 对照 4 组真实指令路径�
 `artifacts/instruction-host.json` 明确标记 `kernel_uprobe_verified=false`。
 本次工具链、产物/报告哈希见 [validation-instruction-2026-11-24.json](validation-instruction-2026-11-24.json)。
 
-指定 fuxi（282eb4e4）不在 ADB，用户确认暂不可用。**未执行指令 trace 实机测试，
-未验证 5.15 verifier/UXN 分发，未得到真实性能数据。** `instruction_smoke.py` 和
-`instruction_bench.py` 已就绪，参数和复现步骤见 testing.md。仿真只证明 fixture
-行为，不能将已有普通 uprobe 真机结果移作这次逐指令功能的验收。
+2026-11-24 指定 fuxi（282eb4e4）不在 ADB，用户确认暂不可用，当日没有指令 trace
+实机或性能数据。2026-11-25 设备恢复后，原版产物无需代码修复通过设备 smoke，验证
+5.15 verifier/UXN 分发、寄存器、分支/循环、BL/BLR/RET、多线程、CPU 0/1/2 迁移、
+81 点位、跨页、两次 SIGSEGV 恢复、排他/SVC/原生回退拒绝，以及 count 和目标退出。
+7 个完整路径用例共输出 601 条事件，ring_lost/state_failed/sequence_missing/
+discarded/queued 均为 0；count=7 用例输出 7 条，多余 20 条记 discarded 并设置
+incomplete=true。设备 boot ID 为 `78f0daf5-9bf8-47b7-9a59-3d54eed95b53`，SELinux
+Enforcing。原始报告 `artifacts/instruction-smoke-2026-11-25.json`，PC/寄存器 JSONL
+在 `artifacts/instruction-smoke/`。本次结果仍不覆盖完整 PAC/BTI、fork/exec 或压力矩阵。

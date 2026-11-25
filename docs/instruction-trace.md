@@ -72,7 +72,14 @@ count、目标退出、映射变化、信号、输出错误均释放挂载资源
 主机共有 34 项测试通过，用户态及 eBPF Clippy、Android/eBPF release 构建通过。
 Unicorn 验证编译后 Android fixture 的实际指令路径，QEMU 验证 Linux fixture 协议、
 线程、信号恢复与迁移。这些不运行目标内核，不能验证 BPF verifier、uprobe consumer
-或 UXN BRK 分发。用户确认设备暂不可用，设备验收和实测性能保持待完成。
+或 UXN BRK 分发。2026-11-24 用户确认设备暂不可用，当日未执行设备验收。
+
+2026-11-25 设备恢复连接，`282eb4e4`、Linux 5.15.167、SELinux Enforcing、boot ID
+`78f0daf5-9bf8-47b7-9a59-3d54eed95b53`。原版本无需代码修复即通过设备 smoke，
+验证了 5.15 verifier、raw exit hook、UXN 激活和 BRK consumer 路径。完整路径用例
+共 601 条事件，ring_lost/state_failed/sequence_missing/discarded/queued 均为 0。
+count=7 另外准确输出 7 条并报告丢弃记录；目标退出用例正常结束。任意指令、PAC/BTI、
+信号/exec 压力和完全无丢失的吞吐上限仍不能从 smoke 推导。
 
 当前 UXN STAT 只返回最多 32 个 site；工具按页确认 active/recomp/generation，再依赖
 各位置标准 uprobe 的成功安装确认绑定。不会把截断的 STAT sites 当作完整点位表。
