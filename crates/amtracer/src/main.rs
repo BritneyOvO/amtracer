@@ -121,13 +121,18 @@ fn emit(value: &Value, as_json: bool) -> Result<()> {
 }
 
 fn wait_readable(fd: std::os::fd::RawFd) -> Result<()> {
+    wait_readable_for(fd, Duration::from_millis(100))
+}
+
+fn wait_readable_for(fd: std::os::fd::RawFd, timeout: Duration) -> Result<()> {
     let mut poll = libc::pollfd {
         fd,
         events: libc::POLLIN,
         revents: 0,
     };
-    // SAFETY: poll refers to one valid pollfd for this call, with bounded timeout.
-    let ret = unsafe { libc::poll(&mut poll, 1, 100) };
+    let timeout_ms = i32::try_from(timeout.as_millis()).context("poll timeout is too large")?;
+    // SAFETY: poll refers to one valid pollfd and a checked finite timeout.
+    let ret = unsafe { libc::poll(&mut poll, 1, timeout_ms) };
     if ret < 0 {
         let error = std::io::Error::last_os_error();
         if error.kind() != std::io::ErrorKind::Interrupted {

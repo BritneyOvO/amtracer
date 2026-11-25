@@ -4,6 +4,7 @@
 use amtracer_abi::instruction::*;
 use aya_ebpf::{
     EbpfContext,
+    bindings::{BPF_RB_FORCE_WAKEUP, BPF_RB_NO_WAKEUP},
     helpers::{
         bpf_get_current_pid_tgid, bpf_get_smp_processor_id, bpf_ktime_get_ns,
         generated::bpf_get_attach_cookie,
@@ -167,7 +168,15 @@ unsafe fn capture(ctx: &ProbeContext) {
         }
         (*record).header.length = u32::try_from(length).unwrap_or(0);
         let bytes = core::slice::from_raw_parts(record.cast::<u8>(), length);
-        if IT_EVENTS.output(bytes, 0).is_err() {
+        // A fast consumer can otherwise empty the ring and sleep after only a
+        // few records, forcing a wakeup in nearly every probe. Sparse tails are
+        // drained by userspace's bounded poll timeout; the first record wakes now.
+        let notification = if sequence % 64 == 1 {
+            BPF_RB_FORCE_WAKEUP
+        } else {
+            BPF_RB_NO_WAKEUP
+        };
+        if IT_EVENTS.output(bytes, u64::from(notification)).is_err() {
             (*stats).ring_lost += 1;
             (*thread).base_sequence = 0;
         } else {

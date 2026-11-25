@@ -5,7 +5,7 @@ mod uxn;
 use crate::{
     Common, RunControl,
     process::{MappingChange, MappingMonitor, ProcessMonitor},
-    wait_readable,
+    wait_readable_for,
 };
 use amtracer_abi::instruction::{self, Address, Config, Stats};
 use anyhow::{Context, Result, ensure};
@@ -24,7 +24,7 @@ use std::{
     os::fd::AsRawFd,
     path::PathBuf,
     sync::atomic::Ordering,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 #[derive(Args)]
@@ -225,7 +225,7 @@ pub fn run(options: Options) -> Result<()> {
                 if !control.running() {
                     break;
                 }
-                wait_readable(events.as_raw_fd())?;
+                wait_readable_for(events.as_raw_fd(), Duration::from_millis(5))?;
             }
         }
         Ok(())

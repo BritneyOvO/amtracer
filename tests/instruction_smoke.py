@@ -3,6 +3,7 @@
 import argparse
 from collections import defaultdict
 import json
+import time
 from pathlib import Path
 from instruction_device import Device, RegisterDecoder, check_register_step, expected_offsets, statistics
 
@@ -65,6 +66,19 @@ def main():
                 expected = [int(info["trace"], 16) + off for off in expected_offsets(value == 0)]
                 records[name] = check_trace(trace, info, expected, 3, threads, regs, 106 if value == 0 else 17)
                 records[name]["fixture"] = call
+            # Neither quiet burst reaches the next batched notification. The
+            # tracer must flush each tail while still running, before detach.
+            trace = device.tracer("sparse_tail", [scope], regs=True)
+            trace.ready()
+            for expected_count in (24, 48):
+                device.run_fixture(rounds=1)
+                deadline = time.monotonic() + 2
+                while trace.path.read_text().count("\n") < expected_count and time.monotonic() < deadline:
+                    assert trace.process.poll() is None
+                    time.sleep(0.005)
+                assert trace.path.read_text().count("\n") == expected_count, trace.error_path.read_text()
+            expected = [int(info["trace"], 16) + off for off in expected_offsets()]
+            records["sparse_tail"] = check_trace(trace, info, expected, 2, 1, regs=True)
             # More than the ordinary uprobe command's 64-point budget.
             trace = device.tracer("many", ["fixture+amtracer_trace_many..amtracer_trace_many_end"])
             trace.ready()
