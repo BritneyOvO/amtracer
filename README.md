@@ -243,6 +243,9 @@ uprobe 与 syscall 共用 framehop 解栈，使用 DWARF CFI / FP，输出 `stac
 多线程、CPU 0/1/2 迁移、81 点位、跨页和访存异常恢复，共核对 601 条完整事件，
 没有 ringbuf 丢失或序号缺口；排他/SVC/原生回退拒绝、count 和目标退出检查通过。
 这项结果不覆盖任意用户代码、PAC/BTI 完整矩阵或持续高负载下零丢失。
+同日完成 60 组性能对照，目标 1k/10k/50k 指令事件率下均无丢失；不节流的完整寄存器
+JSONL 短突发出现约 43.35% ringbuf 丢失。数据及限制见
+[fuxi 测试报告](docs/instruction-device-2026-11-25.md)。预留 NOP 的非命中开销尚未单独测量。
 设备测试与性能复现见 [testing.md](docs/testing.md)，设计见 [instruction-trace.md](docs/instruction-trace.md)。
 
 ## syscall：过滤、参数与调用栈

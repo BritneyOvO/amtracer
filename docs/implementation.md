@@ -154,3 +154,12 @@ discarded/queued 均为 0；count=7 用例输出 7 条，多余 20 条记 discar
 incomplete=true。设备 boot ID 为 `78f0daf5-9bf8-47b7-9a59-3d54eed95b53`，SELinux
 Enforcing。原始报告 `artifacts/instruction-smoke-2026-11-25.json`，PC/寄存器 JSONL
 在 `artifacts/instruction-smoke/`。本次结果仍不覆盖完整 PAC/BTI、fork/exec 或压力矩阵。
+
+性能脚本同日完成 60 组（0/1k/10k/50k 目标事件率 × 基线/PC/regs/PC JSONL/regs JSONL
+× 三次）。三个节流档的全部 trace 用例无丢失；不节流的完整寄存器 JSONL 三次共丢失
+62,424/144,000（43.35%），正确设置 incomplete。全部性能用例发生 2,039,040 次采集，
+成功提交 1,976,616 条；state_failed、queued、discarded 均为 0。原始报告为
+`artifacts/instruction-bench-2026-11-25.json`。详细延迟/吞吐、产物哈希和测试边界见
+[设备报告](instruction-device-2026-11-25.md) 与
+[验证清单](validation-instruction-device-2026-11-25.json)。未固定 CPU/频率，短突发结果
+不能当持续吞吐上限；没有单独测量预留 NOP 或与原生 BRK/XOL/stackplz 对照。

@@ -141,7 +141,8 @@ python3 tests/instruction_bench.py --serial "$SERIAL" \
 ticks/峰值 RSS、安装时间、输出量、丢失和原始命令。节流率是目标值，不代表设备达到
 该吞吐；原始 CPU ticks 保留 CLK_TCK 查询结果，不假定 100 Hz。trace 丢失率非零时
 必须连同吞吐一起比较。脚本不运行普通 stackplz 对照，不能据此声称完成整个项目的
-性能 roadmap。当前没有设备数据，不能把下面仿真中的时间用作性能数字。
+性能 roadmap。2026-11-25 已完成本脚本的 60 组设备对照，详细数据与限制见
+[fuxi 报告](instruction-device-2026-11-25.md)。下面仿真中的时间不能用作设备性能数字。
 
 没有设备时，可独立检查 fixture。主机需安装 `unicorn` Python 包、QEMU user 和
 AArch64 GNU 工具链及运行库；NDK fixture 仍按前面的命令构建：

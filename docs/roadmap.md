@@ -16,7 +16,7 @@
 | 10 | feat: consume binder trace events | 已覆盖同步成功/失败、oneway、数据与顺序正常时的请求/回复关联；逆序关联和丢失压力待补 |
 | 11 | feat: integrate tracing sessions | 初版 JSON 配置、跨来源 JSONL、全局 duration/count 和退出传播已实现；双来源、count 和 uprobe 启动失败回滚真机 smoke 已通过，慢输出、EBUSY 和生命周期矩阵待补 |
 | 12 | test: add device correctness and benchmarks | 可复现真机正确性和性能报告 |
-| 13 | feat: add recomp instruction tracing | 主机与构建通过；2026-11-25 fuxi 受控 smoke 通过，601 条完整事件无丢失；性能及完整边界矩阵见 instruction-trace.md |
+| 13 | feat: add recomp instruction tracing | 主机与构建、fuxi 601 条完整事件 smoke 通过；60 组性能对照完成，1k/10k/50k 档无丢失，不节流 regs JSONL 有丢失；完整边界矩阵与 NOP 单独基准仍待补，见 instruction-device-2026-11-25.md |
 
 允许按依赖关系拆分较大的提交；每项状态在实施记录中更新，未完成验收不得标为通过。
 
