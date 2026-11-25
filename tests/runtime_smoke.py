@@ -2,6 +2,10 @@
 """Validate private runtime opcodes; --resolve-only works before flashing the fix."""
 import argparse
 import json
+import re
+import shlex
+import subprocess
+import time
 from pathlib import Path
 from instruction_device import Device, read_json, statistics
 
@@ -13,6 +17,49 @@ def request(device, command):
     assert result["faults"] == 0 and result["failures"] == 0, result
     assert result["word"] == "d2800540" and result["alias_word"] == "d28009a0", result
     return result
+
+
+def ordinary_probe(device, info):
+    """Exercise the unchanged ordinary uprobe CLI against private plaintext."""
+    source = device.root / "artifacts/amtracer-ebpf.o"
+    remote_object = f"{device.remote}/amtracer-ebpf.o"
+    subprocess.run(device.adb + ["push", str(source), remote_object], check=True, capture_output=True)
+    output = device.output / "runtime-uprobe.jsonl"
+    error = device.output / "runtime-uprobe.stderr"
+    command = [f"{device.remote}/amtracer", "uprobe", "-p", str(info["pid"]),
+               "--probe", info["point"], "--print", "r0", "--print", "*sp",
+               "--print", f"bytes({info['point']},4)", "--stack", "--regs",
+               "--duration", "8", "--count", "3", "--json"]
+    process = None
+    pid = None
+    try:
+        with output.open("w") as stdout, error.open("w") as stderr:
+            process = subprocess.Popen(device.adb + ["shell", "-T",
+                'echo "AMTRACER_PID=$$" >&2\nexec ' + shlex.join(command)],
+                stdout=stdout, stderr=stderr, text=True)
+            deadline = time.monotonic() + 12
+            while process.poll() is None and time.monotonic() < deadline:
+                if match := re.search(r"AMTRACER_PID=(\d+)", error.read_text()):
+                    pid = int(match[1])
+                request(device, "run 2")
+                time.sleep(0.1)
+            assert process.wait(timeout=2) == 0, error.read_text()
+        events = [json.loads(line) for line in output.read_text().splitlines()]
+        assert len(events) == 3 and "kernel_lost=0" in error.read_text(), error.read_text()
+        for event in events:
+            assert event["pc"] in (info["point"], info["alias"]), event
+            assert event["captures"][0]["value"]["decimal"] == event["registers"]["x"][0], event
+            assert event["captures"][1]["status"] == "ok", event
+            assert event["captures"][2]["value"] == [0x40, 0x05, 0x80, 0xd2], event
+            assert event["stack"]["frames"], event
+        request(device, "run 2")
+        return {"events": len(events), "stats": error.read_text(), "command": command}
+    finally:
+        if process is not None and process.poll() is None:
+            if pid is not None:
+                device.signal(pid, "INT")
+            process.wait(timeout=10)
+        device.shell("rm", "-f", remote_object, check=False)
 
 
 def main():
@@ -60,6 +107,7 @@ def main():
                     assert [(e["pc"], e["opcode"]) for e in events] == expected, events
                     report["traces"].append(stats)
                     request(device, "run 2")  # detach must not restore ciphertext
+                report["ordinary_uprobe"] = ordinary_probe(device, info)
             report["after"] = request(device, "run 2")
             report["passed"] = True
     finally:
