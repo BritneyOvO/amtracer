@@ -78,7 +78,7 @@ impl Event {
         );
         let point = point(plan, header.cookie)?;
         ensure!(
-            point.addresses.contains(&header.pc),
+            point.instructions.contains_key(&header.pc),
             "instruction trace PC outside declared range"
         );
         let payload = &bytes[size_of::<Header>()..];
@@ -139,6 +139,10 @@ impl Event {
     ) -> Result<()> {
         let point = point(plan, self.header.cookie)?;
         let target = &plan.targets[point.target];
+        let instruction = point
+            .instructions
+            .get(&self.header.pc)
+            .context("instruction trace PC outside declared range")?;
         if json {
             let event = Output {
                 source: "instruction",
@@ -152,8 +156,8 @@ impl Event {
                 pc: format!("{:#x}", self.header.pc),
                 module: target.path.to_string_lossy(),
                 elf_address: format!("{:#x}", point.elf_address),
-                opcode: format!("{:08x}", point.word),
-                instruction: &point.assembly,
+                opcode: format!("{:08x}", instruction.word),
+                instruction: &instruction.assembly,
                 missed_before: missed,
                 incomplete,
                 registers: self.regs.as_ref().map(|regs| RegisterOutput {
@@ -174,8 +178,8 @@ impl Event {
                 self.header.pc,
                 target.path.display(),
                 point.elf_address,
-                point.word,
-                point.assembly,
+                instruction.word,
+                instruction.assembly,
                 missed,
                 incomplete
             )?;
@@ -303,10 +307,17 @@ mod tests {
                 target: 0,
                 file_offset: 4096,
                 elf_address: 0x1000,
-                word: 0xd503201f,
-                assembly: "nop".into(),
-                addresses: vec![0x7000],
+                instructions: [(
+                    0x7000,
+                    super::super::plan::Instruction {
+                        word: 0xd503201f,
+                        assembly: "nop".into(),
+                    },
+                )]
+                .into(),
             }],
+            pid: 10,
+            pages: Default::default(),
         }
     }
 
@@ -385,6 +396,27 @@ mod tests {
             Header { sequence: 0, ..h },
         ] {
             assert!(Event::decode(bytes(&h), 10, false, &plan).is_err());
+        }
+    }
+
+    #[test]
+    fn outputs_instruction_for_the_actual_runtime_alias() {
+        let mut plan = plan();
+        plan.points[0].instructions.insert(
+            0x9000,
+            super::super::plan::Instruction {
+                word: 0xd10243ff,
+                assembly: "sub sp, sp, #0x90".into(),
+            },
+        );
+        for (pc, opcode) in [(0x7000, "d503201f"), (0x9000, "d10243ff")] {
+            let h = Header { pc, ..header() };
+            let event = Event::decode(bytes(&h), 10, false, &plan).unwrap();
+            let mut output = Vec::new();
+            event.write(&plan, 0, false, true, &mut output).unwrap();
+            let json: serde_json::Value = serde_json::from_slice(&output).unwrap();
+            assert_eq!(json["opcode"], opcode);
+            assert_eq!(json["pc"], format!("{pc:#x}"));
         }
     }
 

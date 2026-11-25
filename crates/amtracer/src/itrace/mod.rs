@@ -103,7 +103,7 @@ pub fn run(options: Options) -> Result<()> {
                 .context("IT_ALLOWED map missing")?,
         )?;
         for (index, point) in plan.points.iter().enumerate() {
-            for pc in &point.addresses {
+            for pc in point.instructions.keys() {
                 allowed.insert(
                     &MapAddress(Address {
                         cookie: u64::try_from(index + 1)?,
@@ -136,6 +136,7 @@ pub fn run(options: Options) -> Result<()> {
     program
         .load()
         .context("verifying instruction trace uprobe program")?;
+    plan.verify_code()?;
     for (index, point) in plan.points.iter().enumerate() {
         ensure!(
             !control.stop.load(Ordering::Relaxed),
@@ -153,15 +154,14 @@ pub fn run(options: Options) -> Result<()> {
             )
             .with_context(|| {
                 format!(
-                    "attaching instruction {}+{:#x} ({})",
+                    "attaching runtime instruction {}+{:#x}",
                     target.path.display(),
-                    point.file_offset,
-                    point.assembly
+                    point.file_offset
                 )
             })?;
     }
     let mut backend = uxn::Backend::verify(pid, &plan)?;
-    plan.verify_words()?;
+    plan.verify_code()?;
     process.verify()?;
     ensure!(
         !matches!(mappings.check(true)?, MappingChange::ProbeRemoved),

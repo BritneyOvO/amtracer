@@ -33,7 +33,7 @@ impl Backend {
         let addresses = plan
             .points
             .iter()
-            .flat_map(|point| &point.addresses)
+            .flat_map(|point| point.instructions.keys())
             .map(|pc| pc & !4095)
             .collect::<BTreeSet<_>>();
         let pages = addresses

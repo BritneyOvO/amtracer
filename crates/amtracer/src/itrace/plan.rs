@@ -1,8 +1,8 @@
-use crate::target::{Location, ProbeSpec, ProcessMaps, ResolvedProbe, integer};
+use crate::target::{Location, Mapping, ProbeSpec, ProcessMaps, ResolvedProbe, integer};
 use anyhow::{Context, Result, bail, ensure};
 use object::{Object, ObjectSegment, ObjectSymbol, SegmentFlags};
 use serde_json::{Value, json};
-use std::{collections::BTreeMap, os::unix::fs::FileExt, str::FromStr};
+use std::{collections::BTreeMap, fs::File, os::unix::fs::FileExt, str::FromStr};
 use yaxpeax_arch::{Decoder, U8Reader};
 use yaxpeax_arm::armv8::a64::InstDecoder;
 
@@ -62,14 +62,25 @@ pub struct Point {
     pub target: usize,
     pub file_offset: u64,
     pub elf_address: u64,
+    pub instructions: BTreeMap<u64, Instruction>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Instruction {
     pub word: u32,
     pub assembly: String,
-    pub addresses: Vec<u64>,
+}
+
+pub(super) struct CodePage {
+    mapping: Mapping,
+    bytes: Vec<u8>,
 }
 
 pub struct Plan {
     pub targets: Vec<ResolvedProbe>,
     pub points: Vec<Point>,
+    pub(super) pid: u32,
+    pub(super) pages: BTreeMap<u64, CodePage>,
 }
 
 impl Plan {
@@ -81,7 +92,11 @@ impl Plan {
         let mut plan = Self {
             targets: Vec::new(),
             points: Vec::new(),
+            pid: maps.pid,
+            pages: BTreeMap::new(),
         };
+        let memory = File::open(format!("/proc/{}/mem", maps.pid))
+            .context("opening target runtime instruction memory")?;
         let mut unique = BTreeMap::new();
         for spec in specs {
             let mut target = maps.resolve(&spec.start)?;
@@ -126,20 +141,13 @@ impl Plan {
                 })
                 .cloned()
                 .collect();
-            check_pages(&bytes, target.file_offset, end)?;
             let target_index = plan.targets.len();
             for offset in (target.file_offset..end).step_by(4) {
                 let address = target
                     .elf_address
                     .checked_add(offset - target.file_offset)
                     .context("ELF range address overflow")?;
-                let word = u32::from_le_bytes(
-                    bytes[usize::try_from(offset)?..usize::try_from(offset + 4)?].try_into()?,
-                );
-                let assembly = decode(word).with_context(|| {
-                    format!("{}+{address:#x} ({word:08x})", target.path.display())
-                })?;
-                let mut addresses = Vec::new();
+                let mut instructions = BTreeMap::new();
                 for m in &target.mappings {
                     if offset < m.offset || offset - m.offset + 4 > m.end - m.start {
                         continue;
@@ -151,23 +159,39 @@ impl Plan {
                             m.start <= page && page + PAGE_BYTES <= m.end,
                             "UXN requires a complete private executable page at {pc:#x}"
                         );
-                        addresses.push(pc);
+                        let snapshot = match plan.pages.entry(page) {
+                            std::collections::btree_map::Entry::Occupied(entry) => entry.into_mut(),
+                            std::collections::btree_map::Entry::Vacant(entry) => {
+                                let mut bytes = vec![0; usize::try_from(PAGE_BYTES)?];
+                                memory.read_exact_at(&mut bytes, page).with_context(|| {
+                                    format!("reading runtime code page {page:#x}")
+                                })?;
+                                check_page(&bytes, page)?;
+                                entry.insert(CodePage {
+                                    mapping: m.clone(),
+                                    bytes,
+                                })
+                            }
+                        };
+                        let index = usize::try_from(pc - page)?;
+                        let word = u32::from_le_bytes(snapshot.bytes[index..index + 4].try_into()?);
+                        let assembly = decode(word).with_context(|| {
+                            format!(
+                                "runtime PC {pc:#x}, {}+{address:#x} ({word:08x})",
+                                target.path.display()
+                            )
+                        })?;
+                        instructions.insert(pc, Instruction { word, assembly });
                     }
                 }
                 ensure!(
-                    !addresses.is_empty(),
+                    !instructions.is_empty(),
                     "instruction {address:#x} has no private read-only executable mapping"
                 );
                 let key = (identity, offset);
                 if let Some(&index) = unique.get(&key) {
                     let old: &mut Point = &mut plan.points[index];
-                    ensure!(
-                        old.word == word,
-                        "backing file changed during range resolution"
-                    );
-                    old.addresses.extend(addresses);
-                    old.addresses.sort_unstable();
-                    old.addresses.dedup();
+                    old.instructions.extend(instructions);
                 } else {
                     ensure!(
                         plan.points.len() < MAX_SITES,
@@ -178,39 +202,50 @@ impl Plan {
                         target: target_index,
                         file_offset: offset,
                         elf_address: address,
-                        word,
-                        assembly,
-                        addresses,
+                        instructions,
                     });
                 }
             }
             plan.targets.push(target);
         }
         ensure!(
-            plan.points.iter().map(|p| p.addresses.len()).sum::<usize>() <= MAX_ADDRESSES,
+            plan.points
+                .iter()
+                .map(|p| p.instructions.len())
+                .sum::<usize>()
+                <= MAX_ADDRESSES,
             "instruction trace exceeds {MAX_ADDRESSES} runtime addresses"
         );
+        plan.verify_code()?;
         Ok(plan)
     }
 
     pub fn preview(&self) -> Value {
-        json!({"sites": self.points.len(), "instructions": self.points.iter().enumerate().map(|(i, p)| {
+        json!({"sites": self.points.len(), "instruction_source":"runtime", "instructions": self.points.iter().enumerate().map(|(i, p)| {
             json!({"site":i + 1, "path":self.targets[p.target].path, "file_offset":format!("{:#x}",p.file_offset),
-                "elf_address":format!("{:#x}",p.elf_address), "opcode":format!("{:08x}",p.word),
-                "instruction":p.assembly, "addresses":p.addresses.iter().map(|pc|format!("{pc:#x}")).collect::<Vec<_>>()})
+                "elf_address":format!("{:#x}",p.elf_address),
+                "instances":p.instructions.iter().map(|(pc, instruction)| json!({
+                    "pc":format!("{pc:#x}"), "opcode":format!("{:08x}",instruction.word),
+                    "instruction":instruction.assembly})).collect::<Vec<_>>()})
         }).collect::<Vec<_>>()})
     }
 
-    pub fn verify_words(&self) -> Result<()> {
-        for point in &self.points {
-            let target = &self.targets[point.target];
-            let mut bytes = [0; 4];
-            target.file.read_exact_at(&mut bytes, point.file_offset)?;
+    pub fn verify_code(&self) -> Result<()> {
+        let maps = ProcessMaps::read(self.pid)?;
+        let memory = File::open(format!("/proc/{}/mem", self.pid))
+            .context("opening target runtime instruction memory for verification")?;
+        let mut bytes = vec![0; usize::try_from(PAGE_BYTES)?];
+        for (page, snapshot) in &self.pages {
             ensure!(
-                u32::from_le_bytes(bytes) == point.word,
-                "instruction bytes changed during setup at {}+{:#x}",
-                target.path.display(),
-                point.elf_address
+                maps.mappings.contains(&snapshot.mapping),
+                "runtime code mapping changed during setup at {page:#x}"
+            );
+            memory
+                .read_exact_at(&mut bytes, *page)
+                .with_context(|| format!("verifying runtime code page {page:#x}"))?;
+            ensure!(
+                bytes == snapshot.bytes,
+                "runtime code page changed during setup at {page:#x}"
             );
         }
         Ok(())
@@ -273,20 +308,17 @@ fn checked_end(start: u64, length: u64) -> Result<u64> {
     start.checked_add(length).context("range overflow")
 }
 
-fn check_pages(bytes: &[u8], start: u64, end: u64) -> Result<()> {
-    let first = usize::try_from(start & !(PAGE_BYTES - 1))?;
-    let last = usize::try_from(
-        end.checked_add(PAGE_BYTES - 1)
-            .context("page range overflow")?
-            & !(PAGE_BYTES - 1),
-    )?
-    .min(bytes.len());
-    for (index, chunk) in bytes[first..last].as_chunks::<4>().0.iter().enumerate() {
+fn check_page(bytes: &[u8], page: u64) -> Result<()> {
+    ensure!(
+        bytes.len() == usize::try_from(PAGE_BYTES)?,
+        "incomplete runtime code page"
+    );
+    for (index, chunk) in bytes.as_chunks::<4>().0.iter().enumerate() {
         let word = u32::from_le_bytes(*chunk);
         ensure!(
             word & 0x3f80_0000 != 0x0800_0000,
-            "exclusive instruction at file offset {:#x} shares a trace page; BRK may break its reservation",
-            first + index * 4
+            "exclusive instruction at runtime PC {:#x} shares a trace page; BRK may break its reservation",
+            page + u64::try_from(index)? * 4
         );
     }
     Ok(())
@@ -378,15 +410,59 @@ mod tests {
 
     #[test]
     fn rejects_exclusive_sequence_outside_requested_bytes_on_same_page() {
-        let mut bytes = vec![0; 8192];
+        let mut bytes = vec![0; 4096];
         bytes[0x80..0x84].copy_from_slice(&0xc85f7c00_u32.to_le_bytes());
-        assert!(check_pages(&bytes, 0x100, 0x110).is_err());
-        assert!(check_pages(&bytes, 0x1000, 0x1010).is_ok());
+        assert!(check_page(&bytes, 0x7000).is_err());
+        assert!(check_page(&bytes[..4092], 0x7000).is_err());
+        bytes[0x80..0x84].copy_from_slice(&0xd503201f_u32.to_le_bytes());
+        assert!(check_page(&bytes, 0x7000).is_ok());
     }
 
     #[test]
     fn resolves_half_open_elf_and_runtime_ranges_and_deduplicates_aliases() {
-        use std::{fs, os::unix::fs::MetadataExt};
+        use std::{fs, os::fd::AsRawFd};
+        struct MappedCode(*mut libc::c_void);
+        impl MappedCode {
+            fn new(file: &File, first_word: u32) -> Self {
+                // SAFETY: mmap creates one private file-backed page at an OS-chosen
+                // address; the file contains the entire page at offset 4096.
+                let ptr = unsafe {
+                    libc::mmap(
+                        std::ptr::null_mut(),
+                        4096,
+                        libc::PROT_READ | libc::PROT_WRITE,
+                        libc::MAP_PRIVATE,
+                        file.as_raw_fd(),
+                        4096,
+                    )
+                };
+                assert_ne!(ptr, libc::MAP_FAILED);
+                let mut bytes = vec![0; 4096];
+                for chunk in bytes.as_chunks_mut::<4>().0 {
+                    chunk.copy_from_slice(&0xd503201f_u32.to_le_bytes());
+                }
+                bytes[..4].copy_from_slice(&first_word.to_le_bytes());
+                // SAFETY: the new writable mapping owns 4096 bytes and does
+                // not alias the source buffer. No test executes its A64 code.
+                unsafe {
+                    std::ptr::copy_nonoverlapping(bytes.as_ptr(), ptr.cast::<u8>(), 4096);
+                }
+                // SAFETY: ptr is the complete live mapping just allocated.
+                let result =
+                    unsafe { libc::mprotect(ptr, 4096, libc::PROT_READ | libc::PROT_EXEC) };
+                assert_eq!(result, 0);
+                Self(ptr)
+            }
+            fn pc(&self) -> u64 {
+                self.0 as u64
+            }
+        }
+        impl Drop for MappedCode {
+            fn drop(&mut self) {
+                // SAFETY: each guard exclusively owns its full live mapping.
+                assert_eq!(unsafe { libc::munmap(self.0, 4096) }, 0);
+            }
+        }
         let path = std::env::temp_dir().join(format!("amtracer-range-test-{}", std::process::id()));
         let mut bytes = vec![0_u8; 8192];
         bytes[..7].copy_from_slice(b"\x7fELF\x02\x01\x01");
@@ -416,43 +492,72 @@ mod tests {
         for chunk in bytes[4096..].as_chunks_mut::<4>().0 {
             chunk.copy_from_slice(&0xd503201f_u32.to_le_bytes());
         }
+        bytes[4096..4100].copy_from_slice(&0x74959469_u32.to_le_bytes());
+        // File-only exclusive instructions must not reject decrypted live code.
+        bytes[4224..4228].copy_from_slice(&0xc85f7c00_u32.to_le_bytes());
         fs::write(&path, bytes).unwrap();
-        let metadata = fs::metadata(&path).unwrap();
-        let mapping = |start: u64| {
-            format!(
-                "{start:x}-{:x} r-xp 00001000 {:02x}:{:02x} {} {}",
-                start + 4096,
-                libc::major(metadata.dev()),
-                libc::minor(metadata.dev()),
-                metadata.ino(),
-                path.display()
-            )
-            .parse()
-            .unwrap()
-        };
-        let maps = ProcessMaps {
-            pid: std::process::id(),
-            mappings: vec![mapping(0x7000), mapping(0x9000)],
-        };
-        let absolute = "0x7000..0x7008".parse().unwrap();
+        let file = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&path)
+            .unwrap();
+        let a = MappedCode::new(&file, 0xd10243ff);
+        let b = MappedCode::new(&file, 0x91000400);
+        let maps = ProcessMaps::read(std::process::id()).unwrap();
+        let absolute = format!("{:#x}:8", a.pc()).parse().unwrap();
         let numeric = format!("{}+0x10000..0x11000", path.display())
             .parse()
             .unwrap();
         let plan = Plan::resolve(&maps, &[absolute, numeric]).unwrap();
         assert_eq!(plan.points.len(), 1024);
-        assert_eq!(plan.points[0].addresses, [0x7000, 0x9000]);
+        assert_eq!(plan.points[0].instructions.len(), 2);
+        assert_eq!(plan.points[0].instructions[&a.pc()].word, 0xd10243ff);
+        assert_eq!(plan.points[0].instructions[&b.pc()].word, 0x91000400);
         assert_eq!(plan.points[0].file_offset, 4096);
-        let plan = Plan::resolve(&maps, &["0x7000:8".parse().unwrap()]).unwrap();
+        assert_eq!(plan.preview()["instruction_source"], "runtime");
+        let spec = format!("{:#x}:8", a.pc()).parse().unwrap();
+        let plan = Plan::resolve(&maps, &[spec]).unwrap();
         assert_eq!(plan.points.len(), 2);
-        assert_eq!(plan.points[0].addresses, [0x7000]);
-        assert!(Plan::resolve(&maps, &["0x7000..0x6ffc".parse().unwrap()]).is_err());
-        assert!(Plan::resolve(&maps, &["0x7000:4100".parse().unwrap()]).is_err());
-        plan.verify_words().unwrap();
-        let changed = fs::OpenOptions::new().write(true).open(&path).unwrap();
-        changed
-            .write_all_at(&0x91000400_u32.to_le_bytes(), 4096)
+        assert_eq!(
+            plan.points[0]
+                .instructions
+                .keys()
+                .copied()
+                .collect::<Vec<_>>(),
+            [a.pc()]
+        );
+        assert!(
+            Plan::resolve(
+                &maps,
+                &[format!("{:#x}..{:#x}", a.pc(), a.pc() - 4).parse().unwrap()]
+            )
+            .is_err()
+        );
+        assert!(Plan::resolve(&maps, &[format!("{:#x}:4100", a.pc()).parse().unwrap()]).is_err());
+        plan.verify_code().unwrap();
+        file.write_all_at(&0_u32.to_le_bytes(), 4096).unwrap();
+        plan.verify_code().unwrap(); // private plaintext survives a file change
+        let memory = fs::OpenOptions::new()
+            .write(true)
+            .open("/proc/self/mem")
             .unwrap();
-        assert!(plan.verify_words().is_err());
+        memory
+            .write_all_at(&0x91000400_u32.to_le_bytes(), a.pc())
+            .unwrap();
+        assert!(plan.verify_code().is_err());
+        let plan = Plan::resolve(&maps, &[format!("{:#x}:8", a.pc()).parse().unwrap()]).unwrap();
+        memory
+            .write_all_at(&0xc85f7c00_u32.to_le_bytes(), a.pc() + 0x80)
+            .unwrap();
+        assert!(plan.verify_code().is_err()); // change elsewhere on the page
+        assert!(Plan::resolve(&maps, &[format!("{:#x}:8", a.pc()).parse().unwrap()]).is_err());
+        memory
+            .write_all_at(&0xd503201f_u32.to_le_bytes(), a.pc() + 0x80)
+            .unwrap();
+        plan.verify_code().unwrap();
+        // SAFETY: a owns exactly this page; the guard still owns its unmap.
+        assert_eq!(unsafe { libc::mprotect(a.0, 4096, libc::PROT_READ) }, 0);
+        assert!(plan.verify_code().is_err());
         fs::remove_file(path).unwrap();
     }
 }
