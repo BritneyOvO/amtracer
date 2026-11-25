@@ -95,13 +95,16 @@ def check_register_step(info, previous, before, event, current):
 
 
 class Device:
-    def __init__(self, serial, output, fixture=None):
+    def __init__(self, serial, output, fixture=None, *, tool_dir=None, target_cpu=None, tracer_cpu=None):
         self.root = Path(__file__).resolve().parents[1]
         self.adb = ["adb", "-s", serial]
         self.remote = f"/data/local/tmp/amtracer-itrace-{uuid.uuid4().hex[:10]}"
         self.output = Path(output)
         self.output.mkdir(parents=True, exist_ok=True)
         self.fixture_path = fixture or self.root / "target/amtracer-instruction-fixture"
+        self.tool_dir = tool_dir or self.root / "artifacts"
+        self.target_cpu = target_cpu
+        self.tracer_cpu = tracer_cpu
         self.children = []
         self.fixture = None
         self.info = None
@@ -114,8 +117,8 @@ class Device:
 
     def __enter__(self):
         self.shell("mkdir", "-p", self.remote)
-        files = [(self.root / "artifacts/amtracer", "amtracer"),
-                 (self.root / "artifacts/amtracer-itrace.o", "amtracer-itrace.o"),
+        files = [(self.tool_dir / "amtracer", "amtracer"),
+                 (self.tool_dir / "amtracer-itrace.o", "amtracer-itrace.o"),
                  (self.fixture_path, "fixture")]
         self.report["sha256"] = {}
         try:
@@ -127,6 +130,7 @@ class Device:
             self.report["kernel"] = self.shell("uname", "-a").stdout.strip()
             self.report["selinux"] = self.shell("getenforce").stdout.strip()
             self.report["commit"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.root, text=True).strip()
+            self.report["affinity"] = {"target_cpu": self.target_cpu, "tracer_cpu": self.tracer_cpu}
         except BaseException:
             self.__exit__(None, None, None)
             raise
@@ -134,9 +138,16 @@ class Device:
 
     def start_fixture(self):
         self.stop_fixture()
-        self.fixture = subprocess.Popen(self.adb + ["shell", "-T", f"exec {shlex.quote(self.remote + '/fixture')}"],
+        command = [self.remote + '/fixture']
+        if self.target_cpu is not None:
+            command = ["taskset", f"{1 << self.target_cpu:x}"] + command
+        self.fixture = subprocess.Popen(self.adb + ["shell", "-T", "exec " + shlex.join(command)],
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
         self.info = read_json(self.fixture, 10)
+        if self.target_cpu is not None:
+            status = self.shell("cat", f"/proc/{self.info['pid']}/status").stdout
+            affinity = next(s.split()[1] for s in status.splitlines() if s.startswith("Cpus_allowed_list:"))
+            assert affinity == str(self.target_cpu), affinity
         return self.info
 
     def stop_fixture(self):
@@ -210,6 +221,8 @@ class Trace:
             args += ["--regs"]
         if count:
             args += ["--count", str(count)]
+        if device.tracer_cpu is not None:
+            args = ["taskset", f"{1 << device.tracer_cpu:x}"] + args
         self.command = args
         # Record the shell's PID before exec so setup failures can be cleaned too.
         shell = 'echo "AMTRACER_PID=$$" >&2\nexec ' + shlex.join(args)

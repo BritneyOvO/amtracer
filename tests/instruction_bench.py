@@ -14,13 +14,20 @@ def process_usage(device, pid):
     status = device.shell("cat", f"/proc/{pid}/status").stdout.splitlines()
     rss = next((int(s.split()[1]) for s in status if s.startswith("VmHWM:")), 0)
     # utime/stime are process stat fields 14/15; fields[0] here is state (#3).
-    return {"cpu_ticks": int(fields[11]) + int(fields[12]), "maxrss_kb": rss}
+    switches = {name: next((int(s.split()[1]) for s in status if s.startswith(name + ":")), 0)
+                for name in ("voluntary_ctxt_switches", "nonvoluntary_ctxt_switches")}
+    affinity = next((s.split()[1] for s in status if s.startswith("Cpus_allowed_list:")), "")
+    return {"cpu_ticks": int(fields[11]) + int(fields[12]), "maxrss_kb": rss,
+            "allowed_cpus": affinity, **switches}
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--serial", required=True)
     parser.add_argument("--fixture", type=Path)
+    parser.add_argument("--tool-dir", type=Path, help="directory containing the selected amtracer and BPF objects")
+    parser.add_argument("--target-cpu", type=int)
+    parser.add_argument("--tracer-cpu", type=int)
     parser.add_argument("--report", type=Path, default=Path("artifacts/instruction-bench.json"))
     parser.add_argument("--seconds", type=float, default=2)
     parser.add_argument("--repeats", type=int, default=3)
@@ -30,13 +37,16 @@ def main():
     parser.add_argument("--json-sink", choices=("file", "host-null", "device-null"), default="file",
                         help="JSON destination: file, ADB to host /dev/null, or device /dev/null")
     args = parser.parse_args()
+    if any(cpu is not None and not 0 <= cpu < 256 for cpu in (args.target_cpu, args.tracer_cpu)):
+        parser.error('CPU indices must be between 0 and 255')
     modes = args.modes.split(",")
     rates = [int(x) for x in args.event_rates.split(",")]
     assert args.seconds > 0 and args.repeats > 0 and 0 < args.unpaced_rounds <= 1000000
     assert all(rate >= 0 for rate in rates)
     assert "baseline" in modes and set(modes) <= {"baseline", "pc", "regs", "pc-json", "regs-json"}
     per_call = len(expected_offsets())
-    report = {"settings": vars(args) | {"fixture": str(args.fixture), "report": str(args.report)},
+    report = {"settings": vars(args) | {"fixture": str(args.fixture), "report": str(args.report),
+                                       "tool_dir": str(args.tool_dir)},
               "instructions_per_call": per_call, "samples": [],
               "notes": ["Warmup runs before attaching each trace; each sample gets a fresh target mm.",
                         "Rate 0 is unpaced; other rates pace calls and do not imply the requested rate was reached.",
@@ -44,7 +54,8 @@ def main():
                         "cpu_ticks uses the device CLK_TCK; raw counters are retained without assuming 100 Hz.",
                         "This benchmark includes consumer validation and uses summary-only to omit formatting where selected."]}
     try:
-        with Device(args.serial, args.report.with_suffix(""), args.fixture) as device:
+        with Device(args.serial, args.report.with_suffix(""), args.fixture, tool_dir=args.tool_dir,
+                    target_cpu=args.target_cpu, tracer_cpu=args.tracer_cpu) as device:
             report["environment"] = device.report
             clock = device.shell("getconf", "CLK_TCK", check=False).stdout.strip()
             report["clk_tck"] = int(clock) if clock.isdecimal() else None
@@ -65,6 +76,8 @@ def main():
                                                   output_sink=args.json_sink if mode.endswith("json") else "file")
                             trace.ready()
                             before = process_usage(device, trace.pid)
+                            if args.tracer_cpu is not None:
+                                assert before["allowed_cpus"] == str(args.tracer_cpu), before
                         measurement = device.run_fixture(rounds=rounds, rate=call_rate, timeout=max(30, args.seconds * 10))
                         sample = {"mode": mode, "repeat": repeat, "requested_events_per_second": event_rate,
                                   "paced_calls_per_second": call_rate, "fixture": measurement,
@@ -82,6 +95,10 @@ def main():
                                        "loss_fraction": (stats["ring_lost"] + stats["state_failed"]) / stats["hits"]}
                             sample["hit_insn_per_second"] = stats["hits"] * 1e9 / measurement["elapsed_ns"]
                             sample["received_per_second_ready_to_exit"] = stats["received"] * 1e9 / result["ready_to_exit_ns"]
+                            sample["tool_context_switches"] = {
+                                name: after[name] - before[name]
+                                for name in ("voluntary_ctxt_switches", "nonvoluntary_ctxt_switches")}
+                            sample["tool_cpu_affinity"] = after["allowed_cpus"]
                         report["samples"].append(sample)
                         print(f"{name}: {sample['calls_per_second']:.1f} calls/s")
                         device.stop_fixture()
