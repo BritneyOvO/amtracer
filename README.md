@@ -444,6 +444,6 @@ docs/                 设计、roadmap、实施与验证记录
 
 动态代码的实现提交、构建产物和验收边界见 [运行时指令记录](docs/runtime-instructions-2026-11-25.md)。
 新内核已在 fuxi 完成私有解密页的普通 uprobe/逐指令 hook、清理回归及新旧性能对照，结果与已发现限制见 [实机功能与性能报告](docs/runtime-device-2026-11-25.md)。
-长批次 insn/s 另测得 PC 汇总约 86.4 万、寄存器增量汇总约 68.6 万，均零丢失；不节流 JSONL 经 ADB 输出有大量丢失，见 [吞吐报告](docs/insn-throughput-2026-11-25.md)。
+消费优化后，fuxi 长批次样本的 PC 汇总约 112.5 万、寄存器增量汇总约 88.3 万 insn/s；设备端 JSONL 样本也全部收到。固定核频的有效接收速度分别提升约 50% / 68%，ADB 满速 JSONL 输出仍有大量丢失，见 [优化报告](docs/itrace-efficiency-2026-11-25.md)。[优化前吞吐报告](docs/insn-throughput-2026-11-25.md) 保留基线数据。
 
 进一步阅读：[整体设计](docs/design.md) · [实施记录](docs/implementation.md) · [roadmap](docs/roadmap.md)。

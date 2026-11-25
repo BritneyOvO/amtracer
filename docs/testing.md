@@ -106,7 +106,8 @@ python3 tests/binder_pair_smoke.py --serial "$SERIAL"
 
 ## recomp 指令 trace
 
-2026-11-25 已在指定 fuxi 上通过受控 smoke，完整路径用例共核对 601 条事件且无丢失。
+2026-11-25 已在指定 fuxi 上通过受控 smoke；当前完整路径用例核对 649 条事件且无丢失，
+包括原有 601 条和新增的 48 条稀疏尾部事件，后者在停止 tracer 前就必须收到。
 复现时先执行 `cargo xtask build`，再构建专用 fixture；其汇编
 按 4 KiB 页隔离，含分支/循环、间接调用、跨页调用、80 NOP、可恢复访存异常和拒绝样例：
 
@@ -152,6 +153,27 @@ ticks/峰值 RSS、安装时间、输出量、丢失和原始命令。节流率�
 [fuxi 报告](instruction-device-2026-11-25.md)。下面仿真中的时间不能用作设备性能数字。
 同日 ABI v2 + 32 MiB 的 60 组对照也已完成，全部无丢失，并通过消费暂停导致缓冲区满的
 恢复测试，见[增量报告](instruction-delta-2026-11-25.md)。
+
+长批次可用 `--unpaced-rounds 1000000`，每组为 2400 万条动态指令；将 `--seconds`
+设为 9 可把不节流组的主机等待上限提高到 90 秒。`--json-sink device-null` 保留设备
+JSON 编码、排除 USB；`host-null` 保留 ADB 输出并丢弃主机文本；默认 `file` 保存原始内容。
+报告额外提供 `received_per_second_ready_to_exit`，包含末尾排空和关闭，不能把丢失时的
+目标命中速度直接当作有效输出速度。
+
+选择已保存的旧/新版产物并固定 CPU：
+
+```sh
+python3 tests/instruction_bench.py --serial "$SERIAL" \
+  --tool-dir /path/to/version-artifacts --target-cpu 4 --tracer-cpu 5 \
+  --json-sink device-null --seconds 9 --repeats 3 --event-rates 0 \
+  --unpaced-rounds 250000 --modes baseline,pc,regs,pc-json,regs-json \
+  --report artifacts/controlled.json
+```
+
+CPU 参数使用设备已有的 taskset，并核对允许 CPU。固定核频须另外保存、设置和恢复
+原有限制，这条命令本身不改频率。当前脚本保存每个夹具的 stderr，ADB 客户端提前
+结束时仍检查并清理归属自己的远端 tracer。优化数据、一次 USB 会话中断及补跑来源见
+[效率报告](itrace-efficiency-2026-11-25.md)；失败尝试不能直接算作通过。
 
 没有设备时，可独立检查 fixture。主机需安装 `unicorn` Python 包、QEMU user 和
 AArch64 GNU 工具链及运行库；NDK fixture 仍按前面的命令构建：
