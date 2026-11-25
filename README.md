@@ -265,6 +265,11 @@ ringbuf 容量为 **32 MiB**；容量固定用于该次 itrace 会话，仍可�
 同日旧版固定 336 字节记录、8 MiB 缓冲区的 60 组性能对照中，目标 1k/10k/50k 指令事件率下均无丢失；不节流的完整寄存器
 JSONL 短突发出现约 43.35% ringbuf 丢失。数据及限制见
 [fuxi 测试报告](docs/instruction-device-2026-11-25.md)。预留 NOP 的非命中开销尚未单独测量。
+同日增量记录与 32 MiB 缓冲区的新版再跑 60 组，共 2,039,040 条事件均无丢失；
+同一不节流寄存器 JSONL 三轮完整输出 144,000 条。平均二进制载荷减少 73.34%，
+单条 JSON 减少 40.08%，并通过主动写满缓冲区后的状态恢复测试。该结果不保证持续
+高负载零丢失；新方案增加比较/打包成本和内存占用，实测与限制见
+[增量测试报告](docs/instruction-delta-2026-11-25.md)。
 设备测试与性能复现见 [testing.md](docs/testing.md)，设计见 [instruction-trace.md](docs/instruction-trace.md)。
 
 ## syscall：过滤、参数与调用栈

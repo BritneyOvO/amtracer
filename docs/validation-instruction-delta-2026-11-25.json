@@ -1,0 +1,3459 @@
+{
+  "date": "2026-11-25",
+  "source_revision": "3634c3a1a31de4900adced56d3b94a570109e08c",
+  "instruction_abi": 2,
+  "ring_bytes": 33554432,
+  "device": {
+    "serial": "282eb4e4",
+    "boot_id": "78f0daf5-9bf8-47b7-9a59-3d54eed95b53",
+    "kernel": "Linux localhost 5.15.167-android13-8-00014-gbf0a81a7f319-ab13297889 #1 SMP PREEMPT Tue Apr 1 14:07:47 UTC 2025 aarch64 Toybox",
+    "selinux": "Enforcing"
+  },
+  "checks": {
+    "host_tests": 38,
+    "fmt": true,
+    "host_clippy": true,
+    "ebpf_clippy": true,
+    "android_ebpf_release_build": true
+  },
+  "commands": [
+    "cargo fmt --all --check",
+    "cargo clippy --all-targets --locked -- -D warnings",
+    "cargo test --locked",
+    "cargo +nightly clippy -p amtracer-ebpf --target bpfel-unknown-none --release -Z build-std=core --locked -- -D warnings",
+    "cargo xtask build",
+    "python3 tests/instruction_smoke.py --serial 282eb4e4 --report artifacts/instruction-smoke-delta-2026-11-25.json",
+    "python3 tests/instruction_delta.py --serial 282eb4e4 --report artifacts/instruction-delta-2026-11-25.json",
+    "python3 -u tests/instruction_bench.py --serial 282eb4e4 --report artifacts/instruction-bench-delta-2026-11-25.json --seconds 2 --repeats 3 --modes baseline,pc,regs,pc-json,regs-json"
+  ],
+  "artifacts": [
+    {
+      "path": "artifacts/amtracer",
+      "bytes": 2904728,
+      "sha256": "3c2559d862f4d7cf8b45e4a157b0fc49a7ebf7bec5bcd4111fa4d0270d023341"
+    },
+    {
+      "path": "artifacts/amtracer-ebpf.o",
+      "bytes": 8792,
+      "sha256": "6456378a57444a4b11294beb9d8c7a5002095acb48c69e735a8ecbc1e9701122"
+    },
+    {
+      "path": "artifacts/amtracer-itrace.o",
+      "bytes": 7592,
+      "sha256": "8e39122cd55e3887dee59a77cf34c7ce0472852b9c908d96d85a4223e40a6793"
+    }
+  ],
+  "fixture": {
+    "path": "target/amtracer-instruction-fixture",
+    "bytes": 70080,
+    "sha256": "7d0fd892d8c7348fb0381ac9c54e28b7b2b0b5273d21176edd4a941e7944e3e4"
+  },
+  "source_files": [
+    {
+      "path": "crates/amtracer-abi/src/instruction.rs",
+      "bytes": 3251,
+      "sha256": "a2d784a01d7ae88d9792f71c332d20c485957fee279819f4449239ba21a579dc"
+    },
+    {
+      "path": "crates/amtracer-ebpf/src/itrace.rs",
+      "bytes": 7457,
+      "sha256": "761ab03f01ffa6978f0d06838308853a8156d7f80029f232b398cec079c6f00a"
+    },
+    {
+      "path": "crates/amtracer/src/itrace/event.rs",
+      "bytes": 18526,
+      "sha256": "61fa3e6481adcf9984d15d49ca48aeeaba94394a1db6fb479752ac8cb213bef9"
+    },
+    {
+      "path": "crates/amtracer/src/itrace/mod.rs",
+      "bytes": 10631,
+      "sha256": "b99b4b33e3b97da8e1ecf652e44395f4ee6ee5674dd640d65dd3771ac67569ae"
+    },
+    {
+      "path": "tests/instruction_device.py",
+      "bytes": 10830,
+      "sha256": "fbebe61a925556e5601425c719b1018cfc8b2e032df791d4bd61c7a0fb98e3c2"
+    },
+    {
+      "path": "tests/instruction_smoke.py",
+      "bytes": 6404,
+      "sha256": "edbd667307cbc0b1e51d10f2116f864d8adc40ebe302e924f49eeeacfb82197b"
+    },
+    {
+      "path": "tests/instruction_delta.py",
+      "bytes": 5258,
+      "sha256": "bc343184718fc7c4b9b02638bfe40841be76a8d0d71743431ca584380cc13342"
+    },
+    {
+      "path": "tests/instruction_bench.py",
+      "bytes": 6827,
+      "sha256": "90a5fda22d510d7d8e1444de6b5a948a85dcc656a5653b0aeab138c52ad7b99e"
+    }
+  ],
+  "smoke": {
+    "complete_path_events": 601,
+    "cases": {
+      "flow": {
+        "events": 72,
+        "threads": 1,
+        "stats": {
+          "sites": 17,
+          "events": 72,
+          "received": 72,
+          "hits": 72,
+          "submitted": 72,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 6656,
+          "full_snapshots": 1,
+          "incomplete": false
+        },
+        "cpus": [
+          4
+        ],
+        "register_snapshots": 1
+      },
+      "zero": {
+        "events": 63,
+        "threads": 1,
+        "stats": {
+          "sites": 17,
+          "events": 63,
+          "received": 63,
+          "hits": 63,
+          "submitted": 63,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 5912,
+          "full_snapshots": 1,
+          "incomplete": false
+        },
+        "cpus": [
+          4
+        ],
+        "register_snapshots": 1
+      },
+      "threads": {
+        "events": 216,
+        "threads": 3,
+        "stats": {
+          "sites": 17,
+          "events": 216,
+          "received": 216,
+          "hits": 216,
+          "submitted": 216,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 19968,
+          "full_snapshots": 3,
+          "incomplete": false
+        },
+        "cpus": [
+          3,
+          4,
+          6
+        ],
+        "register_snapshots": 3
+      },
+      "migration": {
+        "events": 72,
+        "threads": 1,
+        "stats": {
+          "sites": 17,
+          "events": 72,
+          "received": 72,
+          "hits": 72,
+          "submitted": 72,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 6656,
+          "full_snapshots": 1,
+          "incomplete": false
+        },
+        "cpus": [
+          0,
+          1,
+          2
+        ],
+        "register_snapshots": 1
+      },
+      "many": {
+        "events": 162,
+        "threads": 1,
+        "stats": {
+          "sites": 81,
+          "events": 162,
+          "received": 162,
+          "hits": 162,
+          "submitted": 162,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 10368,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "cpus": [
+          2
+        ],
+        "register_snapshots": 0
+      },
+      "cross_page": {
+        "events": 12,
+        "threads": 1,
+        "stats": {
+          "sites": 6,
+          "events": 12,
+          "received": 12,
+          "hits": 12,
+          "submitted": 12,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 768,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "cpus": [
+          2
+        ],
+        "register_snapshots": 0
+      },
+      "fault": {
+        "events": 4,
+        "threads": 1,
+        "stats": {
+          "sites": 2,
+          "events": 4,
+          "received": 4,
+          "hits": 4,
+          "submitted": 4,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 256,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "cpus": [
+          2
+        ],
+        "register_snapshots": 0
+      },
+      "exclusive": {
+        "returncode": 1,
+        "output_bytes": 0,
+        "stats": null,
+        "cpus": [],
+        "register_snapshots": 0
+      },
+      "svc": {
+        "returncode": 1,
+        "output_bytes": 0,
+        "stats": null,
+        "cpus": [],
+        "register_snapshots": 0
+      },
+      "fallback": {
+        "returncode": 1,
+        "output_bytes": 0,
+        "stats": null,
+        "cpus": [],
+        "register_snapshots": 0
+      },
+      "count": {
+        "returncode": 0,
+        "output_bytes": 2334,
+        "stats": {
+          "sites": 17,
+          "events": 7,
+          "received": 19,
+          "hits": 19,
+          "submitted": 19,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 12,
+          "queued": 0,
+          "submitted_bytes": 1216,
+          "full_snapshots": 0,
+          "incomplete": true
+        },
+        "cpus": [
+          2
+        ],
+        "register_snapshots": 0
+      },
+      "target_exit": {
+        "returncode": 0,
+        "output_bytes": 0,
+        "stats": {
+          "sites": 17,
+          "events": 0,
+          "received": 0,
+          "hits": 0,
+          "submitted": 0,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 0,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "cpus": [],
+        "register_snapshots": 0
+      }
+    }
+  },
+  "delta": {
+    "checkpoints": {
+      "events": 2400,
+      "full_snapshots": 3,
+      "empty_deltas": 699,
+      "recovered_gaps": 0,
+      "missing": 0,
+      "submitted_bytes": 216016,
+      "last_sequence": 2400,
+      "stats": {
+        "sites": 17,
+        "events": 2400,
+        "received": 2400,
+        "hits": 2400,
+        "submitted": 2400,
+        "ring_lost": 0,
+        "state_failed": 0,
+        "sequence_missing": 0,
+        "discarded": 0,
+        "queued": 0,
+        "submitted_bytes": 216016,
+        "full_snapshots": 3,
+        "incomplete": false
+      },
+      "trace": {
+        "returncode": 0,
+        "stderr": "AMTRACER_PID=14837\nitrace: ready pid=14833 sites=17 pages=1 backend=uxn setup_ns=8702031\nitrace: sites=17 events=2400 received=2400 hits=2400 submitted=2400 ring_lost=0 state_failed=0 sequence_missing=0 discarded=0 queued=0 submitted_bytes=216016 full_snapshots=3 incomplete=false\n",
+        "output_bytes": 985471,
+        "command": [
+          "/data/local/tmp/amtracer-itrace-12ed6f7a43/amtracer",
+          "itrace",
+          "-p",
+          "14833",
+          "--duration",
+          "120",
+          "--range",
+          "fixture+amtracer_trace..amtracer_trace_end",
+          "--json",
+          "--regs"
+        ]
+      }
+    },
+    "loss_recovery": {
+      "events": 345286,
+      "full_snapshots": 338,
+      "empty_deltas": 100597,
+      "recovered_gaps": 1,
+      "missing": 375002,
+      "submitted_bytes": 30820864,
+      "last_sequence": 720288,
+      "stats": {
+        "sites": 17,
+        "events": 345286,
+        "received": 345286,
+        "hits": 720288,
+        "submitted": 345286,
+        "ring_lost": 375002,
+        "state_failed": 0,
+        "sequence_missing": 375002,
+        "discarded": 0,
+        "queued": 0,
+        "submitted_bytes": 30820864,
+        "full_snapshots": 338,
+        "incomplete": true
+      },
+      "trace": {
+        "returncode": 0,
+        "stderr": "AMTRACER_PID=14862\nitrace: ready pid=14833 sites=17 pages=1 backend=uxn setup_ns=7652188\nitrace: sites=17 events=345286 received=345286 hits=720288 submitted=345286 ring_lost=375002 state_failed=0 sequence_missing=375002 discarded=0 queued=0 submitted_bytes=30820864 full_snapshots=338 incomplete=true\n",
+        "output_bytes": 142994629,
+        "command": [
+          "/data/local/tmp/amtracer-itrace-12ed6f7a43/amtracer",
+          "itrace",
+          "-p",
+          "14833",
+          "--duration",
+          "120",
+          "--range",
+          "fixture+amtracer_trace..amtracer_trace_end",
+          "--json",
+          "--regs"
+        ]
+      }
+    }
+  },
+  "performance": {
+    "settings": {
+      "serial": "282eb4e4",
+      "fixture": "None",
+      "report": "artifacts/instruction-bench-delta-2026-11-25.json",
+      "seconds": 2.0,
+      "repeats": 3,
+      "event_rates": "0,1000,10000,50000",
+      "modes": "baseline,pc,regs,pc-json,regs-json",
+      "unpaced_rounds": 2000
+    },
+    "clk_tck": 100,
+    "totals": {
+      "hits": 2039040,
+      "submitted": 2039040,
+      "ring_lost": 0,
+      "state_failed": 0,
+      "sequence_missing": 0,
+      "queued": 0,
+      "discarded": 0,
+      "submitted_bytes": 156635728,
+      "full_snapshots": 1002
+    },
+    "samples": [
+      {
+        "mode": "baseline",
+        "repeat": 0,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 355625,
+          "cpu_ns": 367135,
+          "min_ns": 52,
+          "max_ns": 105,
+          "samples": 1000,
+          "p50_ns": 52,
+          "p95_ns": 105,
+          "p99_ns": 105,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 7096
+        },
+        "calls_per_second": 5623901.58172232,
+        "expected_events": 48000
+      },
+      {
+        "mode": "pc",
+        "repeat": 0,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 69700521,
+          "cpu_ns": 52089676,
+          "min_ns": 16927,
+          "max_ns": 117760,
+          "samples": 1000,
+          "p50_ns": 35573,
+          "p95_ns": 50053,
+          "p99_ns": 64948,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 7096
+        },
+        "calls_per_second": 28694.19010512131,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 3072000,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 5,
+        "tool_maxrss_kb": 71092,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 0,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 76933855,
+          "cpu_ns": 61381469,
+          "min_ns": 23385,
+          "max_ns": 262500,
+          "samples": 1000,
+          "p50_ns": 33437,
+          "p95_ns": 54687,
+          "p99_ns": 105990,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10192
+        },
+        "calls_per_second": 25996.357520366033,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 4299736,
+          "full_snapshots": 47,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 7,
+        "tool_maxrss_kb": 71000,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 0,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 36891822,
+          "cpu_ns": 36411717,
+          "min_ns": 16041,
+          "max_ns": 173750,
+          "samples": 1000,
+          "p50_ns": 16927,
+          "p95_ns": 23594,
+          "p99_ns": 27605,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11208
+        },
+        "calls_per_second": 54212.556918441165,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 3072000,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71368,
+        "loss_fraction": 0.0,
+        "output_bytes": 16108894
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 0,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 50560677,
+          "cpu_ns": 50272241,
+          "min_ns": 22239,
+          "max_ns": 183073,
+          "samples": 1000,
+          "p50_ns": 24479,
+          "p95_ns": 28854,
+          "p99_ns": 35677,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11220
+        },
+        "calls_per_second": 39556.43236343532,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 4299712,
+          "full_snapshots": 47,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71304,
+        "loss_fraction": 0.0,
+        "output_bytes": 19808013
+      },
+      {
+        "mode": "baseline",
+        "repeat": 1,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 471875,
+          "cpu_ns": 419063,
+          "min_ns": 52,
+          "max_ns": 11354,
+          "samples": 1000,
+          "p50_ns": 52,
+          "p95_ns": 105,
+          "p99_ns": 105,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 12240
+        },
+        "calls_per_second": 4238410.59602649,
+        "expected_events": 48000
+      },
+      {
+        "mode": "pc",
+        "repeat": 1,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 61710521,
+          "cpu_ns": 49557250,
+          "min_ns": 17291,
+          "max_ns": 121667,
+          "samples": 1000,
+          "p50_ns": 27500,
+          "p95_ns": 46302,
+          "p99_ns": 55833,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 12240
+        },
+        "calls_per_second": 32409.384454880877,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 3072000,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 5,
+        "tool_maxrss_kb": 71040,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 1,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 70949792,
+          "cpu_ns": 55157019,
+          "min_ns": 18125,
+          "max_ns": 124062,
+          "samples": 1000,
+          "p50_ns": 33646,
+          "p95_ns": 49844,
+          "p99_ns": 68958,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 12240
+        },
+        "calls_per_second": 28188.94803807177,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 4299696,
+          "full_snapshots": 47,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 6,
+        "tool_maxrss_kb": 71168,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 1,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 36379532,
+          "cpu_ns": 35999688,
+          "min_ns": 16718,
+          "max_ns": 123750,
+          "samples": 1000,
+          "p50_ns": 17240,
+          "p95_ns": 22657,
+          "p99_ns": 38489,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 54975.968354953,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 3072000,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71180,
+        "loss_fraction": 0.0,
+        "output_bytes": 16108894
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 1,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 46419322,
+          "cpu_ns": 46157087,
+          "min_ns": 20156,
+          "max_ns": 152240,
+          "samples": 1000,
+          "p50_ns": 21041,
+          "p95_ns": 27291,
+          "p99_ns": 31666,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 43085.506505243655,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 4299640,
+          "full_snapshots": 47,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71320,
+        "loss_fraction": 0.0,
+        "output_bytes": 19805803
+      },
+      {
+        "mode": "baseline",
+        "repeat": 2,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 606042,
+          "cpu_ns": 510311,
+          "min_ns": 52,
+          "max_ns": 103959,
+          "samples": 1000,
+          "p50_ns": 104,
+          "p95_ns": 105,
+          "p99_ns": 105,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 3300101.3131103124,
+        "expected_events": 48000
+      },
+      {
+        "mode": "pc",
+        "repeat": 2,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 54773385,
+          "cpu_ns": 43061803,
+          "min_ns": 13437,
+          "max_ns": 165209,
+          "samples": 1000,
+          "p50_ns": 24791,
+          "p95_ns": 44843,
+          "p99_ns": 54115,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 36514.084349543125,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 3072000,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 4,
+        "tool_maxrss_kb": 70932,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 2,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 81265677,
+          "cpu_ns": 63201984,
+          "min_ns": 18958,
+          "max_ns": 144375,
+          "samples": 1000,
+          "p50_ns": 37813,
+          "p95_ns": 63593,
+          "p99_ns": 103646,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 24610.63604995255,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 4299776,
+          "full_snapshots": 47,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 7,
+        "tool_maxrss_kb": 71124,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 2,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 36406770,
+          "cpu_ns": 35923074,
+          "min_ns": 13178,
+          "max_ns": 122760,
+          "samples": 1000,
+          "p50_ns": 18959,
+          "p95_ns": 23593,
+          "p99_ns": 39375,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 54934.837668928056,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 3072000,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71248,
+        "loss_fraction": 0.0,
+        "output_bytes": 16108894
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 2,
+        "requested_events_per_second": 0,
+        "paced_calls_per_second": 0,
+        "fixture": {
+          "calls": 2000,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 48918490,
+          "cpu_ns": 48570938,
+          "min_ns": 17656,
+          "max_ns": 189218,
+          "samples": 1000,
+          "p50_ns": 23958,
+          "p95_ns": 32083,
+          "p99_ns": 45313,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 40884.33637260676,
+        "expected_events": 48000,
+        "stats": {
+          "sites": 17,
+          "events": 48000,
+          "received": 48000,
+          "hits": 48000,
+          "submitted": 48000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 4299688,
+          "full_snapshots": 47,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71360,
+        "loss_fraction": 0.0,
+        "output_bytes": 19808304
+      },
+      {
+        "mode": "baseline",
+        "repeat": 0,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000310103,
+          "cpu_ns": 2368326,
+          "min_ns": 52,
+          "max_ns": 989,
+          "samples": 82,
+          "p50_ns": 313,
+          "p95_ns": 573,
+          "p99_ns": 989,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 40.993643874026866,
+        "expected_events": 1968
+      },
+      {
+        "mode": "pc",
+        "repeat": 0,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000194374,
+          "cpu_ns": 11549115,
+          "min_ns": 44063,
+          "max_ns": 362396,
+          "samples": 82,
+          "p50_ns": 123125,
+          "p95_ns": 204479,
+          "p99_ns": 362396,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 40.9960157202202,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 125952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 2,
+        "tool_maxrss_kb": 70992,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 0,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000323281,
+          "cpu_ns": 13950574,
+          "min_ns": 48802,
+          "max_ns": 778594,
+          "samples": 82,
+          "p50_ns": 154375,
+          "p95_ns": 247031,
+          "p99_ns": 778594,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11724
+        },
+        "calls_per_second": 40.99337381056058,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 179024,
+          "full_snapshots": 2,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 70984,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 0,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000229634,
+          "cpu_ns": 12033539,
+          "min_ns": 43125,
+          "max_ns": 325208,
+          "samples": 82,
+          "p50_ns": 127916,
+          "p95_ns": 234427,
+          "p99_ns": 325208,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10696
+        },
+        "calls_per_second": 40.99529304343863,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 125952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 3,
+        "tool_maxrss_kb": 71024,
+        "loss_fraction": 0.0,
+        "output_bytes": 657845
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 0,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000247968,
+          "cpu_ns": 13379847,
+          "min_ns": 45365,
+          "max_ns": 396667,
+          "samples": 82,
+          "p50_ns": 136615,
+          "p95_ns": 242448,
+          "p99_ns": 396667,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.99491728617519,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 178952,
+          "full_snapshots": 2,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 2,
+        "tool_maxrss_kb": 71084,
+        "loss_fraction": 0.0,
+        "output_bytes": 811756
+      },
+      {
+        "mode": "baseline",
+        "repeat": 1,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2002461301,
+          "cpu_ns": 6376356,
+          "min_ns": 156,
+          "max_ns": 1146,
+          "samples": 82,
+          "p50_ns": 625,
+          "p95_ns": 886,
+          "p99_ns": 1146,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.94960534770404,
+        "expected_events": 1968
+      },
+      {
+        "mode": "pc",
+        "repeat": 1,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000749739,
+          "cpu_ns": 15308290,
+          "min_ns": 43177,
+          "max_ns": 435000,
+          "samples": 82,
+          "p50_ns": 152552,
+          "p95_ns": 229583,
+          "p99_ns": 435000,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.98463610995378,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 125952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71200,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 1,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000199218,
+          "cpu_ns": 14932919,
+          "min_ns": 65730,
+          "max_ns": 423177,
+          "samples": 82,
+          "p50_ns": 161927,
+          "p95_ns": 242916,
+          "p99_ns": 423177,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.995916437759554,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 178960,
+          "full_snapshots": 2,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71060,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 1,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000235780,
+          "cpu_ns": 11101721,
+          "min_ns": 37344,
+          "max_ns": 387135,
+          "samples": 82,
+          "p50_ns": 119011,
+          "p95_ns": 218958,
+          "p99_ns": 387135,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.99516707975297,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 125952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 2,
+        "tool_maxrss_kb": 71088,
+        "loss_fraction": 0.0,
+        "output_bytes": 657845
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 1,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2001960625,
+          "cpu_ns": 11686818,
+          "min_ns": 44583,
+          "max_ns": 355729,
+          "samples": 82,
+          "p50_ns": 121354,
+          "p95_ns": 219843,
+          "p99_ns": 355729,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.95984655042853,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 178968,
+          "full_snapshots": 2,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71040,
+        "loss_fraction": 0.0,
+        "output_bytes": 811781
+      },
+      {
+        "mode": "baseline",
+        "repeat": 2,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000173281,
+          "cpu_ns": 4876085,
+          "min_ns": 52,
+          "max_ns": 2968,
+          "samples": 82,
+          "p50_ns": 677,
+          "p95_ns": 989,
+          "p99_ns": 2968,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.996448047242964,
+        "expected_events": 1968
+      },
+      {
+        "mode": "pc",
+        "repeat": 2,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000166405,
+          "cpu_ns": 14971764,
+          "min_ns": 47240,
+          "max_ns": 393750,
+          "samples": 82,
+          "p50_ns": 170730,
+          "p95_ns": 255104,
+          "p99_ns": 393750,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.99658898130528,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 125952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 1,
+        "tool_maxrss_kb": 71156,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 2,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000241665,
+          "cpu_ns": 15886602,
+          "min_ns": 54063,
+          "max_ns": 373542,
+          "samples": 82,
+          "p50_ns": 166823,
+          "p95_ns": 275469,
+          "p99_ns": 373542,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.99504646604789,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 178976,
+          "full_snapshots": 2,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 0,
+        "tool_maxrss_kb": 70956,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 2,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000253124,
+          "cpu_ns": 11530832,
+          "min_ns": 36406,
+          "max_ns": 249740,
+          "samples": 82,
+          "p50_ns": 124375,
+          "p95_ns": 230625,
+          "p99_ns": 249740,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.99481161465243,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 125952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 4,
+        "tool_maxrss_kb": 71004,
+        "loss_fraction": 0.0,
+        "output_bytes": 657845
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 2,
+        "requested_events_per_second": 1000,
+        "paced_calls_per_second": 41,
+        "fixture": {
+          "calls": 82,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2002311718,
+          "cpu_ns": 17382699,
+          "min_ns": 48229,
+          "max_ns": 434427,
+          "samples": 82,
+          "p50_ns": 144427,
+          "p95_ns": 260209,
+          "p99_ns": 434427,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 40.952664494170435,
+        "expected_events": 1968,
+        "stats": {
+          "sites": 17,
+          "events": 1968,
+          "received": 1968,
+          "hits": 1968,
+          "submitted": 1968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 178968,
+          "full_snapshots": 2,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 2,
+        "tool_maxrss_kb": 71056,
+        "loss_fraction": 0.0,
+        "output_bytes": 811772
+      },
+      {
+        "mode": "baseline",
+        "repeat": 0,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000680937,
+          "cpu_ns": 11665335,
+          "min_ns": 52,
+          "max_ns": 1198,
+          "samples": 832,
+          "p50_ns": 156,
+          "p95_ns": 312,
+          "p99_ns": 364,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.85841330980804,
+        "expected_events": 19968
+      },
+      {
+        "mode": "pc",
+        "repeat": 0,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2001703281,
+          "cpu_ns": 63961006,
+          "min_ns": 23385,
+          "max_ns": 1709948,
+          "samples": 832,
+          "p50_ns": 53125,
+          "p95_ns": 101146,
+          "p99_ns": 1440677,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.64601901654174,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1277952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 5,
+        "tool_maxrss_kb": 71056,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 0,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2001226561,
+          "cpu_ns": 71676750,
+          "min_ns": 31302,
+          "max_ns": 1198073,
+          "samples": 832,
+          "p50_ns": 65052,
+          "p95_ns": 129010,
+          "p99_ns": 212605,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.7450316790993,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1803768,
+          "full_snapshots": 20,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 5,
+        "tool_maxrss_kb": 71112,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 0,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000232343,
+          "cpu_ns": 60963207,
+          "min_ns": 27083,
+          "max_ns": 293177,
+          "samples": 832,
+          "p50_ns": 48438,
+          "p95_ns": 147552,
+          "p99_ns": 201771,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.9516782696079,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1277952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 10,
+        "tool_maxrss_kb": 70996,
+        "loss_fraction": 0.0,
+        "output_bytes": 6694814
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 0,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000365833,
+          "cpu_ns": 113143928,
+          "min_ns": 31302,
+          "max_ns": 2954115,
+          "samples": 832,
+          "p50_ns": 132292,
+          "p95_ns": 295104,
+          "p99_ns": 1568802,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.923920652168,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1806896,
+          "full_snapshots": 20,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 17,
+        "tool_maxrss_kb": 71168,
+        "loss_fraction": 0.0,
+        "output_bytes": 8260205
+      },
+      {
+        "mode": "baseline",
+        "repeat": 1,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000268957,
+          "cpu_ns": 15443381,
+          "min_ns": 52,
+          "max_ns": 1458,
+          "samples": 832,
+          "p50_ns": 260,
+          "p95_ns": 364,
+          "p99_ns": 572,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.9440644661267,
+        "expected_events": 19968
+      },
+      {
+        "mode": "pc",
+        "repeat": 1,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000247030,
+          "cpu_ns": 91221050,
+          "min_ns": 25209,
+          "max_ns": 2902292,
+          "samples": 832,
+          "p50_ns": 76146,
+          "p95_ns": 691927,
+          "p99_ns": 1495729,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.94862410569357,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1277952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 6,
+        "tool_maxrss_kb": 71048,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 1,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000248749,
+          "cpu_ns": 73884779,
+          "min_ns": 32864,
+          "max_ns": 6984167,
+          "samples": 832,
+          "p50_ns": 62656,
+          "p95_ns": 128750,
+          "p99_ns": 1204791,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.9482666423105,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1803928,
+          "full_snapshots": 20,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 5,
+        "tool_maxrss_kb": 70924,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 1,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000272656,
+          "cpu_ns": 58907627,
+          "min_ns": 28281,
+          "max_ns": 301563,
+          "samples": 832,
+          "p50_ns": 47344,
+          "p95_ns": 138437,
+          "p99_ns": 166614,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.9432952824407,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1277952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 9,
+        "tool_maxrss_kb": 71156,
+        "loss_fraction": 0.0,
+        "output_bytes": 6694814
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 1,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000390780,
+          "cpu_ns": 102286510,
+          "min_ns": 30729,
+          "max_ns": 904635,
+          "samples": 832,
+          "p50_ns": 125416,
+          "p95_ns": 180365,
+          "p99_ns": 242344,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.91873363863436,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1806328,
+          "full_snapshots": 20,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 16,
+        "tool_maxrss_kb": 71016,
+        "loss_fraction": 0.0,
+        "output_bytes": 8258967
+      },
+      {
+        "mode": "baseline",
+        "repeat": 2,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000267811,
+          "cpu_ns": 15613394,
+          "min_ns": 52,
+          "max_ns": 1198,
+          "samples": 832,
+          "p50_ns": 260,
+          "p95_ns": 365,
+          "p99_ns": 573,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.9443027701654,
+        "expected_events": 19968
+      },
+      {
+        "mode": "pc",
+        "repeat": 2,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000181874,
+          "cpu_ns": 78955673,
+          "min_ns": 24375,
+          "max_ns": 2277136,
+          "samples": 832,
+          "p50_ns": 52656,
+          "p95_ns": 636406,
+          "p99_ns": 1460834,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.962173647815,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1277952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 6,
+        "tool_maxrss_kb": 71028,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 2,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000173177,
+          "cpu_ns": 77973911,
+          "min_ns": 32447,
+          "max_ns": 1620677,
+          "samples": 832,
+          "p50_ns": 63646,
+          "p95_ns": 168489,
+          "p99_ns": 1377500,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.96398230271836,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1803872,
+          "full_snapshots": 20,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 6,
+        "tool_maxrss_kb": 71020,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 2,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000419166,
+          "cpu_ns": 70711525,
+          "min_ns": 26354,
+          "max_ns": 1899948,
+          "samples": 832,
+          "p50_ns": 83385,
+          "p95_ns": 152031,
+          "p99_ns": 536927,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.9128317409852,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1277952,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 12,
+        "tool_maxrss_kb": 70992,
+        "loss_fraction": 0.0,
+        "output_bytes": 6694814
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 2,
+        "requested_events_per_second": 10000,
+        "paced_calls_per_second": 416,
+        "fixture": {
+          "calls": 832,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000398541,
+          "cpu_ns": 101930483,
+          "min_ns": 31927,
+          "max_ns": 512188,
+          "samples": 832,
+          "p50_ns": 122760,
+          "p95_ns": 180313,
+          "p99_ns": 254635,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 415.9171199875415,
+        "expected_events": 19968,
+        "stats": {
+          "sites": 17,
+          "events": 19968,
+          "received": 19968,
+          "hits": 19968,
+          "submitted": 19968,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1806528,
+          "full_snapshots": 20,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 17,
+        "tool_maxrss_kb": 71092,
+        "loss_fraction": 0.0,
+        "output_bytes": 8259417
+      },
+      {
+        "mode": "baseline",
+        "repeat": 0,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000223541,
+          "cpu_ns": 59484556,
+          "min_ns": 52,
+          "max_ns": 3959,
+          "samples": 834,
+          "p50_ns": 157,
+          "p95_ns": 313,
+          "p99_ns": 677,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.7672080677708,
+        "expected_events": 99984
+      },
+      {
+        "mode": "pc",
+        "repeat": 0,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000254843,
+          "cpu_ns": 388983145,
+          "min_ns": 23907,
+          "max_ns": 727448,
+          "samples": 834,
+          "p50_ns": 119584,
+          "p95_ns": 199427,
+          "p99_ns": 239427,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.7346148312763,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 6398976,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 38,
+        "tool_maxrss_kb": 71096,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 0,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000367343,
+          "cpu_ns": 357245796,
+          "min_ns": 35938,
+          "max_ns": 432604,
+          "samples": 834,
+          "p50_ns": 74895,
+          "p95_ns": 206146,
+          "p99_ns": 264532,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.6174825230587,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 8947224,
+          "full_snapshots": 98,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 36,
+        "tool_maxrss_kb": 70976,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 0,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000389790,
+          "cpu_ns": 462475771,
+          "min_ns": 22083,
+          "max_ns": 387500,
+          "samples": 834,
+          "p50_ns": 115364,
+          "p95_ns": 184843,
+          "p99_ns": 217656,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.5941128203817,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 6398976,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 51,
+        "tool_maxrss_kb": 71080,
+        "loss_fraction": 0.0,
+        "output_bytes": 33566854
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 0,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000365259,
+          "cpu_ns": 483699042,
+          "min_ns": 20572,
+          "max_ns": 628282,
+          "samples": 834,
+          "p50_ns": 110990,
+          "p95_ns": 198854,
+          "p99_ns": 255521,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.619652214226,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 8947192,
+          "full_snapshots": 98,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 52,
+        "tool_maxrss_kb": 71092,
+        "loss_fraction": 0.0,
+        "output_bytes": 41285016
+      },
+      {
+        "mode": "baseline",
+        "repeat": 1,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000280937,
+          "cpu_ns": 62830779,
+          "min_ns": 52,
+          "max_ns": 3594,
+          "samples": 834,
+          "p50_ns": 157,
+          "p95_ns": 313,
+          "p99_ns": 469,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11708
+        },
+        "calls_per_second": 2082.7074452092324,
+        "expected_events": 99984
+      },
+      {
+        "mode": "pc",
+        "repeat": 1,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000354010,
+          "cpu_ns": 367774092,
+          "min_ns": 26406,
+          "max_ns": 457396,
+          "samples": 834,
+          "p50_ns": 96822,
+          "p95_ns": 192708,
+          "p99_ns": 232812,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 11708
+        },
+        "calls_per_second": 2082.6313638354445,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 6398976,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 36,
+        "tool_maxrss_kb": 71104,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 1,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000312916,
+          "cpu_ns": 399071535,
+          "min_ns": 32813,
+          "max_ns": 448177,
+          "samples": 834,
+          "p50_ns": 84062,
+          "p95_ns": 211458,
+          "p99_ns": 263281,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.6741489680007,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 8947200,
+          "full_snapshots": 98,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 39,
+        "tool_maxrss_kb": 71044,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 1,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000406040,
+          "cpu_ns": 431069674,
+          "min_ns": 29063,
+          "max_ns": 346615,
+          "samples": 834,
+          "p50_ns": 100886,
+          "p95_ns": 174583,
+          "p99_ns": 220833,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.577195177835,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 6398976,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 48,
+        "tool_maxrss_kb": 71080,
+        "loss_fraction": 0.0,
+        "output_bytes": 33566854
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 1,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000392759,
+          "cpu_ns": 532431540,
+          "min_ns": 33698,
+          "max_ns": 459479,
+          "samples": 834,
+          "p50_ns": 136615,
+          "p95_ns": 220469,
+          "p99_ns": 265365,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.5910218164313,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 8947168,
+          "full_snapshots": 98,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 58,
+        "tool_maxrss_kb": 71208,
+        "loss_fraction": 0.0,
+        "output_bytes": 41284975
+      },
+      {
+        "mode": "baseline",
+        "repeat": 2,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000280937,
+          "cpu_ns": 63918041,
+          "min_ns": 52,
+          "max_ns": 4115,
+          "samples": 834,
+          "p50_ns": 157,
+          "p95_ns": 313,
+          "p99_ns": 573,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.7074452092324,
+        "expected_events": 99984
+      },
+      {
+        "mode": "pc",
+        "repeat": 2,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000310833,
+          "cpu_ns": 387872399,
+          "min_ns": 22448,
+          "max_ns": 450677,
+          "samples": 834,
+          "p50_ns": 92084,
+          "p95_ns": 184687,
+          "p99_ns": 194739,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.6763177360644,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 6398976,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 37,
+        "tool_maxrss_kb": 71076,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "regs",
+        "repeat": 2,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000786979,
+          "cpu_ns": 404427185,
+          "min_ns": 31771,
+          "max_ns": 499636,
+          "samples": 834,
+          "p50_ns": 87500,
+          "p95_ns": 217447,
+          "p99_ns": 265989,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.180683763836,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 8947120,
+          "full_snapshots": 98,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 41,
+        "tool_maxrss_kb": 71128,
+        "loss_fraction": 0.0,
+        "output_bytes": 0
+      },
+      {
+        "mode": "pc-json",
+        "repeat": 2,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000241405,
+          "cpu_ns": 415980286,
+          "min_ns": 19531,
+          "max_ns": 1080625,
+          "samples": 834,
+          "p50_ns": 97656,
+          "p95_ns": 169948,
+          "p99_ns": 221511,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.7486070362593,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 6398976,
+          "full_snapshots": 0,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 51,
+        "tool_maxrss_kb": 70952,
+        "loss_fraction": 0.0,
+        "output_bytes": 33566854
+      },
+      {
+        "mode": "regs-json",
+        "repeat": 2,
+        "requested_events_per_second": 50000,
+        "paced_calls_per_second": 2083,
+        "fixture": {
+          "calls": 4166,
+          "threads": 1,
+          "failures": 0,
+          "elapsed_ns": 2000352239,
+          "cpu_ns": 505620130,
+          "min_ns": 27083,
+          "max_ns": 430781,
+          "samples": 834,
+          "p50_ns": 129323,
+          "p95_ns": 211563,
+          "p99_ns": 276303,
+          "faults": 0,
+          "fault_bad_pc": 0,
+          "maxrss_kb": 10680
+        },
+        "calls_per_second": 2082.63320768078,
+        "expected_events": 99984,
+        "stats": {
+          "sites": 17,
+          "events": 99984,
+          "received": 99984,
+          "hits": 99984,
+          "submitted": 99984,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 8947128,
+          "full_snapshots": 98,
+          "incomplete": false
+        },
+        "tool_cpu_ticks": 54,
+        "tool_maxrss_kb": 71064,
+        "loss_fraction": 0.0,
+        "output_bytes": 41284907
+      }
+    ],
+    "unpaced_regs_json_comparison": {
+      "old_record_bytes": 336,
+      "new_mean_record_bytes": 89.57666666666667,
+      "payload_reduction_fraction": 0.7334027777777778,
+      "old_ring_bytes": 8388608,
+      "new_ring_bytes": 33554432,
+      "old_mean_json_bytes": 688.7108831028734,
+      "new_mean_json_bytes": 412.6536111111111,
+      "json_reduction_fraction": 0.4008318712026616,
+      "old_hits": 144000,
+      "old_submitted": 81576,
+      "old_ring_lost": 62424,
+      "new_hits": 144000,
+      "new_submitted": 144000,
+      "new_ring_lost": 0
+    },
+    "old_report": {
+      "path": "artifacts/instruction-bench-2026-11-25.json",
+      "bytes": 139973,
+      "sha256": "7be99ccea582902ca68de0e6714b0dc37d91773e9f381f83889f16111cbdb150"
+    }
+  },
+  "raw_files": [
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25.json",
+      "bytes": 21442,
+      "sha256": "a14b77632063c14858104db66f8953db006651f5fa8cce634296167c36010dc3"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/count.jsonl",
+      "bytes": 2334,
+      "sha256": "ec7c5515bf6698b16896cbc9b32b5d82df7c22edd46e8663ba9c0be2c508fe60"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/count.stderr",
+      "bytes": 270,
+      "sha256": "1c4cc60607011965d9fd86e2b1b96c8db49250a0375a1eee62a08e3dd30c20f5"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/cross_page.jsonl",
+      "bytes": 3951,
+      "sha256": "7b2fadc2db51278b22161b41387f7702e6fd5260561447007278f34939920b66"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/cross_page.stderr",
+      "bytes": 268,
+      "sha256": "e35ebb73c42d63d62fa2f326b592f5a02999d5cd1a1490a42931f03a47dc25a2"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/exclusive.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/exclusive.stderr",
+      "bytes": 121,
+      "sha256": "fc3bd8d834fca78e79092b1a3df216f37da3ac2b4ea2b262fa05ba5de98488ab"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/fallback.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/fallback.stderr",
+      "bytes": 162,
+      "sha256": "660c823b1f9a30165a1bb3b7994e16dc1cf4ae6f87efa3754f4401f283d0ff1f"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/fault.jsonl",
+      "bytes": 1310,
+      "sha256": "1144dff133d6022e8621d906bb07244ff61832c94087ddca8ea85ccf4a641fa8"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/fault.stderr",
+      "bytes": 264,
+      "sha256": "8f2062a6353b98cb8b94f146cd49901c1d242efb90d5e44b717849c60bd2ceb0"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/flow.jsonl",
+      "bytes": 29670,
+      "sha256": "fb0d3c2fdd38882f1157d7c1eb4227b2319d188d912265e0c22cea3145ebbc9a"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/flow.stderr",
+      "bytes": 271,
+      "sha256": "9fd291412a70d7c2e2188ff6722a686333f5ac02ec52abbd6f5211bc285f3004"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/many.jsonl",
+      "bytes": 52686,
+      "sha256": "01d28de8f90646e21bc77ca96ea45ed96fc6b7f68bfd1b29a938669aeca12c80"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/many.stderr",
+      "bytes": 277,
+      "sha256": "28ae52cb56b01098de613e148ca1a5d97836023a9316769c722266d042255fe4"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/migration.jsonl",
+      "bytes": 29671,
+      "sha256": "303dfaa517c5d49fff1483bef9a97d86e53609ab80dd20c178cb405d9aca6490"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/migration.stderr",
+      "bytes": 271,
+      "sha256": "4c125722258cc97c0aa2bd2acd87baf004fb70bb183685eadeaade1c9932f047"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/svc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/svc.stderr",
+      "bytes": 168,
+      "sha256": "448fa187e3c4a741508f8debee7f490a7f6eac77b2077a0012fdd65fbe128c72"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/target_exit.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/target_exit.stderr",
+      "bytes": 292,
+      "sha256": "8d97c3f8294be5806a5f1674fc060a559dc7ee9cd9873c83c18ea3a59428b224"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/threads.jsonl",
+      "bytes": 88989,
+      "sha256": "09da13dda5e3b2fbab31716e74243e9931f40d7049c9b04e3f50723ff87b99fc"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/threads.stderr",
+      "bytes": 276,
+      "sha256": "208c6c6912277397bb5028234e6ea65597f9d2e189f6ccc503413893324e8cfd"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/zero.jsonl",
+      "bytes": 26125,
+      "sha256": "41fe746879b2fc2a702609c83c1f98b3099d108f1e314c7192845e9160426383"
+    },
+    {
+      "path": "artifacts/instruction-smoke-delta-2026-11-25/zero.stderr",
+      "bytes": 271,
+      "sha256": "8d90256f4aa42ef11c60256372779ac73effff04d3058208ea2eff99a84a73f0"
+    },
+    {
+      "path": "artifacts/instruction-delta-2026-11-25.json",
+      "bytes": 5676,
+      "sha256": "60ee592670d9badfbabcde6e3d3e173bb3c994f103c30f3b052d2c80f74b1cf7"
+    },
+    {
+      "path": "artifacts/instruction-delta-2026-11-25/checkpoints.jsonl",
+      "bytes": 985471,
+      "sha256": "0f6aafd32f66a1353d3625e2330836017957665589ddefaf187269431422a303"
+    },
+    {
+      "path": "artifacts/instruction-delta-2026-11-25/checkpoints.stderr",
+      "bytes": 281,
+      "sha256": "fbac493ef565ab7342a585fe9e71961a079b199b23b1013836957a3939785263"
+    },
+    {
+      "path": "artifacts/instruction-delta-2026-11-25/loss_recovery.jsonl",
+      "bytes": 142994629,
+      "sha256": "78d7f4f37d14c2584e5751b988917c68dd1d0096ac784f14a3817e4e5bdd2a25"
+    },
+    {
+      "path": "artifacts/instruction-delta-2026-11-25/loss_recovery.stderr",
+      "bytes": 302,
+      "sha256": "4140b72cc62ec127346a7de0f03b61c207c74fae387924e7ffd5bc6c1f3905be"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25.json",
+      "bytes": 145030,
+      "sha256": "65a1b2a5b76f997a9a62a8411cd13018aaa3c3cdaaac9fc1d8623d99ed2d4d84"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-0-pc-json.jsonl",
+      "bytes": 16108894,
+      "sha256": "32e2583706e583c153906d50a27037839efcd8055fd99e7e207a780441e62eec"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-0-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "a9a57d2d80201128f19c0b5c3646c1d248630827255a66a8c9bd4e5a0c65d1ed"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-0-pc.stderr",
+      "bytes": 286,
+      "sha256": "77a67815fd2212f9128b24450399194fe88d65f76944f5117f4303709afd5514"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-0-regs-json.jsonl",
+      "bytes": 19808013,
+      "sha256": "c66751e46d4f9677db2d1b1caf466ac9daf93cfa437b8757aee0fa516d1c6ee8"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-0-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "af4cb9e1ac8b8d518e54923a1f7f7c610c953b6d19befd89416f891dbb46741d"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-0-regs.stderr",
+      "bytes": 287,
+      "sha256": "ba2351cda99e8da7242ef89e03fa6ec9d4c45ad3bdc1b8caeda8f9d1eb3c8440"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-1-pc-json.jsonl",
+      "bytes": 16108894,
+      "sha256": "028acb285edd45765a0e342f6dd3a9fffa3a2529bcd011ddd4227e675e9aed46"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-1-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "a24b34c1e0eeb7c4ecdb35ec5fa859438772e4db7a9b6a3d99c675c13de6da50"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-1-pc.stderr",
+      "bytes": 286,
+      "sha256": "14c8e0fe69da230e561983dfb80763d1b581532b01e2d0ff884f7327dd8b021d"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-1-regs-json.jsonl",
+      "bytes": 19805803,
+      "sha256": "7bf2722aa148ff98a75bc9dc5e4399acd638b6dc0f5e92217d86a4fb073a1b88"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-1-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "eda4d10b4ebdbc6618e0def7db5fa145d72c30b7349e12d8a5fadbf80264ef84"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-1-regs.stderr",
+      "bytes": 287,
+      "sha256": "63f0a1ff546aab374e7127d782f703b5bc3dffeef85559b2be9449cf491cb7b0"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-2-pc-json.jsonl",
+      "bytes": 16108894,
+      "sha256": "d3849c89c0007854db85e9074a6e7e022dabab220be32a552c062227d733425a"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-2-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "be5bd62c174cfc8a79371146ebdae17269f179f838e0db8628c9ef9becfe2f72"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-2-pc.stderr",
+      "bytes": 286,
+      "sha256": "d6f29acecfdf4a8c47667bec3491558b4abaf71f3caf299d0966ecd2ce53cc5a"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-2-regs-json.jsonl",
+      "bytes": 19808304,
+      "sha256": "14f4797015d9699a6463918923b509e50b72748e35fa89da60a3a266a141240b"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-2-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "c2225444ba05a2b7cc190f5f4acfbb23fdb97d183fd80f0b7e44b6c9b2fa6540"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/0-2-regs.stderr",
+      "bytes": 287,
+      "sha256": "c1c1f6c68d6305f9e8fe4084416d0f2cae8c69fadecfceb2a5e7b85153521b23"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-0-pc-json.jsonl",
+      "bytes": 657845,
+      "sha256": "3b0aa03a4187ee4d7ae41fe1a55b020119f78feb9048825ee74993ea1a45f61f"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-0-pc-json.stderr",
+      "bytes": 281,
+      "sha256": "8be7551c851faa7151e8b12d59644cf9ce1829d9cb63aa63a3deb837ff2f9376"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-0-pc.stderr",
+      "bytes": 281,
+      "sha256": "5fb67238589179332c8c4f89a7c8f5e28eab287c602e3a0eed6a257651de10bf"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-0-regs-json.jsonl",
+      "bytes": 811756,
+      "sha256": "aeab56c5a689ca36e3be03a27abd7a9adc1a6a92a65c60da1e675a8dca178125"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-0-regs-json.stderr",
+      "bytes": 281,
+      "sha256": "8a9ed58a46cfcb349e9efb3199d397de210a676af1ccceb56fca5ea4629fed16"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-0-regs.stderr",
+      "bytes": 281,
+      "sha256": "37df7d8bc89246189ad233de8d611b1b98c11e71c883d829a0acfc9d53306ce3"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-1-pc-json.jsonl",
+      "bytes": 657845,
+      "sha256": "c64eeae3ac8a79eedc32dd3cc1b66d250fa7309a167d533eb4253a38c9dbf40a"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-1-pc-json.stderr",
+      "bytes": 281,
+      "sha256": "a7db839dfd11bd5a46cbb23f77268ed8bea5b8cd9aaa3776b75f7671f789d28f"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-1-pc.stderr",
+      "bytes": 281,
+      "sha256": "a46ea6825b2a1ec389997532128286fa4f7f8d708687729b9176e49c737a9766"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-1-regs-json.jsonl",
+      "bytes": 811781,
+      "sha256": "ea51c3629147f785719d05d0102b68f1f6076884cfe4d4b0293f8c3beabe9994"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-1-regs-json.stderr",
+      "bytes": 281,
+      "sha256": "dcba45fe77480cbfc705474d9f9aad6135d5cb13a751b8495342d59363c4d058"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-1-regs.stderr",
+      "bytes": 281,
+      "sha256": "fadcee945ccbe428076887c4c3ed8f5da7f9eb2857fe28177ad65386d695e94b"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-2-pc-json.jsonl",
+      "bytes": 657845,
+      "sha256": "06fb83136b56a0900669167d64f3cfe5a6894423686fe4731222f9c47843b737"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-2-pc-json.stderr",
+      "bytes": 281,
+      "sha256": "524c87c3e503ca7ce7345c3e4f9a9aa1f85f5d00422083afcacc324c9801ceea"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-2-pc.stderr",
+      "bytes": 281,
+      "sha256": "d0c5c3a6a3a77413bb9cfa22e0a4904aca7e68cc9ff79f45c667cef0585a3046"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-2-regs-json.jsonl",
+      "bytes": 811772,
+      "sha256": "8ee41994bd65481502c51d62c0ccf9e0c6617a0f4c59141fc0a30a0c6db21924"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-2-regs-json.stderr",
+      "bytes": 281,
+      "sha256": "36da10e51bf64a72981ab04aa00a0485b64c469dd956c8d67e27bb1f33f207f9"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/1000-2-regs.stderr",
+      "bytes": 281,
+      "sha256": "ac3b0f06b97443a272da77a6fc02300e5fde417e273d1299ed19161f6b94b1ee"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-0-pc-json.jsonl",
+      "bytes": 6694814,
+      "sha256": "6607336a3544f5a75a79a96c4d5a3380135ea38a3ad3177e6d08193fb5bfd888"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-0-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "d2dd933d7f7a9a624585c07a5411d8943c06096a48dff770ba4a7c454f2ae6e9"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-0-pc.stderr",
+      "bytes": 286,
+      "sha256": "18394240eecfa168ab62c7ef6d973fe3333e94beefd3f59bb8b02ee447ca5117"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-0-regs-json.jsonl",
+      "bytes": 8260205,
+      "sha256": "e87847790f3a0325ef7724815bd51af851412ad8e69a64f969f01681c67fac95"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-0-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "65e1e8b21dee974415747fe344efb1410f5d056c89402c05c95f0193d3c87fe2"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-0-regs.stderr",
+      "bytes": 287,
+      "sha256": "6255410668c0078c0f92ea9788e650854873940bbfa9b2a6d5137abe65f61fb9"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-1-pc-json.jsonl",
+      "bytes": 6694814,
+      "sha256": "4d15e9acd22365a5397127da51e14a5ab9d32f8372b013cf4e10c10465aa75a4"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-1-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "2d849334ea565e9326cc63ec0c9010ca1a6557fda5071180d9830572d7c06c2e"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-1-pc.stderr",
+      "bytes": 286,
+      "sha256": "650609c71e237ba8f845d871e68c10b7035b8a64216462f76a5ba923101449e6"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-1-regs-json.jsonl",
+      "bytes": 8258967,
+      "sha256": "6f43a12b95fab22cf944da36dcbc16f238adb768530c4dc5175d9224176eced0"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-1-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "283b4c18f5c23cbd49cd65668eaf0ad479650c6a8b08af895a9ebc3061aa6d9b"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-1-regs.stderr",
+      "bytes": 287,
+      "sha256": "58bb44bf48fe76c62d07becf5d8ae633a2bcde81289a02a2f3a335fc154f0243"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-2-pc-json.jsonl",
+      "bytes": 6694814,
+      "sha256": "4324340d5b360cf56da2e3f7f08bf6c50e896df550520619591fc62ed67a2910"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-2-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "4cc15531fe037129aeb0bb7858aaa1b3840d2ce929caccb1d2c872597be2bcad"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-2-pc.stderr",
+      "bytes": 286,
+      "sha256": "ac8f25f4f09265f743b233f9305a5f895be448e1711e012f7742740fd710ef25"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-2-regs-json.jsonl",
+      "bytes": 8259417,
+      "sha256": "6add8008c05e64e6f2cdd95e15b9ad27d5fefbc4b7ed287382ce7a0c69e3d1d7"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-2-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "0aef92e415578f224780cd60599c5e98384bb851c4e16d3f2a14de2d8f86dce7"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/10000-2-regs.stderr",
+      "bytes": 287,
+      "sha256": "0e31e478ccba82a8c623833ba4e134b26b858b531f5fd9cadd442221a1bc9810"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-0-pc-json.jsonl",
+      "bytes": 33566854,
+      "sha256": "43dbf25b8c7c8d63cea13465c5a8fe62e92e9abcdbdbb09d5759076bf8dc2853"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-0-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "715c4c7a72c380cea4a7bba121b2f31dbb49f6c476d6ab5cabb147bf51ff08fe"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-0-pc.stderr",
+      "bytes": 286,
+      "sha256": "29db2b3df10ff07f1babdf1caec8ae3e8309246a1a9be23725ae0dd2c5bbc00f"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-0-regs-json.jsonl",
+      "bytes": 41285016,
+      "sha256": "04213f0f90b2c5627515aa0c6f6fdf5933317c0f32b688d9c065e35b43798162"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-0-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "dca75b91f1c76a76d371580dc2d52ca7eb8cd589acc1efe418d8f9c6d3109bab"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-0-regs.stderr",
+      "bytes": 287,
+      "sha256": "cfb700402918f5cc5bd4e1002abb947faca7f650a2481f6adcfb343b3b1f35e2"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-1-pc-json.jsonl",
+      "bytes": 33566854,
+      "sha256": "b5f644efe1ce13125cb4b658b73ae8593025962ed57c3e3618224fc481015e6f"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-1-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "b918f2c7550e42a6724249d1ddbef0a9edf377c3cdee881a605f1bd0fb0ee7ed"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-1-pc.stderr",
+      "bytes": 286,
+      "sha256": "97e49a04291a2bd1283d428b6126a12a7eaa78bcceb7dc3c6ca9e005e409909c"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-1-regs-json.jsonl",
+      "bytes": 41284975,
+      "sha256": "d97459f49bcfb30085b794a9dc110317cfa2d2b87fd894f6c51e2b22577295d0"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-1-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "48a2ccd458dff9a573a3b3b2987f125a238c574eb2ab0f8cb6d962e110d377ed"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-1-regs.stderr",
+      "bytes": 287,
+      "sha256": "44f6a44dc78ef1744a4cadea4cae64dce8b06167203e9323510342b137e6c3c8"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-2-pc-json.jsonl",
+      "bytes": 33566854,
+      "sha256": "d37475c50352e8541f6be9ee7abe30447f216e81f4616fcbd0fe2b6e3e6b5b8f"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-2-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "cc726bb599a33a2f21e5a204ee01a32113924886d6a423b6a4b3530c38f0cfcd"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-2-pc.stderr",
+      "bytes": 286,
+      "sha256": "3720740765e3c99b92d918502c3cf6dbb54e282300e8f202d9842372d65b1fda"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-2-regs-json.jsonl",
+      "bytes": 41284907,
+      "sha256": "f8b472d2b4cce6e9afa81108c416e77055a63970876eb582bb9b765ac7215a8b"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-2-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "7ee267ea8511db974c29b6a5babac8fd1fefadb321a747374559ce9a9e88f23c"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/instruction-bench-delta-2026-11-25/50000-2-regs.stderr",
+      "bytes": 287,
+      "sha256": "e986e2767c20c035bb13ba76ea227bc5c5ce793f2ff276e97b2e8836387e7323"
+    }
+  ],
+  "cleanup": {
+    "boot_id_unchanged": true,
+    "test_processes_remaining": false,
+    "test_directories_remaining": false
+  },
+  "notes": [
+    "Smoke and loss tests ran against the working tree subsequently committed as source_revision; their recorded HEAD is the preceding commit. File and artifact hashes identify what was tested.",
+    "Benchmarks ran after source_revision was committed, using the same artifacts as correctness tests.",
+    "The old-vs-new comparison combines delta encoding and an 8 MiB to 32 MiB buffer increase; their independent loss-rate effects were not isolated.",
+    "No CPU affinity, frequency, temperature or background load control. Short unpaced bursts do not establish sustained zero-loss capacity."
+  ]
+}

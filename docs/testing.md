@@ -150,6 +150,8 @@ ticks/峰值 RSS、安装时间、输出量、丢失和原始命令。节流率�
 必须连同吞吐一起比较。脚本不运行普通 stackplz 对照，不能据此声称完成整个项目的
 性能 roadmap。2026-11-25 已完成本脚本的 60 组设备对照，详细数据与限制见
 [fuxi 报告](instruction-device-2026-11-25.md)。下面仿真中的时间不能用作设备性能数字。
+同日 ABI v2 + 32 MiB 的 60 组对照也已完成，全部无丢失，并通过消费暂停导致缓冲区满的
+恢复测试，见[增量报告](instruction-delta-2026-11-25.md)。
 
 没有设备时，可独立检查 fixture。主机需安装 `unicorn` Python 包、QEMU user 和
 AArch64 GNU 工具链及运行库；NDK fixture 仍按前面的命令构建：
