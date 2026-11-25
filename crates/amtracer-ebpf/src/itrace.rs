@@ -81,7 +81,8 @@ unsafe fn capture(ctx: &ProbeContext) {
     // thread entry concurrently. sched_process_exit removes it before TID reuse.
     unsafe {
         (*stats).hits += 1;
-        if IT_THREADS.get_ptr_mut(&identity).is_none() {
+        let mut thread = IT_THREADS.get_ptr_mut(&identity);
+        if thread.is_none() {
             // A map-backed initializer keeps the expanded thread state off
             // BPF's 512-byte stack. Only epoch changes; all other fields stay zero.
             let Some(initial) = IT_INITIAL.get_ptr_mut(0) else {
@@ -93,8 +94,9 @@ unsafe fn capture(ctx: &ProbeContext) {
                 (*stats).state_failed += 1;
                 return;
             }
+            thread = IT_THREADS.get_ptr_mut(&identity);
         }
-        let Some(thread) = IT_THREADS.get_ptr_mut(&identity) else {
+        let Some(thread) = thread else {
             (*stats).state_failed += 1;
             return;
         };
