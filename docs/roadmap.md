@@ -18,7 +18,7 @@
 | 12 | test: add device correctness and benchmarks | 可复现真机正确性和性能报告 |
 | 13 | feat: add recomp instruction tracing | 主机与构建、fuxi 601 条完整事件 smoke 通过；60 组性能对照完成，1k/10k/50k 档无丢失，不节流 regs JSONL 有丢失；完整边界矩阵与 NOP 单独基准仍待补，见 instruction-device-2026-11-25.md |
 
-| 14 | feat: prepare UXN probes from runtime instructions | 内核内存优先准备/解绑与安全回退已提交，完整 Image 构建通过；工具实时内存规划、39 项主机测试和 fuxi 解析/原有 601 条 smoke 通过；新内核动态解密 hook 尚待刷入验收，见 runtime-instructions-2026-11-25.md |
+| 14 | feat: prepare UXN probes from runtime instructions | 内核和工具实现、构建及主机验证完成；新内核 fuxi 五组内核回归、动态私有明文普通 uprobe/itrace、601 条 smoke 和丢失恢复通过；同频 perf 与 120 组新旧端到端对照完成，128 页布局限制和性能升高项见 runtime-device-2026-11-25.md |
 
 允许按依赖关系拆分较大的提交；每项状态在实施记录中更新，未完成验收不得标为通过。
 

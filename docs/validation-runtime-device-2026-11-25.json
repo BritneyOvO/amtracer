@@ -1,0 +1,3201 @@
+{
+  "date": "2026-11-25",
+  "serial": "282eb4e4",
+  "product": "fuxi",
+  "tested_kernel_source": "5805d4b63c5c7589509f48739fb054959da83c0b",
+  "kernel_test_commit": "d431cf6c80bcafd455d1408cc506e639f4c474cd",
+  "amtracer_test_commit": "e56dcbe13ac812b58bc5afeb0585688cb6dc2ac7",
+  "final_device": {
+    "boot_id": "854ad72b-b404-4311-b277-1200b1a4e1df",
+    "old_boot_id": "c6c706fb-1197-4dff-bee7-b31602c269c9",
+    "boot_a_sha256": "3941f3c05fc47edd3cef84a0777c4ab2eb4489fef6f9cbbbc5edb1e1aff77a59",
+    "image": "/root/Kernel/common-android13-5.15-2024-11/out/ktools-tests/uxn-runtime-20261125/new-boot.img",
+    "kernel": "Linux localhost 5.15.167-android13-8-00014-gbf0a81a7f319-ab13297889 #1 SMP PREEMPT Tue Apr 1 14:07:47 UTC 2025 aarch64 Toybox",
+    "selinux": "Enforcing",
+    "boot_completed": true,
+    "frequency_limits_khz": {
+      "min": 1920000,
+      "max": 2592000
+    },
+    "owned_processes_remaining": false
+  },
+  "kernel_functional": {
+    "tests": [
+      {
+        "test": "uxn_uprobe_runtime_test",
+        "returncode": 0,
+        "output": "PASS no-hit detach preserves each private plaintext alias\nPASS runtime aliases, simultaneous mm isolation, duplicate/return probes, USDT rollback\nPASS unsafe native fallback refused without modifying plaintext\n"
+      },
+      {
+        "test": "uxn_uprobe_auto_test",
+        "returncode": 0,
+        "output": "PASS auto: install, duplicate/return consumers, same-page add/remove, cleanup\nPASS reattach: new generation, retired passthrough, fork consumer filtering\nPASS running loop: attach patches the current recomp without replacing it\nPASS mapping: probe before mmap, source unmap, retained code, event close\nPASS fallback: unsupported recomp uses native BRK/XOL; no live page leaks\n"
+      },
+      {
+        "test": "uxn_uprobe_test",
+        "returncode": 0,
+        "output": "PASS auto: original PC/regs, ref counter, manual registration guard\nPASS UXN: entry/return consumers, two sites, PC/regs, counts, fork, guards\nPASS detach: ref counters, retired prefix, automatic reattach, original unmap\n"
+      },
+      {
+        "test": "uxn_brk_test",
+        "returncode": 0,
+        "output": "PASS BRK: loop, body, validation, fork, replace, detach, NO_PREFIX\n"
+      },
+      {
+        "test": "uxn_uprobe_fault_test",
+        "returncode": 0,
+        "output": "PASS readonly write preserves probes/USDT; harmless MM requests succeed\nPASS signal PC/si_addr, sigreturn retry, non-site/retired bodies, native comparison\nPASS missing source PTE: detach/munmap in both orders, with/without USDT\nPASS failed automatic images release mappings; no live registry leak\nPASS automatic exception and cleanup regressions\n"
+      }
+    ]
+  },
+  "runtime_smoke": {
+    "after-runtime-full-pass": {
+      "passed": true,
+      "traces": [
+        {
+          "sites": 2,
+          "events": 12,
+          "received": 12,
+          "hits": 12,
+          "submitted": 12,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1408,
+          "full_snapshots": 1,
+          "incomplete": false
+        },
+        {
+          "sites": 2,
+          "events": 12,
+          "received": 12,
+          "hits": 12,
+          "submitted": 12,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1408,
+          "full_snapshots": 1,
+          "incomplete": false
+        }
+      ],
+      "ordinary_uprobe": {
+        "events": 3,
+        "stats": "AMTRACER_PID=20247\nuprobe: events=3 kernel_lost=0\n",
+        "command": [
+          "/data/local/tmp/amtracer-itrace-06e017663c/amtracer",
+          "uprobe",
+          "-p",
+          "20226",
+          "--probe",
+          "0x630fad2000",
+          "--print",
+          "r0",
+          "--print",
+          "*sp",
+          "--print",
+          "bytes(0x630fad2000,4)",
+          "--stack",
+          "--regs",
+          "--duration",
+          "8",
+          "--count",
+          "3",
+          "--json"
+        ]
+      },
+      "after": {
+        "failures": 0,
+        "faults": 0,
+        "calls": 4,
+        "word": "d2800540",
+        "alias_word": "d28009a0"
+      },
+      "boot_id": "97b60927-5067-449e-b391-c5d23cb226f0",
+      "source": {
+        "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full-pass/runtime-report.json",
+        "bytes": 6960,
+        "sha256": "d21e5db635f64f9b6829155fdef1eef78c2e267e6146bab419db4b0b8954a0b6"
+      }
+    },
+    "final-runtime": {
+      "passed": true,
+      "traces": [
+        {
+          "sites": 2,
+          "events": 12,
+          "received": 12,
+          "hits": 12,
+          "submitted": 12,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1408,
+          "full_snapshots": 1,
+          "incomplete": false
+        },
+        {
+          "sites": 2,
+          "events": 12,
+          "received": 12,
+          "hits": 12,
+          "submitted": 12,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "discarded": 0,
+          "queued": 0,
+          "submitted_bytes": 1408,
+          "full_snapshots": 1,
+          "incomplete": false
+        }
+      ],
+      "ordinary_uprobe": {
+        "events": 3,
+        "stats": "AMTRACER_PID=13229\nuprobe: events=3 kernel_lost=0\n",
+        "command": [
+          "/data/local/tmp/amtracer-itrace-5d22d25971/amtracer",
+          "uprobe",
+          "-p",
+          "13068",
+          "--probe",
+          "0x61f7ad2000",
+          "--print",
+          "r0",
+          "--print",
+          "*sp",
+          "--print",
+          "bytes(0x61f7ad2000,4)",
+          "--stack",
+          "--regs",
+          "--duration",
+          "8",
+          "--count",
+          "3",
+          "--json"
+        ]
+      },
+      "after": {
+        "failures": 0,
+        "faults": 0,
+        "calls": 4,
+        "word": "d2800540",
+        "alias_word": "d28009a0"
+      },
+      "boot_id": "854ad72b-b404-4311-b277-1200b1a4e1df",
+      "source": {
+        "path": "common/tools/amtracer/artifacts/runtime-device-20261125/final-runtime/runtime-report.json",
+        "bytes": 6960,
+        "sha256": "7c0e0f92995d4011c1e472326e618188afd8a907323d4c8b71bdbea857e482e3"
+      }
+    }
+  },
+  "itrace_benchmark": {
+    "before": {
+      "source": {
+        "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction.json",
+        "bytes": 145015,
+        "sha256": "6691d95e6226959c0433b71ba09be935f4acfa35e656db2a5da36dc14f0e766a"
+      },
+      "boot_id": "78f0daf5-9bf8-47b7-9a59-3d54eed95b53",
+      "sha256": {
+        "amtracer": "ca6f69563d0ce5e452cb9a5c105825d9fb38281286309b80e449e9ce47ac28ff",
+        "amtracer-itrace.o": "8e39122cd55e3887dee59a77cf34c7ce0472852b9c908d96d85a4223e40a6793",
+        "fixture": "7d0fd892d8c7348fb0381ac9c54e28b7b2b0b5273d21176edd4a941e7944e3e4"
+      },
+      "total_groups": 60,
+      "traced_groups": 48,
+      "hits": 3611520,
+      "losses": {
+        "ring_lost": 0,
+        "state_failed": 0,
+        "sequence_missing": 0,
+        "discarded": 0,
+        "queued": 0
+      },
+      "unpaced": {
+        "pc": {
+          "events_per_second": {
+            "count": 3,
+            "median": 846760.5894688561,
+            "minimum": 754636.3964064491,
+            "maximum": 876822.2654634429,
+            "samples": [
+              754636.3964064491,
+              876822.2654634429,
+              846760.5894688561
+            ]
+          },
+          "median_call_latency_ns": {
+            "p50_ns": 26875,
+            "p95_ns": 35573,
+            "p99_ns": 48593
+          }
+        },
+        "regs": {
+          "events_per_second": {
+            "count": 3,
+            "median": 660619.495271071,
+            "minimum": 588340.1397913822,
+            "maximum": 700832.8788456449,
+            "samples": [
+              700832.8788456449,
+              588340.1397913822,
+              660619.495271071
+            ]
+          },
+          "median_call_latency_ns": {
+            "p50_ns": 33437,
+            "p95_ns": 47969,
+            "p99_ns": 59531
+          }
+        },
+        "pc-json": {
+          "events_per_second": {
+            "count": 3,
+            "median": 1306883.6847219563,
+            "minimum": 1224875.5004643528,
+            "maximum": 1364732.041857833,
+            "samples": [
+              1224875.5004643528,
+              1306883.6847219563,
+              1364732.041857833
+            ]
+          },
+          "median_call_latency_ns": {
+            "p50_ns": 16719,
+            "p95_ns": 19115,
+            "p99_ns": 56146
+          }
+        },
+        "regs-json": {
+          "events_per_second": {
+            "count": 3,
+            "median": 1014387.6646537678,
+            "minimum": 946459.906716123,
+            "maximum": 1024884.590735484,
+            "samples": [
+              946459.906716123,
+              1014387.6646537678,
+              1024884.590735484
+            ]
+          },
+          "median_call_latency_ns": {
+            "p50_ns": 21719,
+            "p95_ns": 27760,
+            "p99_ns": 58177
+          }
+        }
+      },
+      "setup_ms": {
+        "median": 7.993828,
+        "minimum": 7.617395,
+        "maximum": 9.885938
+      },
+      "tool_rss_kib": {
+        "median": 71078.0,
+        "maximum": 71404
+      }
+    },
+    "after": {
+      "source": {
+        "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction.json",
+        "bytes": 144926,
+        "sha256": "64f04434c0525e4e26504bdde090a31be58aa36a00ef758fd13cdd1a5e8825fb"
+      },
+      "boot_id": "97b60927-5067-449e-b391-c5d23cb226f0",
+      "sha256": {
+        "amtracer": "ca6f69563d0ce5e452cb9a5c105825d9fb38281286309b80e449e9ce47ac28ff",
+        "amtracer-itrace.o": "8e39122cd55e3887dee59a77cf34c7ce0472852b9c908d96d85a4223e40a6793",
+        "fixture": "7d0fd892d8c7348fb0381ac9c54e28b7b2b0b5273d21176edd4a941e7944e3e4"
+      },
+      "total_groups": 60,
+      "traced_groups": 48,
+      "hits": 3611520,
+      "losses": {
+        "ring_lost": 0,
+        "state_failed": 0,
+        "sequence_missing": 0,
+        "discarded": 0,
+        "queued": 0
+      },
+      "unpaced": {
+        "pc": {
+          "events_per_second": {
+            "count": 3,
+            "median": 887269.4184568572,
+            "minimum": 885245.6179253799,
+            "maximum": 964844.526822334,
+            "samples": [
+              885245.6179253799,
+              964844.526822334,
+              887269.4184568572
+            ]
+          },
+          "median_call_latency_ns": {
+            "p50_ns": 26562,
+            "p95_ns": 36042,
+            "p99_ns": 46458
+          }
+        },
+        "regs": {
+          "events_per_second": {
+            "count": 3,
+            "median": 683108.1072773009,
+            "minimum": 643664.3278086301,
+            "maximum": 683334.9174365427,
+            "samples": [
+              643664.3278086301,
+              683108.1072773009,
+              683334.9174365427
+            ]
+          },
+          "median_call_latency_ns": {
+            "p50_ns": 32812,
+            "p95_ns": 47187,
+            "p99_ns": 57344
+          }
+        },
+        "pc-json": {
+          "events_per_second": {
+            "count": 3,
+            "median": 1442985.6267268066,
+            "minimum": 1389440.8539170022,
+            "maximum": 1452073.9981991742,
+            "samples": [
+              1452073.9981991742,
+              1442985.6267268066,
+              1389440.8539170022
+            ]
+          },
+          "median_call_latency_ns": {
+            "p50_ns": 15886,
+            "p95_ns": 20260,
+            "p99_ns": 24635
+          }
+        },
+        "regs-json": {
+          "events_per_second": {
+            "count": 3,
+            "median": 1086275.7053284335,
+            "minimum": 1075568.7380048598,
+            "maximum": 1342734.023098785,
+            "samples": [
+              1342734.023098785,
+              1086275.7053284335,
+              1075568.7380048598
+            ]
+          },
+          "median_call_latency_ns": {
+            "p50_ns": 20782,
+            "p95_ns": 26719,
+            "p99_ns": 32292
+          }
+        }
+      },
+      "setup_ms": {
+        "median": 7.639374500000001,
+        "minimum": 6.559531,
+        "maximum": 9.426771
+      },
+      "tool_rss_kib": {
+        "median": 71152.0,
+        "maximum": 71492
+      }
+    }
+  },
+  "fixed_frequency_perf": {
+    "old": {
+      "source": {
+        "path": "out/ktools-tests/uxn-runtime-20261125/device/old-locked-uprobe.json",
+        "bytes": 284214,
+        "sha256": "d06bbec765fa2dbfbf45ee120eff8b096370dcefc0c462587a018fb853724be1"
+      },
+      "boot_id": "c6c706fb-1197-4dff-bee7-b31602c269c9",
+      "fixture_sha256": "6792c1a575d7a1c9b31d06aa19d6a552b8e5efa46f924a136bc8c3c2a66d99f7",
+      "sample_groups": 12,
+      "frequency_khz": 1920000,
+      "original_limits": {
+        "scaling_min_freq": 1920000,
+        "scaling_max_freq": 2592000
+      },
+      "restored_limits": {
+        "scaling_min_freq": "1920000",
+        "scaling_max_freq": "2592000"
+      },
+      "groups": [
+        {
+          "mode": "native",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 1453.3854,
+            "minimum": 1267.625,
+            "maximum": 1673.65375,
+            "samples": [
+              1458.5105,
+              1422.1405,
+              1517.9011,
+              1606.66915,
+              1568.56005,
+              1423.8569,
+              1405.29185,
+              1341.7707,
+              1353.8176,
+              1453.3854,
+              1408.60685,
+              1415.1796,
+              1508.96085,
+              1513.2734,
+              1446.07285,
+              1471.2787,
+              1439.664,
+              1543.01045,
+              1267.625,
+              1569.9896,
+              1673.65375
+            ]
+          },
+          "site_repeat_medians": [
+            1458.5105,
+            1415.1796,
+            1471.2787
+          ],
+          "install_us": {
+            "count": 3,
+            "median": 440.521,
+            "minimum": 402.188,
+            "maximum": 452.396
+          },
+          "close_us": {
+            "count": 3,
+            "median": 14010.26,
+            "minimum": 13990.469,
+            "maximum": 14307.448
+          },
+          "add_us": {
+            "count": 96,
+            "median": 18.307499999999997,
+            "minimum": 14.062,
+            "maximum": 38.906
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 80.807,
+            "minimum": 69.635,
+            "maximum": 15863.541
+          }
+        },
+        {
+          "mode": "plain",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 2.112,
+            "minimum": 2.10675,
+            "maximum": 2.6563,
+            "samples": [
+              2.1693,
+              2.125,
+              2.1172,
+              2.10935,
+              2.6563,
+              2.11715,
+              2.112,
+              2.1849,
+              2.1224,
+              2.1094,
+              2.10675,
+              2.1068,
+              2.10675,
+              2.1068,
+              2.2031,
+              2.2604,
+              2.112,
+              2.1094,
+              2.1146,
+              2.10675,
+              2.1094
+            ]
+          },
+          "site_repeat_medians": [
+            2.1172,
+            2.1068,
+            2.112
+          ]
+        },
+        {
+          "mode": "uxn",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 943.7135,
+            "minimum": 897.85155,
+            "maximum": 1143.1147,
+            "samples": [
+              1011.9688,
+              902.44535,
+              899.8854,
+              910.8229,
+              908.52865,
+              945.2162,
+              943.2239,
+              897.85155,
+              933.80465,
+              944.7553,
+              941.4507,
+              943.7135,
+              912.70055,
+              942.77345,
+              947.67185,
+              1143.1147,
+              968.21355,
+              1000.1953,
+              996.82555,
+              997.70065,
+              998.638
+            ]
+          },
+          "site_repeat_medians": [
+            910.8229,
+            941.4507,
+            997.70065
+          ],
+          "same_page_non_site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 179.00515,
+            "minimum": 176.3958,
+            "maximum": 208.8724,
+            "samples": [
+              204.23175,
+              204.3698,
+              203.77605,
+              203.82815,
+              208.8724,
+              205.0859,
+              205.4244,
+              179.1302,
+              179.00515,
+              179.29425,
+              178.97655,
+              178.97915,
+              179.5443,
+              178.7526,
+              176.4401,
+              176.4505,
+              176.59375,
+              176.9948,
+              176.5677,
+              176.3958,
+              176.64325
+            ]
+          },
+          "same_page_non_site_repeat_medians": [
+            204.3698,
+            179.00515,
+            176.5677
+          ],
+          "install_us": {
+            "count": 3,
+            "median": 341.354,
+            "minimum": 326.042,
+            "maximum": 341.614
+          },
+          "close_us": {
+            "count": 3,
+            "median": 15654.375,
+            "minimum": 14666.042,
+            "maximum": 15943.698
+          },
+          "add_us": {
+            "count": 96,
+            "median": 33.75,
+            "minimum": 21.563,
+            "maximum": 373.073
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 85.703,
+            "minimum": 66.406,
+            "maximum": 15506.666
+          }
+        },
+        {
+          "mode": "uxn",
+          "pages": 64,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 1069.55465,
+            "minimum": 1005.02855,
+            "maximum": 1349.1406,
+            "samples": [
+              1079.91655,
+              1067.0521,
+              1078.3359,
+              1068.77865,
+              1087.7266,
+              1058.0598,
+              1069.55465,
+              1329.1954,
+              1311.14315,
+              1349.1406,
+              1072.1432,
+              1076.13025,
+              1069.57025,
+              1075.5521,
+              1010.57555,
+              1041.3229,
+              1028.1041,
+              1005.02855,
+              1022.5494,
+              1026.47665,
+              1021.8151
+            ]
+          },
+          "site_repeat_medians": [
+            1069.55465,
+            1076.13025,
+            1022.5494
+          ],
+          "same_page_non_site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 222.72915,
+            "minimum": 211.2604,
+            "maximum": 233.54945,
+            "samples": [
+              223.2396,
+              223.92185,
+              222.72915,
+              222.0417,
+              222.1693,
+              221.48175,
+              224.47135,
+              211.72135,
+              211.75785,
+              211.2604,
+              211.6641,
+              211.27865,
+              211.72135,
+              211.31245,
+              232.96095,
+              232.81775,
+              232.98435,
+              233.04945,
+              232.67965,
+              233.54945,
+              232.8698
+            ]
+          },
+          "same_page_non_site_repeat_medians": [
+            222.72915,
+            211.6641,
+            232.96095
+          ],
+          "install_us": {
+            "count": 192,
+            "median": 89.8955,
+            "minimum": 76.094,
+            "maximum": 376.042
+          },
+          "close_us": {
+            "count": 192,
+            "median": 92.52600000000001,
+            "minimum": 73.958,
+            "maximum": 14148.334
+          },
+          "add_us": {
+            "count": 96,
+            "median": 50.625,
+            "minimum": 28.698,
+            "maximum": 753.125
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 98.62,
+            "minimum": 80.0,
+            "maximum": 15774.062
+          }
+        }
+      ]
+    },
+    "new": {
+      "source": {
+        "path": "out/ktools-tests/uxn-runtime-20261125/device/new-locked-uprobe.json",
+        "bytes": 284206,
+        "sha256": "fe48ff657ef9b4475f9a2552ef62979f3d262340afef2bfc7d42e4599dafaacc"
+      },
+      "boot_id": "97b60927-5067-449e-b391-c5d23cb226f0",
+      "fixture_sha256": "6792c1a575d7a1c9b31d06aa19d6a552b8e5efa46f924a136bc8c3c2a66d99f7",
+      "sample_groups": 12,
+      "frequency_khz": 1920000,
+      "original_limits": {
+        "scaling_min_freq": 1920000,
+        "scaling_max_freq": 2592000
+      },
+      "restored_limits": {
+        "scaling_min_freq": "1920000",
+        "scaling_max_freq": "2592000"
+      },
+      "groups": [
+        {
+          "mode": "native",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 1511.9167,
+            "minimum": 1319.62505,
+            "maximum": 1559.23975,
+            "samples": [
+              1465.23175,
+              1529.6746,
+              1372.4402,
+              1430.12515,
+              1531.90885,
+              1528.30205,
+              1511.9167,
+              1416.2631,
+              1542.82295,
+              1559.112,
+              1536.0286,
+              1549.4168,
+              1559.23975,
+              1558.3176,
+              1493.94535,
+              1319.62505,
+              1498.41655,
+              1505.49735,
+              1517.0444,
+              1491.3699,
+              1461.30475
+            ]
+          },
+          "site_repeat_medians": [
+            1511.9167,
+            1549.4168,
+            1493.94535
+          ],
+          "install_us": {
+            "count": 3,
+            "median": 396.928,
+            "minimum": 371.77,
+            "maximum": 488.229
+          },
+          "close_us": {
+            "count": 3,
+            "median": 13729.479,
+            "minimum": 13640.781,
+            "maximum": 16493.802
+          },
+          "add_us": {
+            "count": 96,
+            "median": 18.3335,
+            "minimum": 13.698,
+            "maximum": 37.969
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 88.5155,
+            "minimum": 82.239,
+            "maximum": 15538.177
+          }
+        },
+        {
+          "mode": "plain",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 2.11195,
+            "minimum": 2.10415,
+            "maximum": 2.2344,
+            "samples": [
+              2.20575,
+              2.11715,
+              2.11195,
+              2.112,
+              2.10675,
+              2.1094,
+              2.10675,
+              2.1745,
+              2.125,
+              2.112,
+              2.1094,
+              2.10935,
+              2.11195,
+              2.11195,
+              2.2344,
+              2.11975,
+              2.1068,
+              2.10675,
+              2.11195,
+              2.1068,
+              2.10415
+            ]
+          },
+          "site_repeat_medians": [
+            2.11195,
+            2.11195,
+            2.1068
+          ]
+        },
+        {
+          "mode": "uxn",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 913.60675,
+            "minimum": 874.09635,
+            "maximum": 1246.3022,
+            "samples": [
+              874.09635,
+              897.2396,
+              908.1041,
+              904.80205,
+              913.60675,
+              897.3854,
+              903.2422,
+              936.8386,
+              1246.3022,
+              944.52335,
+              944.72125,
+              954.7265,
+              945.6015,
+              954.4896,
+              905.45835,
+              899.9193,
+              955.38025,
+              914.9506,
+              905.5364,
+              917.12495,
+              894.2526
+            ]
+          },
+          "site_repeat_medians": [
+            903.2422,
+            945.6015,
+            905.5364
+          ],
+          "same_page_non_site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 212.5703,
+            "minimum": 202.8646,
+            "maximum": 216.4662,
+            "samples": [
+              212.5703,
+              212.61715,
+              212.22915,
+              212.49995,
+              212.57555,
+              212.7422,
+              212.48175,
+              216.4662,
+              215.8958,
+              215.6641,
+              216.12765,
+              215.5547,
+              216.08855,
+              215.61715,
+              202.97655,
+              203.0521,
+              202.8646,
+              203.0313,
+              202.8698,
+              202.99215,
+              203.08855
+            ]
+          },
+          "same_page_non_site_repeat_medians": [
+            212.5703,
+            215.8958,
+            202.99215
+          ],
+          "install_us": {
+            "count": 3,
+            "median": 439.115,
+            "minimum": 278.437,
+            "maximum": 821.354
+          },
+          "close_us": {
+            "count": 3,
+            "median": 13692.656,
+            "minimum": 13461.563,
+            "maximum": 15607.239
+          },
+          "add_us": {
+            "count": 96,
+            "median": 38.5155,
+            "minimum": 23.594,
+            "maximum": 692.656
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 74.844,
+            "minimum": 64.532,
+            "maximum": 15829.115
+          }
+        },
+        {
+          "mode": "uxn",
+          "pages": 64,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 985.5782,
+            "minimum": 954.41655,
+            "maximum": 1031.3723,
+            "samples": [
+              1012.91665,
+              1012.5964,
+              1025.0339,
+              1025.4869,
+              1031.3723,
+              1010.63285,
+              1009.2266,
+              956.7579,
+              969.7968,
+              956.79935,
+              981.9922,
+              982.51555,
+              985.5782,
+              983.48435,
+              954.41655,
+              988.05985,
+              979.9219,
+              970.914,
+              971.25515,
+              990.7058,
+              990.9635
+            ]
+          },
+          "site_repeat_medians": [
+            1012.91665,
+            981.9922,
+            979.9219
+          ],
+          "same_page_non_site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 205.1979,
+            "minimum": 192.836,
+            "maximum": 217.7578,
+            "samples": [
+              193.4609,
+              193.1432,
+              193.0651,
+              192.98695,
+              192.836,
+              193.3438,
+              193.2135,
+              205.2735,
+              205.1406,
+              205.17965,
+              205.3281,
+              205.1979,
+              205.5026,
+              205.19525,
+              217.63545,
+              217.7578,
+              216.78645,
+              217.1563,
+              216.6146,
+              217.21615,
+              216.58855
+            ]
+          },
+          "same_page_non_site_repeat_medians": [
+            193.1432,
+            205.1979,
+            217.1563
+          ],
+          "install_us": {
+            "count": 192,
+            "median": 91.927,
+            "minimum": 80.417,
+            "maximum": 482.448
+          },
+          "close_us": {
+            "count": 192,
+            "median": 90.547,
+            "minimum": 71.615,
+            "maximum": 13850.573
+          },
+          "add_us": {
+            "count": 96,
+            "median": 45.338499999999996,
+            "minimum": 35.521,
+            "maximum": 472.5
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 93.203,
+            "minimum": 86.719,
+            "maximum": 16009.479
+          }
+        }
+      ]
+    },
+    "final_new": {
+      "source": {
+        "path": "out/ktools-tests/uxn-runtime-20261125/device/final-runtime-locked-uprobe.json",
+        "bytes": 469548,
+        "sha256": "f68c2d4c51a048179624a24493cead7e02dd87e2c331667059349f9ed3800b7c"
+      },
+      "boot_id": "854ad72b-b404-4311-b277-1200b1a4e1df",
+      "fixture_sha256": "6792c1a575d7a1c9b31d06aa19d6a552b8e5efa46f924a136bc8c3c2a66d99f7",
+      "sample_groups": 18,
+      "frequency_khz": 1920000,
+      "original_limits": {
+        "scaling_min_freq": 1920000,
+        "scaling_max_freq": 2592000
+      },
+      "restored_limits": {
+        "scaling_min_freq": "1920000",
+        "scaling_max_freq": "2592000"
+      },
+      "groups": [
+        {
+          "mode": "native",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 1521.2291,
+            "minimum": 1394.5312,
+            "maximum": 1637.24475,
+            "samples": [
+              1517.59105,
+              1532.0027,
+              1496.07565,
+              1539.5184,
+              1617.58085,
+              1483.31765,
+              1515.4271,
+              1443.44005,
+              1499.7108,
+              1521.2291,
+              1521.8619,
+              1529.4974,
+              1499.6771,
+              1541.55735,
+              1444.0755,
+              1637.24475,
+              1399.96095,
+              1533.7266,
+              1573.40365,
+              1581.57035,
+              1394.5312
+            ]
+          },
+          "site_repeat_medians": [
+            1517.59105,
+            1521.2291,
+            1533.7266
+          ],
+          "install_us": {
+            "count": 3,
+            "median": 458.333,
+            "minimum": 344.219,
+            "maximum": 507.396
+          },
+          "close_us": {
+            "count": 3,
+            "median": 15219.271,
+            "minimum": 12797.76,
+            "maximum": 15220.937
+          },
+          "add_us": {
+            "count": 96,
+            "median": 21.25,
+            "minimum": 12.917,
+            "maximum": 36.562
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 87.03200000000001,
+            "minimum": 70.156,
+            "maximum": 15236.094
+          }
+        },
+        {
+          "mode": "plain",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 2.11195,
+            "minimum": 2.10415,
+            "maximum": 2.3099,
+            "samples": [
+              2.1719,
+              2.11975,
+              2.11195,
+              2.11195,
+              2.11455,
+              2.11195,
+              2.3099,
+              2.21615,
+              2.125,
+              2.1094,
+              2.1146,
+              2.10935,
+              2.1094,
+              2.1094,
+              2.23175,
+              2.1146,
+              2.10675,
+              2.10675,
+              2.10935,
+              2.1094,
+              2.10415
+            ]
+          },
+          "site_repeat_medians": [
+            2.11455,
+            2.1094,
+            2.10935
+          ]
+        },
+        {
+          "mode": "runtime",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 927.74485,
+            "minimum": 879.6927,
+            "maximum": 1051.0545,
+            "samples": [
+              1023.3282,
+              1051.0545,
+              977.96115,
+              979.52345,
+              983.62235,
+              976.58595,
+              975.5495,
+              923.4975,
+              936.1874,
+              925.89575,
+              934.52085,
+              924.56,
+              927.74485,
+              932.62495,
+              883.33855,
+              883.9687,
+              891.4739,
+              879.6927,
+              900.90625,
+              908.3646,
+              905.0807
+            ]
+          },
+          "site_repeat_medians": [
+            979.52345,
+            927.74485,
+            891.4739
+          ],
+          "same_page_non_site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 196.90365,
+            "minimum": 176.0625,
+            "maximum": 215.1979,
+            "samples": [
+              197.0677,
+              196.90365,
+              196.90625,
+              196.94795,
+              196.8073,
+              196.88015,
+              196.80735,
+              215.1979,
+              215.1927,
+              214.9453,
+              214.69005,
+              214.82815,
+              214.7734,
+              214.9661,
+              176.6146,
+              176.5026,
+              176.5807,
+              176.2448,
+              176.0625,
+              176.4792,
+              176.19015
+            ]
+          },
+          "same_page_non_site_repeat_medians": [
+            196.90365,
+            214.9453,
+            176.4792
+          ],
+          "install_us": {
+            "count": 3,
+            "median": 364.584,
+            "minimum": 339.375,
+            "maximum": 631.615
+          },
+          "close_us": {
+            "count": 3,
+            "median": 15379.688,
+            "minimum": 14113.23,
+            "maximum": 15737.5
+          },
+          "add_us": {
+            "count": 96,
+            "median": 27.708,
+            "minimum": 22.5,
+            "maximum": 370.938
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 87.3175,
+            "minimum": 74.479,
+            "maximum": 15784.167
+          }
+        },
+        {
+          "mode": "runtime",
+          "pages": 64,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 1019.0025,
+            "minimum": 915.49735,
+            "maximum": 1128.5183,
+            "samples": [
+              915.49735,
+              925.22395,
+              916.36975,
+              916.9949,
+              916.32035,
+              917.7891,
+              916.93495,
+              991.09105,
+              1019.53375,
+              1019.0025,
+              1004.2291,
+              1010.0807,
+              1045.6668,
+              1128.5183,
+              1031.63025,
+              1079.7579,
+              1079.74215,
+              1077.01835,
+              1079.8698,
+              1079.23175,
+              1078.36975
+            ]
+          },
+          "site_repeat_medians": [
+            916.93495,
+            1019.0025,
+            1079.23175
+          ],
+          "same_page_non_site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 206.59115,
+            "minimum": 202.4896,
+            "maximum": 234.3542,
+            "samples": [
+              206.3047,
+              206.84375,
+              206.92705,
+              206.4063,
+              206.59115,
+              206.8073,
+              206.3776,
+              203.22135,
+              202.724,
+              203.00265,
+              202.4896,
+              203.07815,
+              202.6745,
+              203.17965,
+              234.3542,
+              233.96355,
+              233.41405,
+              233.5312,
+              233.9583,
+              234.2135,
+              233.6797
+            ]
+          },
+          "same_page_non_site_repeat_medians": [
+            206.59115,
+            203.00265,
+            233.9583
+          ],
+          "install_us": {
+            "count": 192,
+            "median": 95.59899999999999,
+            "minimum": 75.937,
+            "maximum": 454.271
+          },
+          "close_us": {
+            "count": 192,
+            "median": 100.57249999999999,
+            "minimum": 73.125,
+            "maximum": 15589.895
+          },
+          "add_us": {
+            "count": 96,
+            "median": 71.84899999999999,
+            "minimum": 38.177,
+            "maximum": 698.594
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 99.60900000000001,
+            "minimum": 83.802,
+            "maximum": 15359.844
+          }
+        },
+        {
+          "mode": "uxn",
+          "pages": 1,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 946.39835,
+            "minimum": 836.54675,
+            "maximum": 1006.1198,
+            "samples": [
+              836.54675,
+              846.8021,
+              899.75005,
+              839.3021,
+              857.8516,
+              860.37495,
+              974.0677,
+              914.1979,
+              928.64325,
+              956.7839,
+              951.11465,
+              962.50245,
+              946.39835,
+              916.3777,
+              907.6458,
+              980.4453,
+              1003.76035,
+              1004.92975,
+              982.84905,
+              1006.1198,
+              954.22395
+            ]
+          },
+          "site_repeat_medians": [
+            857.8516,
+            946.39835,
+            982.84905
+          ],
+          "same_page_non_site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 210.401,
+            "minimum": 180.2839,
+            "maximum": 214.46615,
+            "samples": [
+              180.9375,
+              180.76825,
+              180.8125,
+              180.51035,
+              180.48695,
+              180.5547,
+              180.2839,
+              214.19015,
+              214.16145,
+              214.46615,
+              213.78905,
+              213.7292,
+              213.9662,
+              213.68755,
+              209.8854,
+              209.3698,
+              210.01565,
+              210.5886,
+              210.60415,
+              210.80725,
+              210.401
+            ]
+          },
+          "same_page_non_site_repeat_medians": [
+            180.5547,
+            213.9662,
+            210.401
+          ],
+          "install_us": {
+            "count": 3,
+            "median": 307.084,
+            "minimum": 305.885,
+            "maximum": 604.218
+          },
+          "close_us": {
+            "count": 3,
+            "median": 16093.281,
+            "minimum": 15527.135,
+            "maximum": 16673.229
+          },
+          "add_us": {
+            "count": 96,
+            "median": 32.474000000000004,
+            "minimum": 23.906,
+            "maximum": 650.99
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 88.36,
+            "minimum": 74.636,
+            "maximum": 16454.531
+          }
+        },
+        {
+          "mode": "uxn",
+          "pages": 64,
+          "repeats": 3,
+          "site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 995.08085,
+            "minimum": 957.2473,
+            "maximum": 1148.46875,
+            "samples": [
+              976.33595,
+              995.08085,
+              994.4011,
+              988.3386,
+              1004.66155,
+              1148.46875,
+              1082.69005,
+              1023.2735,
+              1065.4896,
+              1051.10145,
+              1032.875,
+              1058.94535,
+              1051.5443,
+              1083.5963,
+              957.2473,
+              966.94275,
+              960.862,
+              958.44005,
+              958.45575,
+              957.659,
+              959.1146
+            ]
+          },
+          "site_repeat_medians": [
+            995.08085,
+            1051.5443,
+            958.45575
+          ],
+          "same_page_non_site_cpu_ns_per_call": {
+            "count": 21,
+            "median": 212.65365,
+            "minimum": 202.09115,
+            "maximum": 214.06255,
+            "samples": [
+              202.4479,
+              202.125,
+              202.52865,
+              202.18755,
+              202.36205,
+              202.09115,
+              202.22915,
+              213.99215,
+              213.67445,
+              213.4896,
+              213.5651,
+              213.4896,
+              214.06255,
+              213.30985,
+              212.98695,
+              212.2969,
+              212.737,
+              212.6459,
+              212.6614,
+              212.263,
+              212.65365
+            ]
+          },
+          "same_page_non_site_repeat_medians": [
+            202.22915,
+            213.5651,
+            212.65365
+          ],
+          "install_us": {
+            "count": 192,
+            "median": 98.4635,
+            "minimum": 85.833,
+            "maximum": 412.396
+          },
+          "close_us": {
+            "count": 192,
+            "median": 83.985,
+            "minimum": 72.135,
+            "maximum": 16974.687
+          },
+          "add_us": {
+            "count": 96,
+            "median": 71.6925,
+            "minimum": 37.761,
+            "maximum": 784.323
+          },
+          "remove_us": {
+            "count": 96,
+            "median": 119.297,
+            "minimum": 84.427,
+            "maximum": 15704.166
+          }
+        }
+      ]
+    }
+  },
+  "register_delta": {
+    "checkpoints": {
+      "events": 2400,
+      "full_snapshots": 3,
+      "empty_deltas": 699,
+      "recovered_gaps": 0,
+      "missing": 0,
+      "submitted_bytes": 216016,
+      "last_sequence": 2400,
+      "stats": {
+        "sites": 17,
+        "events": 2400,
+        "received": 2400,
+        "hits": 2400,
+        "submitted": 2400,
+        "ring_lost": 0,
+        "state_failed": 0,
+        "sequence_missing": 0,
+        "discarded": 0,
+        "queued": 0,
+        "submitted_bytes": 216016,
+        "full_snapshots": 3,
+        "incomplete": false
+      }
+    },
+    "loss_recovery": {
+      "events": 345285,
+      "full_snapshots": 338,
+      "empty_deltas": 100596,
+      "recovered_gaps": 1,
+      "missing": 375003,
+      "submitted_bytes": 30820904,
+      "last_sequence": 720288,
+      "stats": {
+        "sites": 17,
+        "events": 345285,
+        "received": 345285,
+        "hits": 720288,
+        "submitted": 345285,
+        "ring_lost": 375003,
+        "state_failed": 0,
+        "sequence_missing": 375003,
+        "discarded": 0,
+        "queued": 0,
+        "submitted_bytes": 30820904,
+        "full_snapshots": 338,
+        "incomplete": true
+      }
+    }
+  },
+  "existing_boot_kernel_warnings": [
+    "[    1.971637] WARNING: CPU: 6 PID: 559 at drivers/spmi/spmi-pmic-arb.c:311 pmic_arb_wait_for_done+0x148/0x1a8 [spmi_pmic_arb]",
+    "[    1.973074] WARNING: CPU: 4 PID: 559 at drivers/spmi/spmi-pmic-arb.c:311 pmic_arb_wait_for_done+0x148/0x1a8 [spmi_pmic_arb]",
+    "[    2.086184] WARNING: CPU: 4 PID: 368 at drivers/spmi/spmi-pmic-arb.c:311 pmic_arb_wait_for_done+0x148/0x1a8 [spmi_pmic_arb]",
+    "[    3.004190] WARNING: CPU: 6 PID: 1131 at drivers/base/core.c:1319 device_links_driver_bound+0x26c/0x2dc",
+    "[    3.065668] WARNING: CPU: 3 PID: 1129 at mm/page_alloc.c:5754 __alloc_pages+0x1c8/0x2e4"
+  ],
+  "new_kernel_warnings_during_final_tests": 0,
+  "limitations": [
+    "128-page layout can fall back after recomp tail B range rejection on both kernels; failed reports retained.",
+    "Frequency fixed only for perf microbenchmark; end-to-end burst throughput uses normal scheduler/frequency.",
+    "Three repeats and sequential kernel A/B do not isolate cache, temperature, layout or background load.",
+    "Final new-kernel repeat has distinct medians; do not report first-pass improvements as causal guarantees.",
+    "Same-page non-site includes UXN fault and short function, not isolated NOP cost.",
+    "Close includes perf synchronization; first-install and add/remove timings vary between runs.",
+    "Runtime private RX only; no sustained RWX/JIT or real kernel allocator ENOMEM injection.",
+    "Binder open/close only in this run, no Binder traffic benchmark.",
+    "Loss recovery deliberately stops the owned consumer; missing events are not reconstructed."
+  ],
+  "files": [
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/after-uprobe-bench-first.json",
+      "bytes": 127062,
+      "sha256": "1e958002130e7c38c7254f72234b0c8388ae87bae9187ec8bde92d998941d775"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/after-uprobe-bench-first.log",
+      "bytes": 1630,
+      "sha256": "330ec845baa972798f5ee1f9ceae56b04ced6b5e8f921a96f2647386b2b4a66d"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/after-uprobe-bench.json",
+      "bytes": 546928,
+      "sha256": "e26bbc355fa6cd99f66fe3a9b29b35a6a90c72d5c199fd2548b416728ec4504b"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/after-uprobe-bench.log",
+      "bytes": 885,
+      "sha256": "e56253016717d846adec1a08a778c21b306066237dd7a20f1dc534fe630d7ed8"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/baseline-reflash-after.log",
+      "bytes": 1306977,
+      "sha256": "ae02abf8ccb234642ecbb8a655ab3746113e1feb0144d4ddb80eb0f67667ad37"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/baseline-reflash-before.log",
+      "bytes": 1922563,
+      "sha256": "0a5230ca8427420b83d60bc8d80b29353eb1b075326a073fbc0e52aafc7f34bd"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/baseline-reflash-validation.json",
+      "bytes": 478,
+      "sha256": "b488a355a0cc5ea01524c432ca796bc3e1ebcaf7151f18dcda15d2b44aa6e402"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/baseline-reflash.log",
+      "bytes": 3236249,
+      "sha256": "ef6bc3b556bd04e497d69c14005041565c171d661782d400249a72f6f1687be7"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/before-uprobe-bench-first.json",
+      "bytes": 288349,
+      "sha256": "3a67966657da1cc089841ae079dc85f1eab9d11a7dc7d6b29814f32abad9789c"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/before-uprobe-bench-first.log",
+      "bytes": 1838,
+      "sha256": "b328a784d3bf9e81941056df240e973655f2b8ce9d3cfe7474b70374abe48728"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/before-uprobe-bench.json",
+      "bytes": 527372,
+      "sha256": "74d7def879456e23159abb110a77dda7c0ddde1b9668f226f1c8a38273375e56"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/before-uprobe-bench.log",
+      "bytes": 744,
+      "sha256": "2fa73c9a2c899da90043d246af80fc0af0a2cea84657b932de7970615fda8f41"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/boot-validation.json",
+      "bytes": 475,
+      "sha256": "d0a4aeded3969b1d9c909f0a351b7a006f650d57b8b11419c9ef096b3b34c991"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/build-fixtures.log",
+      "bytes": 1130,
+      "sha256": "24b0a08c371da5c8ea1df2e3002015582a3409f5521925428af35f1f970dd112"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/cleanup.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/create_validation.py",
+      "bytes": 8510,
+      "sha256": "57448135ab8d6c0a2cd7cc16e2534a000d93c456f74954eb9a55afc9bd9ad730"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/dmesg-after-boot.log",
+      "bytes": 1301906,
+      "sha256": "179b7534059266c58eb7c6ce29858b7994518e357af86ad716215033dc22c48d"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/dmesg-after-kernel-tests.log",
+      "bytes": 1573219,
+      "sha256": "0319301004878f35160c9ffcfb5f95589d39ebde4f5ecc9496f67707f59e8cf9"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/dmesg-after-tool-tests.log",
+      "bytes": 1762908,
+      "sha256": "38abf1c18967628fa01eab99dc41f3d1de9a194a17b63d56200a6ae0e980c721"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/dmesg-before-flash.log",
+      "bytes": 2127148,
+      "sha256": "fd75966e3fa3a3c8ac6be9e4a5aade6d475234dc297523b3515432ec272e7c80"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/final-device-state.log",
+      "bytes": 61251,
+      "sha256": "8e607025242473e46f35259f03e6098959b08b8bd884f1c1de8e7e8d7b2ac821"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/final-dmesg.log",
+      "bytes": 1637746,
+      "sha256": "f8f80cae432159f968fb68a104137953f698281da80be85115115f3fc716fe05"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/final-runtime-locked-uprobe.json",
+      "bytes": 469548,
+      "sha256": "f68c2d4c51a048179624a24493cead7e02dd87e2c331667059349f9ed3800b7c"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/final-runtime-locked-uprobe.log",
+      "bytes": 765,
+      "sha256": "f7f43c341a694b37e99407b07503414ebca40031fd09fedd8d598dc357bf89ba"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/flash.log",
+      "bytes": 3435662,
+      "sha256": "4559c4fd77d596903ae4f04166e1d3215c170a4bd3d39a9a0fb9a5eb76ec2e54"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/flash.py",
+      "bytes": 3245,
+      "sha256": "316acf32a52e37581b2fdbc0e85f1ecf7a9f1c498d22089dbb1d4adfb2ca2004"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/kernel-functional.json",
+      "bytes": 1714,
+      "sha256": "d6c254c624a6d6e0299493a5cb1c3615759fd2bf95aa645e2fb158ba8b70df30"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/new-locked-uprobe.json",
+      "bytes": 284206,
+      "sha256": "fe48ff657ef9b4475f9a2552ef62979f3d262340afef2bfc7d42e4599dafaacc"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/new-locked-uprobe.log",
+      "bytes": 496,
+      "sha256": "3d45d0dae104f2770c0339400d80f011c38f594a4e60eafb4c08d44662478037"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/new-reflash-after.log",
+      "bytes": 1291886,
+      "sha256": "fe1ba7bd145d4a385082068053e8e44a64b6344d42a8beec82c763c629969359"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/new-reflash-before.log",
+      "bytes": 1594818,
+      "sha256": "003e1e34b977c66951abde9f603994b2aed725c26512ef8c7cd979bab47306bf"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/new-reflash-validation.json",
+      "bytes": 475,
+      "sha256": "82cb84e872cc63e38dbe12d3bb0d5c3f41870f9d026143e59674f51d7af112e2"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/new-reflash.log",
+      "bytes": 2893002,
+      "sha256": "0beda3104d16f2123ffe57940e9cda1e15bdb1e149b484f1fbd09f4f2457a728"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/old-locked-uprobe.json",
+      "bytes": 284214,
+      "sha256": "d06bbec765fa2dbfbf45ee120eff8b096370dcefc0c462587a018fb853724be1"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/old-locked-uprobe.log",
+      "bytes": 498,
+      "sha256": "f0dab7a2254c28f0e8f97b2a561d666dc3c8cf7a5b9cd15d7a79816c02493ac7"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/reflash.py",
+      "bytes": 3689,
+      "sha256": "34723cacb7ea619630ab34b2d69f93b3d1be4c105a861e8baecdd157278d9ab9"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/uxn_brk_test.log",
+      "bytes": 67,
+      "sha256": "7c625f0ce9689a18ddb8175330220d3fddce8d48aa36148d28e3055f7964e6fd"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/uxn_uprobe_auto_test.log",
+      "bytes": 376,
+      "sha256": "80fb8f1f798db2befe4339f1c05b7d2bac5770bba20c65aba4a8e66fa8a60601"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/uxn_uprobe_fault_test.log",
+      "bytes": 347,
+      "sha256": "ac08a2c50d5b6206b3e06e727c0026d4286b43f3d8f2cfec041fb1b23e42cf9d"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/uxn_uprobe_runtime_test.log",
+      "bytes": 210,
+      "sha256": "8bd09349661430e056a2ab56f210858d991e7bc0f2eeff87192ad46f4796315d"
+    },
+    {
+      "path": "out/ktools-tests/uxn-runtime-20261125/device/uxn_uprobe_test.log",
+      "bytes": 221,
+      "sha256": "95ffa6c68f25262ac359f3321c09780d005c8311060cf162e8186e945e5a2323"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-delta/checkpoints.jsonl",
+      "bytes": 975540,
+      "sha256": "a90369dcf713ec449e340a516799a0460a4ea09624da577d4ef9837a2f2328b0"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-delta/checkpoints.stderr",
+      "bytes": 281,
+      "sha256": "7ba6c53d3cb6e998cc44fbee215982844c062301657944ace51d04b13b6e44d1"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-delta/loss_recovery.jsonl",
+      "bytes": 141551838,
+      "sha256": "f7a0529e347cd106df772cd7c042401c5038ddbf76d88dbbdd480db5f6c4ad89"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-delta/loss_recovery.stderr",
+      "bytes": 302,
+      "sha256": "9d936d920a121618200846fbfbdab965c17e7bf01b773e59db2978dd9ae4f082"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-delta.json",
+      "bytes": 5676,
+      "sha256": "1d8cdd44441f829d027fac8db418ec1937b1a7968f8c815901337f2b2c7fd03c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-0-pc-json.jsonl",
+      "bytes": 79768895,
+      "sha256": "382e343629eeb94bb366114ae1ab1a77176ce91a6cd308a56392e4cc5f892aed"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-0-pc-json.stderr",
+      "bytes": 291,
+      "sha256": "899650727394456f13017e1faa0192514b32a96eff64b3c14daa1cc6f27e0e49"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-0-pc.stderr",
+      "bytes": 291,
+      "sha256": "418e78086c5e1c57e3f8cec5b59818c749b706fb175e81a99d33a78521d90390"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-0-regs-json.jsonl",
+      "bytes": 98310081,
+      "sha256": "cca37acceacf46d0f416c3cbc7136b02b1488a461a6bd9d0653a0b026e9cddf5"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-0-regs-json.stderr",
+      "bytes": 293,
+      "sha256": "638ec7b7c882f7071e69824b3503b07e50d40a0c8117ec2402c9d6a1560228ba"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-0-regs.stderr",
+      "bytes": 293,
+      "sha256": "4733c8bc5ebfb0381f876245af9a3017f32b69c5eb7b7bd09ed4868cc0b5c4dd"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-1-pc-json.jsonl",
+      "bytes": 79768895,
+      "sha256": "0f12252cfb99b0cf20245ff6d7fc3ba80f8e7d096697b08816b8ca817aa20d0f"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-1-pc-json.stderr",
+      "bytes": 291,
+      "sha256": "d92daeb85b77ba3621414e347d4b50a121379d365e5bd114a27ba579fc0da682"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-1-pc.stderr",
+      "bytes": 291,
+      "sha256": "2450ec13ccf64385042377a83d72a4e19ac610097ded0cb94ee8d4425082fcc5"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-1-regs-json.jsonl",
+      "bytes": 98310700,
+      "sha256": "423e48a57c30489931afa70a55a0c5d83d93c2e0e0a666bce93aea31fa9cafd8"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-1-regs-json.stderr",
+      "bytes": 293,
+      "sha256": "5d266b69703d3e08560b5e91968cc6e55918cc07f996e88547188b9667a1400c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-1-regs.stderr",
+      "bytes": 293,
+      "sha256": "3658d6fff239f43c8e96b05b58bec9051521eed2b2c1d91c0f079a6d1dde1a3a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-2-pc-json.jsonl",
+      "bytes": 79768895,
+      "sha256": "54972d6c668fbf81f5a3ae8a491c8790f23ed2d160a8b14738a22487e2cce5ed"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-2-pc-json.stderr",
+      "bytes": 291,
+      "sha256": "4f2b65ae2154c14d815fecdc2a626c4ce636846fbe1f3b5554fdd3e991769536"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-2-pc.stderr",
+      "bytes": 291,
+      "sha256": "cfd500d210d43dbe32c6a6ae1d6d78e996d0439f26d1d6632952b28d20e47d41"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-2-regs-json.jsonl",
+      "bytes": 98305484,
+      "sha256": "28a733ecd2a9739c12b307af4a48e60e8745250d6027ef4c8ffb1db6315ea44a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-2-regs-json.stderr",
+      "bytes": 293,
+      "sha256": "744ed767228b82660c7860936cf8d5df9f4f73e94fa8cb4eb7ca3f80e41225c8"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/0-2-regs.stderr",
+      "bytes": 293,
+      "sha256": "888285d77445663cf7f55d6354bb38c52ce61c4b8c5e342332a757620f43aa39"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-0-pc-json.jsonl",
+      "bytes": 324448,
+      "sha256": "c618a8495363ccbfffb6d67f152997794485b15ee6937d8812071e592b5fbee4"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-0-pc-json.stderr",
+      "bytes": 276,
+      "sha256": "5d6183ae3ebf2b95f4ef78fb2e5995ad1fd0e3d296d11ec58e9a26a334865a8a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-0-pc.stderr",
+      "bytes": 276,
+      "sha256": "d91908d80226d4fe0d23e6afb1a353b628c6fc93ea39f1d0c1e0353e10f73a63"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-0-regs-json.jsonl",
+      "bytes": 400301,
+      "sha256": "9b8e231d44256a88a83aceede9cf06958f6588061158771b8bd567649e26e651"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-0-regs-json.stderr",
+      "bytes": 276,
+      "sha256": "13dd1fe98874ebc144763962f610c011f3d1daa0effb93c05f8dc45eec754c18"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-0-regs.stderr",
+      "bytes": 276,
+      "sha256": "a33a1ac828145994b859fcbf1649af08e91414585ccc3a603216def62722d00c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-1-pc-json.jsonl",
+      "bytes": 324448,
+      "sha256": "621b1edcbd89a3c35dee62b49df2d186108cd9c645a2a48cadcfee9d3929e7c3"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-1-pc-json.stderr",
+      "bytes": 276,
+      "sha256": "845906e4da74d853aa0c3b702505993f37153505bcb795847301e89991113b8a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-1-pc.stderr",
+      "bytes": 276,
+      "sha256": "f366ad12b7d9162711dbbd66ecd79a532207954cd29d9e1a2230b07fc1aea3c1"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-1-regs-json.jsonl",
+      "bytes": 400390,
+      "sha256": "34f4caf5863a2773b7a1ad0e9a7937af71dbb75bf9eda806795866e9c74a8cf2"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-1-regs-json.stderr",
+      "bytes": 276,
+      "sha256": "41eb3487b66a38e49351bf0f103a4c59d681b0c78ff9f0ef00ea43fff0a492fa"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-1-regs.stderr",
+      "bytes": 276,
+      "sha256": "cba5b5b2e545ef50da361d5926552b2712cf0e9d0b851aab4b2eae6b10067319"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-2-pc-json.jsonl",
+      "bytes": 324448,
+      "sha256": "d925108dc177097288e3763d00fdb5ab01bfcca8a351ad568e7a0642c3d9dc38"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-2-pc-json.stderr",
+      "bytes": 276,
+      "sha256": "e19c9e457a1d0751c4d78d860050ad78e060094d272e7e776292d17c46f2b4d1"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-2-pc.stderr",
+      "bytes": 276,
+      "sha256": "61ac532a9a48f8e123c965bb5da71dfae4a38c1151088f1920c0c9b15ad7951c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-2-regs-json.jsonl",
+      "bytes": 400290,
+      "sha256": "b0a8536106ac5431864a2fd4dbc41da3008b14b1e7c79c4fc36f7cc5fc6834b7"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-2-regs-json.stderr",
+      "bytes": 276,
+      "sha256": "96e84e5b526008dae4673ce7befa57db0543d66d815b1528fcd2a5677aa78ec2"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/1000-2-regs.stderr",
+      "bytes": 276,
+      "sha256": "9b9df519fd8d268b385bb1882a0b86da12bfadf4c8eefd84f71c522b02e9b201"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-0-pc-json.jsonl",
+      "bytes": 3301933,
+      "sha256": "db1c19e0aa93b53b9cf866e6f7eb362cf7c412be5cecb665706ae8c0d9593c12"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-0-pc-json.stderr",
+      "bytes": 281,
+      "sha256": "74c89436dab27d0ad22af5199682c4996de99fadbd11d9892e4bfb0d477b885d"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-0-pc.stderr",
+      "bytes": 281,
+      "sha256": "2dc6a24390416680c25a42c2ab99ab789810f8850fc9436775748d2fe118152c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-0-regs-json.jsonl",
+      "bytes": 4075201,
+      "sha256": "06532001c6b1a757ea44ad75676ffd1f1e2bc9417d811c9eeb4dbc222ae6cc9d"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-0-regs-json.stderr",
+      "bytes": 282,
+      "sha256": "cf41cf920e69b426cdc228b43d64bdb62258594614bd37cb2be7440e339caddc"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-0-regs.stderr",
+      "bytes": 282,
+      "sha256": "3c3897f132bc96cc5ed90f4921573722dc9202e93aef6a76e4103d1cb90ece0b"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-1-pc-json.jsonl",
+      "bytes": 3301933,
+      "sha256": "99d5716a0ba6d2dcdab0bb17405ecbcd069e6f33ce0ddf8bf7e34855b9f29e1f"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-1-pc-json.stderr",
+      "bytes": 281,
+      "sha256": "ddfcf4c4715ca54df52e9ded5cb21527fbbb8ea3189631ee8c3e4452ef224f02"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-1-pc.stderr",
+      "bytes": 281,
+      "sha256": "a3f04ae42122a169998dc37249e422267ac9215fe837645d3a144632d2d2fb61"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-1-regs-json.jsonl",
+      "bytes": 4075217,
+      "sha256": "b2d9e8ad63b901e301170bef14329524b681a52ecbe6f0795d8a26f04f788163"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-1-regs-json.stderr",
+      "bytes": 282,
+      "sha256": "69a2b4f10cdbd4e1f932ed172547456216517c677a8593fadb16f12008c50f1a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-1-regs.stderr",
+      "bytes": 282,
+      "sha256": "3f12971f4077e9449989e7814bbd4212abc0d8f07616d174e22d81ce09cf5776"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-2-pc-json.jsonl",
+      "bytes": 3301933,
+      "sha256": "41e889197722b25b29bdddd10418dca985861ac5bca9825ef8bc689f1701677f"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-2-pc-json.stderr",
+      "bytes": 281,
+      "sha256": "eabbaf148e2dc1cc8505aa7f271f469fbbe10c1bace4ea5856bf9b0c67a78882"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-2-pc.stderr",
+      "bytes": 281,
+      "sha256": "08149573f59083b25438114d22b32095f02f212a0f505c0bd72104cb2b87fb92"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-2-regs-json.jsonl",
+      "bytes": 4075558,
+      "sha256": "2db04396c58e524ee5908aaaae82fe452987e90a3995ad5e2bbfb90845b7bde9"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-2-regs-json.stderr",
+      "bytes": 282,
+      "sha256": "218fda6f7a55d56a01f140ebd21bb37a710d7c566a098233886033de83a95fd3"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/10000-2-regs.stderr",
+      "bytes": 282,
+      "sha256": "faba1e9520de49de32c90af944dd0dfc16b5de2aa8a32f7ae98d8c233d74432e"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-0-pc-json.jsonl",
+      "bytes": 16577906,
+      "sha256": "bb7a1fdb46445e00d1c23cc6adb0d2776774f1c5d328b7798612b8ac6a3d32b2"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-0-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "8cf62226e3ec0ff6425b14012fbd5b00ebc31c63249518ff426343808c188f85"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-0-pc.stderr",
+      "bytes": 286,
+      "sha256": "27ae276177e2983d75ded8af0bd018e5fe5ea288bd7219c0a05d9f08724a53cd"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-0-regs-json.jsonl",
+      "bytes": 20422284,
+      "sha256": "b6f2811af029817dad0f8bd44eea55e1593ea7aa785961c1e003d9dcb66a0617"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-0-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "d8a695542b13f09bab27deea975b8a48e3474674ad642c02624b6f7727984956"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-0-regs.stderr",
+      "bytes": 287,
+      "sha256": "37be8d507d2c2a8c8d85cd675326536584d890cc390f4367e464c155fe235089"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-1-pc-json.jsonl",
+      "bytes": 16577906,
+      "sha256": "e5c067124afd42628b860791073986341d3de479b04447c241bea6917ebcc2b2"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-1-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "08dea538e05742e94b45867c8c6fd32c91da0d94297e629a46c1e474697dbc82"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-1-pc.stderr",
+      "bytes": 286,
+      "sha256": "ae6618434ac665cb550aa0b100c5bd9549e930e4823dec69d3d06c32634a4134"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-1-regs-json.jsonl",
+      "bytes": 20422259,
+      "sha256": "5831810377b5fae516c634932a5e954d79286bf8b9f185e81217201ab4423d66"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-1-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "e889a9b88a28fbe40d4da833330cd7d50cd41149d01b90fd6bb399981db31a81"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-1-regs.stderr",
+      "bytes": 287,
+      "sha256": "745449862b3e4318d0a9c0850da7ad196e40c07bba0542256c2a0c46ef72ace9"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-2-pc-json.jsonl",
+      "bytes": 16577906,
+      "sha256": "b2018b46e2e2931b63617a7f9357586c4577ab3f0a4b12338b84e11c757f4345"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-2-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "cdd5cb043b29bde8cc9b33bc7d2ca3f939e3e7edd894f1d036c0c88d8c242b16"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-2-pc.stderr",
+      "bytes": 286,
+      "sha256": "9dde60c448d2728acfc9ea6de3aa2d21dd99067138f3f98eb9d64d17e0e8efc4"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-2-regs-json.jsonl",
+      "bytes": 20422157,
+      "sha256": "6826637454d857052d70e2fa1c9f104b975719dbb98cd11ba65f04841e4f7034"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-2-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "664090e5c382fd2d1ff0321afc4ca20a284364636f56f14b0974443f1d857af3"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction/50000-2-regs.stderr",
+      "bytes": 287,
+      "sha256": "158ec97b775d8db0d5a22297eff39c2d94215a7047138077b0863e4eff113e81"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/count.jsonl",
+      "bytes": 2292,
+      "sha256": "7d8da2d1a5df2b7f99543da445da44d194fb58140616ae79884e259e8479cac7"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/count.stderr",
+      "bytes": 270,
+      "sha256": "e946dc2834fee13b040abfc91aeb1005e6fccc55ab9d9b250d43f07b86be7567"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/cross_page.jsonl",
+      "bytes": 3879,
+      "sha256": "21989ce92b2ba076b4fca8a87e0b083fffd7b242c5be0000b1dd2481e12ba020"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/cross_page.stderr",
+      "bytes": 268,
+      "sha256": "f4fa24bbfe30242466cd1bac9ede2187353e45a5999eea7b0960e31e809109c8"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/exclusive.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/exclusive.stderr",
+      "bytes": 126,
+      "sha256": "098a72b5d9371253a9cb71b043f316820d84d417657af4ca0e4e72addc727dc0"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/fallback.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/fallback.stderr",
+      "bytes": 162,
+      "sha256": "bba86fa3db33a0de3410ad599d9770e72442d35627b729ab3232cf67862aacdf"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/fault.jsonl",
+      "bytes": 1286,
+      "sha256": "ff5ceb527b9ed83f2cbfc134ae5cb5c08800f602d5b4ff04d85f000d8da12ef6"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/fault.stderr",
+      "bytes": 264,
+      "sha256": "efe007521918a8e30562d6896807377f06f59d54fb4ed84924155870299bf405"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/flow.jsonl",
+      "bytes": 29199,
+      "sha256": "593775497031c456d42c91d75cd84cc884d63ffbf9549f42cd237e868cc596f8"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/flow.stderr",
+      "bytes": 271,
+      "sha256": "397619ac5b67f921baa7297f7ba4a0901dd468bcaa268d1ba8e9b54cb6612a11"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/many.jsonl",
+      "bytes": 51714,
+      "sha256": "e4d7bfd415aab259e72b73657d337d80f063c4265f8308cf0f029587a789a31c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/many.stderr",
+      "bytes": 276,
+      "sha256": "ff433187c477de172db85261228ab81db14f6c65c9c783a1e355a0b24fe1d1c9"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/migration.jsonl",
+      "bytes": 29203,
+      "sha256": "c6e2c4e1d401dfb642a1345d2e87acf4ce78919e8da57908c8a66750ac61596e"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/migration.stderr",
+      "bytes": 271,
+      "sha256": "7061c539ed9d4c2223473a0cbfd853fc0c4200f17992d260a2f035148d3457b9"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/svc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/svc.stderr",
+      "bytes": 193,
+      "sha256": "b4f4840715e58ad9c3fbdd2065a80d509d0520a4d1dbdee202ce213d5ee77d2f"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/target_exit.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/target_exit.stderr",
+      "bytes": 292,
+      "sha256": "fbe2d5b1ca686c84727f98876dd83042c0b6362d54c386cc9b1932ea2f7e5934"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/threads.jsonl",
+      "bytes": 87609,
+      "sha256": "03b6fa4343c5379918aee594e294b252b90c2e977835d3fcebd7d24250be1a01"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/threads.stderr",
+      "bytes": 276,
+      "sha256": "d6a89a2f63d90e0a9eb267318c4d26c8bc2112559a7e894a52a34cad1b38d017"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/zero.jsonl",
+      "bytes": 25713,
+      "sha256": "1fd27663f2e5e0fcb4bc584459bc73e41fb62a6fffdfc53b94b1c7e5d5c9c4aa"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke/zero.stderr",
+      "bytes": 271,
+      "sha256": "c2859d83c5e6f7b40bee2e823b733916f518067283a6a5ca664a32401a7fc025"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction-smoke.json",
+      "bytes": 22187,
+      "sha256": "88741d130941f0b15f13876ccdf63bb9e26f4e919aa185a9f6f3a5a7e6764db8"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-instruction.json",
+      "bytes": 144926,
+      "sha256": "64f04434c0525e4e26504bdde090a31be58aa36a00ef758fd13cdd1a5e8825fb"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime/runtime-0.jsonl",
+      "bytes": 5392,
+      "sha256": "4f45edecc4d57b0d9098c62c89d0228fd9b3e215b7c8e48f54195fb2928b7ea8"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime/runtime-0.stderr",
+      "bytes": 269,
+      "sha256": "23c3486a2124ece5c129b709d0460b3a0a754d9668015bd923c72592895c09e1"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime/runtime-1.jsonl",
+      "bytes": 5392,
+      "sha256": "b51553eba1c1e09026925741fd1cddac931c4e615ddc849976803f02e0c4bae8"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime/runtime-1.stderr",
+      "bytes": 269,
+      "sha256": "2c4d9bf716e65f23bde96b2319ea6ddbf688fdd7261862e37515cf7ebcb63be9"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime/runtime-report.json",
+      "bytes": 6308,
+      "sha256": "3bce5fbf3b1a9a389e11865d327fe06333b95851f1f99c527b6c2beaf5c632b9"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full/runtime-0.jsonl",
+      "bytes": 5416,
+      "sha256": "c3be88e48b4a3223974b3638119d31d5cec3faeea6731d862c5a3be5111c796b"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full/runtime-0.stderr",
+      "bytes": 269,
+      "sha256": "a6a7ba999558c02e8bb42b121e79cdc2428805247596f20b4e360dcd0eaa3c22"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full/runtime-1.jsonl",
+      "bytes": 5416,
+      "sha256": "dc3f6573c9512e2c37122c21106ccf22809d33693114d1964eaf107ece0f40e8"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full/runtime-1.stderr",
+      "bytes": 269,
+      "sha256": "8c8d7ca064112eef9dae2b2857b2bf9b0ea151b76a603b18aa3971d78eb15d27"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full/runtime-report.json",
+      "bytes": 6325,
+      "sha256": "09e07d14edf2dce428b5e7c0b7ab40cdfdec7cd5f8ca0fa9015292b9db1cc105"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full/runtime-uprobe.jsonl",
+      "bytes": 5627,
+      "sha256": "668e4def335514e1264a3c9cd40be9352cdd48edac337fa015acdb54413342be"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full/runtime-uprobe.stderr",
+      "bytes": 50,
+      "sha256": "35c715346bbdeac1c3b60e90fbfddf2595ce5d5a4c37e98b51abce63096cdd4a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full-pass/runtime-0.jsonl",
+      "bytes": 5416,
+      "sha256": "3028061df236ad8ff87d6c494808e41346777eb9225736647c5a4f0923abd7ff"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full-pass/runtime-0.stderr",
+      "bytes": 269,
+      "sha256": "9d4f3990d990c9137c13f86b9ca11ee6f96d1286135dea0f742b9e152866cb33"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full-pass/runtime-1.jsonl",
+      "bytes": 5416,
+      "sha256": "a052b5327dc780963bf6a8bc9cb1eccf1367e1e969d67178f4156430f4534de2"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full-pass/runtime-1.stderr",
+      "bytes": 269,
+      "sha256": "673d302f83baf408dd5200dfac35ad2849b3718e95d3164ac11a5bd5cab9b8c4"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full-pass/runtime-report.json",
+      "bytes": 6960,
+      "sha256": "d21e5db635f64f9b6829155fdef1eef78c2e267e6146bab419db4b0b8954a0b6"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full-pass/runtime-uprobe.jsonl",
+      "bytes": 5627,
+      "sha256": "8b760fad55fb247603f4a8ac19bca0968a0a9a95522a7f0004969b5c0ae0ef57"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/after-runtime-full-pass/runtime-uprobe.stderr",
+      "bytes": 50,
+      "sha256": "16cd08e5eb38ad38759ab097f5606e2a5bb543dea89c022a21b6b9a2413dbce5"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-0-pc-json.jsonl",
+      "bytes": 80728895,
+      "sha256": "af9698abd81e9f642c3caf42c516a6e27a31af02c599678e5e3297022e98fde5"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-0-pc-json.stderr",
+      "bytes": 291,
+      "sha256": "2a24a45b3d13fef891f59c8e2ecd33727e80a2c31144e0d60a21439b4a922b4a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-0-pc.stderr",
+      "bytes": 291,
+      "sha256": "650746ba0888eed77e1c16f10c1e679760c9867c6c4f233fd490193b5cf10692"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-0-regs-json.jsonl",
+      "bytes": 99354776,
+      "sha256": "ed2697404770c461de3f5b3ca9363ffb432c09858710794b91e5cd4347d9b3bd"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-0-regs-json.stderr",
+      "bytes": 293,
+      "sha256": "e0539d2681b4d95961fd884a566ce948302857822b42a16d56a6605213d15cf5"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-0-regs.stderr",
+      "bytes": 293,
+      "sha256": "d5587687da24cf8427a06efd273039e7f75ade103d7edd715d941967822dfc2d"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-1-pc-json.jsonl",
+      "bytes": 80728895,
+      "sha256": "2fbfc05f2eb0f51ee49149ba8318d2c55d4014390f096f0e700f4b6554150e57"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-1-pc-json.stderr",
+      "bytes": 291,
+      "sha256": "e3d723478df8849e55f41ddb8a0158a28511f9ac417a5e6793ff2849cacd7768"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-1-pc.stderr",
+      "bytes": 291,
+      "sha256": "b8f840e9f00acb3988cea189b9138c5d8dfdbd18156a0cc97288f48d0509165c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-1-regs-json.jsonl",
+      "bytes": 99354724,
+      "sha256": "0a0255d1ebd7171f58f6213ad339da9e1c4395757e06564d4bf34a778f4922db"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-1-regs-json.stderr",
+      "bytes": 293,
+      "sha256": "8209f82dbdbd30634af73a9b3559af2ee7412fc083087ccd7f7923a4919bd091"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-1-regs.stderr",
+      "bytes": 293,
+      "sha256": "5d197f4c840ab14c54c551d8f5cfadd875a92423a4240f7dc6b55e386b105a48"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-2-pc-json.jsonl",
+      "bytes": 80728895,
+      "sha256": "4d75a3abaca8c9a4217aa015082dd9e11a5a207fea0a2309076e18bb93ad8414"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-2-pc-json.stderr",
+      "bytes": 291,
+      "sha256": "a4a8ba8855c532b28d17891ef2d06851102c2e682a4b0efd22b341914f625f1f"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-2-pc.stderr",
+      "bytes": 291,
+      "sha256": "e682cbbe07295f52349a85f884273990b1cd44570f018590002dd7a50c6aaaec"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-2-regs-json.jsonl",
+      "bytes": 99353694,
+      "sha256": "0e9bbd8edf110381427388a5714f56224851e831e4db9e2b2002d31abe5f9f14"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-2-regs-json.stderr",
+      "bytes": 293,
+      "sha256": "5fc51995be0148cc15b5ecb6100d05a13c09228a27278c9cdcdc6488c79b1208"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/0-2-regs.stderr",
+      "bytes": 293,
+      "sha256": "e5e3d565e7724e549486f6010b21a1d09608271efd2664168ab8143ba1469127"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-0-pc-json.jsonl",
+      "bytes": 328384,
+      "sha256": "2b4cb2f3325d6275fe5c81324bdcc4ef461e10516c657fb21fc876440a568b0a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-0-pc-json.stderr",
+      "bytes": 276,
+      "sha256": "681958441245c035f31cadba167ba481e25188320bdc1bf833dc1e2e1b8809be"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-0-pc.stderr",
+      "bytes": 276,
+      "sha256": "15fe1a1b05cf98fcf7b0458b7874f85308d871ef329cbcb137a2307179b85d1b"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-0-regs-json.jsonl",
+      "bytes": 404819,
+      "sha256": "2b8fbd64529251215cda1c6401e72a772cb328d6db64d90af1a7c184670ff1f7"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-0-regs-json.stderr",
+      "bytes": 276,
+      "sha256": "635957ac974106424922318bbfa15e878a8b3d850cb99e557694e08d726da243"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-0-regs.stderr",
+      "bytes": 276,
+      "sha256": "df439f51a13c4a7281dcd30b77e2cdc5bbbb9049c905f8580972f23c36c8330c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-1-pc-json.jsonl",
+      "bytes": 328384,
+      "sha256": "3d5b80d3ccd0a7e326200d1f2f3c58d66ce44e43e2227d2b4e07125b2e9d09b0"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-1-pc-json.stderr",
+      "bytes": 276,
+      "sha256": "615519c2f3c60687f62ee059cb46e2b659728981e21e9a85cac818e43a878d0e"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-1-pc.stderr",
+      "bytes": 276,
+      "sha256": "7eb9685cdf235e54177400941e1f352b0b9f612e1485a01e4bf58a04359cf176"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-1-regs-json.jsonl",
+      "bytes": 404835,
+      "sha256": "7bf056185e3456d703da04bff8af143fb17f27ec42eee1762807fc5818a53a71"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-1-regs-json.stderr",
+      "bytes": 276,
+      "sha256": "b1909287b5ec574f88d08a89355718eeb1cc005168628762771f4e1d3b891af1"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-1-regs.stderr",
+      "bytes": 276,
+      "sha256": "c7a35ade0671aea2591873e482500b072e76880aef7e245d23af696c61076c3a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-2-pc-json.jsonl",
+      "bytes": 328384,
+      "sha256": "618f088cb0ef594b7332ee2149cc86decc467f41b5b7594d65fc6be0113289bb"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-2-pc-json.stderr",
+      "bytes": 276,
+      "sha256": "8085a7991fef87a5d9434d1b436d1cea123b4d7d103880b5ff73edd8ea2aecba"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-2-pc.stderr",
+      "bytes": 276,
+      "sha256": "084e9ce1616175f276b87dac5aebdc21fc7772a5610904b3ccfdd29decebf4a3"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-2-regs-json.jsonl",
+      "bytes": 404826,
+      "sha256": "17ff9dd7a00561038efb78e74e25b51c1391777e8333b0112ece85d3d7407a2e"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-2-regs-json.stderr",
+      "bytes": 276,
+      "sha256": "4b79aa3aac170cf0d639afbac9c64661ce732c65d7257f8eb4d7578eea2de657"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/1000-2-regs.stderr",
+      "bytes": 276,
+      "sha256": "5040222222fb3231d0d6079770ddb09c869480a60a00ee91d32789ddd3211180"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-0-pc-json.jsonl",
+      "bytes": 3341869,
+      "sha256": "621785903b6a02bb031dd143069002b51268e2c0bad72ba22e210d44972bef84"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-0-pc-json.stderr",
+      "bytes": 281,
+      "sha256": "3fe3bae021b728ca78b942f3928850aa4c51b2df2ab1032eb68aa94a09faf5a7"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-0-pc.stderr",
+      "bytes": 281,
+      "sha256": "7f5df44dd818ea9c2511ee91f04a0fca90df4d4d16c64075c859a921bcb63142"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-0-regs-json.jsonl",
+      "bytes": 4120079,
+      "sha256": "6ed5c98cb82464862395f133940345d4a07ba6e02f456961b6513ae1f63d1b33"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-0-regs-json.stderr",
+      "bytes": 282,
+      "sha256": "784ba0a7548c15f05fe18d4685ae39c35dcdeb2218ad819d1667e04caea26270"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-0-regs.stderr",
+      "bytes": 282,
+      "sha256": "41ca9b515aa5d04a6e9287ac40c6acc22160e16e8d16cb14aa0232a60e45eab2"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-1-pc-json.jsonl",
+      "bytes": 3341869,
+      "sha256": "180795b8abaf394f190488f727c91db169244ca91e38f76bc91cffef8387b68c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-1-pc-json.stderr",
+      "bytes": 281,
+      "sha256": "42e5ca213aef18f2ecfbeeb394c8cd412597e889f1c65a7fcb8f7d2aec79e6b5"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-1-pc.stderr",
+      "bytes": 281,
+      "sha256": "8746d1491a7610c919d3d7401f69ae7975249873bcad9fc33321c3048a63af25"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-1-regs-json.jsonl",
+      "bytes": 4120014,
+      "sha256": "b8cc80bad6adfc19573c4a98fc10760af12c7dae90b3faf4b72c948d5d60b7b7"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-1-regs-json.stderr",
+      "bytes": 282,
+      "sha256": "d85f5d1262c62b5b214a32672c194b3b603db687784cb1ee9c6406333c175211"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-1-regs.stderr",
+      "bytes": 282,
+      "sha256": "ad225de5d232ed2d6d2ad65f639e87c03a03deccd6d97557b534a1232d2b0afc"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-2-pc-json.jsonl",
+      "bytes": 3341869,
+      "sha256": "9e827edc6d90f2537fd60495fe07beea5c04d55f8c924aedb5ce073eaea2aea7"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-2-pc-json.stderr",
+      "bytes": 281,
+      "sha256": "e08a14c2cbca51d1756a79cb26b6eb083bc24b50a18a09249a0fb87e141326e6"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-2-pc.stderr",
+      "bytes": 281,
+      "sha256": "4f55aa6ebc04c50cf47cc4dbc934ad1af89d78eb5c1559ac5f4cb7f7d1204a3c"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-2-regs-json.jsonl",
+      "bytes": 4120017,
+      "sha256": "2ebce1280e6970176867f98c6c1d2c3e42c14a666462e8524a52fa7d003e3513"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-2-regs-json.stderr",
+      "bytes": 282,
+      "sha256": "a2277dea2653cb05d5fcbdbaf02a20c93340eaf154782ecf37d641a665b05143"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/10000-2-regs.stderr",
+      "bytes": 282,
+      "sha256": "91efb2952c72bc79b8b059428fcea09a2f7c83c1d8b0d7a91b2c5e87572260c4"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-0-pc-json.jsonl",
+      "bytes": 16777874,
+      "sha256": "5ce6f2818899395cf829f304572dac3e16464d0099848b99bc577c74824d93ea"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-0-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "8ad533a5fd07d64d1531cb532d7b7bc7ac84cf1de7be6602c412c17d16c494dd"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-0-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-0-pc.stderr",
+      "bytes": 286,
+      "sha256": "82a9c3e3f0b8f86cf54cb83b0adeeaf6ac9280f1adb562fe001f8bc1f1626084"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-0-regs-json.jsonl",
+      "bytes": 20640608,
+      "sha256": "9c96012b22d65bca141c1e157aa9d828aa2cbbfc842d54600606bafa8c187133"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-0-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "29eb49ff4f5515137038f25c01e76a3bfcc0744eaef9dd21a38dc9a860e4e986"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-0-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-0-regs.stderr",
+      "bytes": 287,
+      "sha256": "d8c89c47bab2c4c536c68912ba4c271005720e57bdc905c569e09a52aca67920"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-1-pc-json.jsonl",
+      "bytes": 16777874,
+      "sha256": "247c0459aa79490a6f4c4449116a3765bd0022d55bcd5aa421ef53a396406955"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-1-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "1f06f8be679d960b148ab17218e78874a19253405331e51995d1e7d6fe99c11b"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-1-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-1-pc.stderr",
+      "bytes": 286,
+      "sha256": "44b4baa36a8996bb3dca96fdceb113ba03d158d307ef519a85717aaa9867a47e"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-1-regs-json.jsonl",
+      "bytes": 20640604,
+      "sha256": "626bf8ad9e05ebb638f91b1c6aaf83b74c8cd0392d7e2d4c413738b8af4e1490"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-1-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "089c352443f20529022de7b98b6015ff69e2ac72a2e6c889910cc57572f5ffb3"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-1-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-1-regs.stderr",
+      "bytes": 287,
+      "sha256": "4f6f3e36811658a31ba18861a60850f4e56d73cc867c0a29c76392ad56079651"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-2-pc-json.jsonl",
+      "bytes": 16777874,
+      "sha256": "cd169265fcfced2a3293c94ab84007be1d1679121838d0a00bacd9c428c0e658"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-2-pc-json.stderr",
+      "bytes": 286,
+      "sha256": "f75a2342e3ae59fa18cf2ef99a0edb9ac014db24b2c63f5418540cf40859cfde"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-2-pc.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-2-pc.stderr",
+      "bytes": 286,
+      "sha256": "dd2a48b8f8f68af580ac59a21ef7edd9ce4ab379e66a619a17780f98ae1513a5"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-2-regs-json.jsonl",
+      "bytes": 20640805,
+      "sha256": "c3c802356ec7b1b64a0af44749da217d288970fea7bb3960cb88f35cccf6a1f5"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-2-regs-json.stderr",
+      "bytes": 287,
+      "sha256": "52b698dc9242f45afa1e3deaafa0e0d757c6f33a1e98902e6e3425409c2bc247"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-2-regs.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction/50000-2-regs.stderr",
+      "bytes": 287,
+      "sha256": "e66ff1b65f4ac88adcfa749049f38e266778f9d38afcf526a8e3286abeedd794"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/before-instruction.json",
+      "bytes": 145015,
+      "sha256": "6691d95e6226959c0433b71ba09be935f4acfa35e656db2a5da36dc14f0e766a"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/final-runtime/runtime-0.jsonl",
+      "bytes": 5392,
+      "sha256": "83dd4b601826331df0ac1a0b56b4739a1b2c92e94fa17b5377497cb55a5c90c6"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/final-runtime/runtime-0.stderr",
+      "bytes": 270,
+      "sha256": "de9e364c3ae22837955eace48cbd4576cc81e5f7116b65be2df5832c58ce0d28"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/final-runtime/runtime-1.jsonl",
+      "bytes": 5392,
+      "sha256": "bf83aa1d983938d42547257e08b5ea4be6e3346df59236b339b16b26509eff0b"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/final-runtime/runtime-1.stderr",
+      "bytes": 270,
+      "sha256": "e823bb2bd835aa77be48709b9ccd0ccf9f9d06379b7668ec74940af8a136d639"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/final-runtime/runtime-report.json",
+      "bytes": 6960,
+      "sha256": "7c0e0f92995d4011c1e472326e618188afd8a907323d4c8b71bdbea857e482e3"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/final-runtime/runtime-uprobe.jsonl",
+      "bytes": 5624,
+      "sha256": "e1098ae5101a9270d61f63c4c90aed4f66c24733d271c1ddd82db737acd05403"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/final-runtime/runtime-uprobe.stderr",
+      "bytes": 50,
+      "sha256": "17d9860e20e07778e408803845d9420d98634692818c0110b7f2fbf47ddb26af"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/runtime-device-20261125/ordinary-device-smoke.json",
+      "bytes": 65389,
+      "sha256": "d3a5891963137c36d33be77829bd8f41fa2f162e10615bb59b2a7959a3701869"
+    }
+  ],
+  "tested_binaries": [
+    {
+      "path": "common/tools/amtracer/artifacts/amtracer",
+      "bytes": 2918608,
+      "sha256": "ca6f69563d0ce5e452cb9a5c105825d9fb38281286309b80e449e9ce47ac28ff"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/amtracer-ebpf.o",
+      "bytes": 8792,
+      "sha256": "6456378a57444a4b11294beb9d8c7a5002095acb48c69e735a8ecbc1e9701122"
+    },
+    {
+      "path": "common/tools/amtracer/artifacts/amtracer-itrace.o",
+      "bytes": 7592,
+      "sha256": "8e39122cd55e3887dee59a77cf34c7ce0472852b9c908d96d85a4223e40a6793"
+    },
+    {
+      "path": "common/tools/amtracer/target/amtracer-runtime-fixture",
+      "bytes": 18376,
+      "sha256": "884c3743d8c155e0a5f9008f4556eb96e8c3669dca02a979be0b732dcab50e12"
+    },
+    {
+      "path": "common/tools/amtracer/target/amtracer-instruction-fixture",
+      "bytes": 70080,
+      "sha256": "7d0fd892d8c7348fb0381ac9c54e28b7b2b0b5273d21176edd4a941e7944e3e4"
+    },
+    {
+      "path": "common/tools/amtracer/target/amtracer-fixture",
+      "bytes": 14704,
+      "sha256": "2309a928323b155334eaec97d7522759cde3edfea87b6c816af3ce2b7ec5febb"
+    },
+    {
+      "path": "common-runtime-insns/drivers/ktools/stealth/tests/uxn_uprobe_runtime_test",
+      "bytes": 19648,
+      "sha256": "1818419515add22db46fd81de8a8c2e2f286e5f9bb13146ab0dba6b1491255c2"
+    },
+    {
+      "path": "common-runtime-insns/drivers/ktools/stealth/tests/uxn_uprobe_auto_test",
+      "bytes": 19944,
+      "sha256": "6cb21f366f9848cd086f6f39b8ee5c1d35f06506da12baf8313212859c465d63"
+    },
+    {
+      "path": "common-runtime-insns/drivers/ktools/stealth/tests/uxn_uprobe_test",
+      "bytes": 18720,
+      "sha256": "ca96e289db74d45921769e66c40a9fa56852d10c8fd44f940d09e19f0c2cfa56"
+    },
+    {
+      "path": "common-runtime-insns/drivers/ktools/stealth/tests/uxn_brk_test",
+      "bytes": 12416,
+      "sha256": "16281d06fe307ead525de232bd85f1a7293b748898837a37e484aa55fe828d58"
+    },
+    {
+      "path": "common-runtime-insns/drivers/ktools/stealth/tests/uxn_uprobe_fault_test",
+      "bytes": 20968,
+      "sha256": "9d3bb5eacc3cf33077adb1391f277ced19cdfcded71cb615a11cd1dfaa27436f"
+    },
+    {
+      "path": "common-runtime-insns/drivers/ktools/stealth/tests/uxn_uprobe_bench",
+      "bytes": 15040,
+      "sha256": "6792c1a575d7a1c9b31d06aa19d6a552b8e5efa46f924a136bc8c3c2a66d99f7"
+    }
+  ],
+  "build_manifest": {
+    "kernel_commit": "5805d4b63c5c7589509f48739fb054959da83c0b",
+    "tool_commit": "a4396dfd24821d492cbe3b5b0b4903eff58930ff",
+    "source_worktree": "/root/Kernel/common-android13-5.15-2024-11/common-runtime-insns",
+    "kernel_release": "5.15.167-android13-8-00014-gbf0a81a7f319-ab13297889",
+    "flashed": true,
+    "runtime_hook_tested": true,
+    "files": {
+      "out/ktools-tests/uxn-runtime-20261125/boot-before.img": {
+        "bytes": 201326592,
+        "sha256": "e8b9386ab11711455cd688d7a50b4bad986d4495bf2d30fa10afec30b8ff9c17"
+      },
+      "out/ktools-tests/uxn-runtime-20261125/new-boot.img": {
+        "bytes": 201326592,
+        "sha256": "3941f3c05fc47edd3cef84a0777c4ab2eb4489fef6f9cbbbc5edb1e1aff77a59"
+      },
+      "out/uxn-runtime-kernel/arch/arm64/boot/Image": {
+        "bytes": 41835008,
+        "sha256": "ee96592e993b52f68ee69e4dcab48508602fd10f80eee3777d8f72f432b86bda"
+      },
+      "out/uxn-runtime-kernel/.config": {
+        "bytes": 188809,
+        "sha256": "a2b4ce4a018f579d55682b038d716510138d04fc34d99a8aba4724b2535fa9bc"
+      },
+      "common/tools/amtracer/artifacts/amtracer": {
+        "bytes": 2918608,
+        "sha256": "ca6f69563d0ce5e452cb9a5c105825d9fb38281286309b80e449e9ce47ac28ff"
+      },
+      "common/tools/amtracer/artifacts/amtracer-itrace.o": {
+        "bytes": 7592,
+        "sha256": "8e39122cd55e3887dee59a77cf34c7ce0472852b9c908d96d85a4223e40a6793"
+      },
+      "common/tools/amtracer/target/amtracer-runtime-fixture": {
+        "bytes": 18376,
+        "sha256": "884c3743d8c155e0a5f9008f4556eb96e8c3669dca02a979be0b732dcab50e12"
+      },
+      "common-runtime-insns/drivers/ktools/stealth/tests/uxn_uprobe_runtime_test": {
+        "bytes": 19648,
+        "sha256": "1818419515add22db46fd81de8a8c2e2f286e5f9bb13146ab0dba6b1491255c2"
+      }
+    },
+    "final_boot_id": "854ad72b-b404-4311-b277-1200b1a4e1df",
+    "final_boot_a_sha256": "3941f3c05fc47edd3cef84a0777c4ab2eb4489fef6f9cbbbc5edb1e1aff77a59",
+    "device_validation": "common/tools/amtracer/docs/validation-runtime-device-2026-11-25.json",
+    "device_report": "common/tools/amtracer/docs/runtime-device-2026-11-25.md",
+    "kernel_test_commit": "d431cf6c80bcafd455d1408cc506e639f4c474cd",
+    "amtracer_test_commit": "e56dcbe13ac812b58bc5afeb0585688cb6dc2ac7"
+  }
+}

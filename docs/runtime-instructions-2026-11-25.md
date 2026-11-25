@@ -34,9 +34,11 @@ UXN 不适用时保留原生路径，但原生文件分析必须成功，并且�
 | amtracer 构建 | AArch64 Android release、bpfel release 通过 |
 | fuxi 运行时解析 | 两个私有映射分别输出 MOV X0,#42 / MOV X0,#77，文件仍为 `0x74959469`；符号与绝对地址预览通过 |
 | fuxi 原有逐指令 smoke | 601 条完整路径事件；分支/循环、调用/返回、线程、迁移、多站点、跨页、异常恢复通过；无 ringbuf 丢失或序号缺口；拒绝、count、目标退出通过 |
-| fuxi 内核设备夹具 | `uxn_uprobe_runtime_test --baseline` 通过，仅证明无 hook 明文执行 |
+| fuxi 新内核设备夹具 | runtime、auto、uprobe、BRK、fault 五组全部通过 |
+| fuxi 私有解密 hook | 同 inode 不同明文的 itrace 两轮挂卸及普通 uprobe 的寄存器、内存、调用栈、count 通过；最终刷回新内核后复验通过 |
+| 新旧内核性能 | 固定 CPU/1.92 GHz 的 perf 对照和 120 组端到端基准完成；逐指令实际追踪 7,223,040 次命中无丢失；详见独立报告 |
 
-上述设备结果使用当前旧内核，boot ID 为 `78f0daf5-9bf8-47b7-9a59-3d54eed95b53`，SELinux Enforcing；**新内核未刷入，动态解密 hook 的端到端验收尚未完成**。主机注入不能当成实机内核 ENOMEM 注入，原有 smoke 也不能证明新内核分发路径正确。本轮没有测量新安装路径的性能开销。
+新内核已刷入并完成动态解密 hook 的端到端验收；最终 boot ID 为 `854ad72b-b404-4311-b277-1200b1a4e1df`，SELinux Enforcing，分区哈希已核对。功能、丢失恢复、同频成本、新旧端到端对照，以及 128 页布局失败和性能升高项见 [实机报告](runtime-device-2026-11-25.md)。主机注入仍不能当成实机内核 ENOMEM 注入。
 
 主机真实 mmap 测试还验证：文件代码变化不影响已有私有明文；目标指令变化、同页其他位置变化或映射权限变化会使准备复核失败；文件中的排他指令不干扰已经解密的内存页检查，内存排他指令会拒绝；同文件偏移不同 PC 的事件输出使用各自指令。
 
@@ -52,8 +54,8 @@ UXN 不适用时保留原生路径，但原生文件分析必须成功，并且�
 | 构建与哈希清单 | `out/ktools-tests/uxn-runtime-20261125/manifest.json` |
 | 内核构建/主机日志 | `out/ktools-tests/uxn-runtime-20261125/` |
 | 工具与采集对象 | `common/tools/amtracer/artifacts/amtracer`、`amtracer-itrace.o` |
-| 设备解析报告 | `artifacts/runtime-20261125-final/runtime-report.json` |
-| 601 条 smoke 报告 | `artifacts/runtime-instruction-smoke-20261125.json`，原始事件在同名目录 |
+| 设备 hook 报告 | `artifacts/runtime-device-20261125/after-runtime-full-pass/runtime-report.json`、`final-runtime/runtime-report.json` |
+| 601 条 smoke 报告 | `artifacts/runtime-device-20261125/after-instruction-smoke.json`，原始事件在同名目录 |
 
 最终内核源码提交为 `5805d4b63`，版本字符串保持 `5.15.167-android13-8-00014-gbf0a81a7f319-ab13297889`。独立 boot 镜像使用本轮从设备读取的 boot_a 打包；再次解包后确认内核与构建 Image 完全一致。
 
@@ -78,7 +80,7 @@ python3 tests/runtime_smoke.py --serial 282eb4e4 \
   --output artifacts/runtime-resolve --resolve-only
 ```
 
-新内核运行后，去掉 `--resolve-only` 执行两轮挂卸、双别名事件序列、寄存器采集及卸载后明文执行：
+新内核运行后，去掉 `--resolve-only` 执行两轮挂卸、双别名事件序列，以及普通 uprobe 的寄存器/内存/栈采集和卸载后明文执行：
 
 ```sh
 python3 tests/runtime_smoke.py --serial 282eb4e4 \
