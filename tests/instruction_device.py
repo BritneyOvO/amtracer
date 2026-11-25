@@ -107,6 +107,7 @@ class Device:
         self.tracer_cpu = tracer_cpu
         self.children = []
         self.fixture = None
+        self.fixture_number = 0
         self.info = None
         self.report = {"serial": serial, "commands": []}
 
@@ -141,8 +142,12 @@ class Device:
         command = [self.remote + '/fixture']
         if self.target_cpu is not None:
             command = ["taskset", f"{1 << self.target_cpu:x}"] + command
-        self.fixture = subprocess.Popen(self.adb + ["shell", "-T", "exec " + shlex.join(command)],
-                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
+        self.fixture_number += 1
+        error_path = self.output / f"fixture-{self.fixture_number}.stderr"
+        # Keep transport diagnostics even if adb ends without a remote exit status.
+        with error_path.open("w") as error:
+            self.fixture = subprocess.Popen(self.adb + ["shell", "-T", "exec " + shlex.join(command)],
+                                            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=error, text=True, bufsize=1)
         self.info = read_json(self.fixture, 10)
         if self.target_cpu is not None:
             status = self.shell("cat", f"/proc/{self.info['pid']}/status").stdout
@@ -255,7 +260,9 @@ class Trace:
             match = re.search(r"AMTRACER_PID=(\d+)", self.error_path.read_text())
             if match:
                 self.pid = int(match[1])
-        if self.process.poll() is None and self.pid is not None:
+        # A disconnected adb client can exit before the remote tracer. Verify
+        # ownership and stop that PID before the fixture files are removed.
+        if self.pid is not None:
             self.device.signal(self.pid, "INT")
         try:
             code = self.process.wait(timeout=20)
