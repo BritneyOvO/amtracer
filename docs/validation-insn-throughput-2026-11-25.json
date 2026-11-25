@@ -1,0 +1,405 @@
+{
+  "date": "2026-11-25",
+  "serial": "282eb4e4",
+  "boot_id": "854ad72b-b404-4311-b277-1200b1a4e1df",
+  "kernel_image_boot_sha256": "3941f3c05fc47edd3cef84a0777c4ab2eb4489fef6f9cbbbc5edb1e1aff77a59",
+  "tool_commit": "b61050f9974e6a699e1822abce9b8feb4bb9e5e9",
+  "instructions_per_call": 24,
+  "calls_per_sample": 1000000,
+  "traced_samples": 12,
+  "total_hits": 288000000,
+  "settings": {
+    "serial": "282eb4e4",
+    "fixture": "None",
+    "report": "artifacts/insn-throughput-20261125.json",
+    "seconds": 9.0,
+    "repeats": 3,
+    "event_rates": "0",
+    "modes": "baseline,pc,regs,pc-json,regs-json",
+    "unpaced_rounds": 1000000
+  },
+  "cpu_affinity": "Android scheduler; not pinned",
+  "frequency_policy": "unchanged 1920000..2592000 kHz for CPU4 cluster; no thermal override",
+  "json_sink": "host /dev/null via symlink, JSON serialization and ADB USB output are enabled",
+  "rate_denominator": "fixture target elapsed time; excludes attachment and final drain/close; received rate does not imply all output was drained before target end",
+  "sampling_order": "baseline, pc, regs, pc-json, regs-json repeated three times",
+  "sequence_gap_note": "The last lost records may have no later received event to expose a sequence gap; kernel counters retain the total.",
+  "interrupted_preflight": "Retained insn-throughput-20261125-preflight.json/log/directory. Manually interrupted to increase host timeout for long samples; excluded from all totals. --seconds 9 increases timeout to 90s, unpaced sample length remains 1000000 calls.",
+  "groups": [
+    {
+      "mode": "pc",
+      "median_hit_insn_per_second": 863509.4211900854,
+      "median_received_insn_per_second_during_target_interval": 863509.4211900854,
+      "hit_rate_min": 795779.3867750545,
+      "hit_rate_max": 871890.3607055325,
+      "total_hits": 72000000,
+      "total_received": 72000000,
+      "total_ring_lost": 0,
+      "total_state_failed": 0,
+      "runs": [
+        {
+          "repeat": 0,
+          "target_elapsed_seconds": 30.159112436,
+          "hit_insn_per_second": 795779.3867750545,
+          "received_insn_per_second_during_target_interval": 795779.3867750545,
+          "hits": 24000000,
+          "received": 24000000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "loss_fraction": 0.0,
+          "incomplete": false,
+          "cpu_ticks": 2531,
+          "tool_rss_kib": 71088,
+          "submitted_bytes": 1536000000,
+          "full_snapshots": 0
+        },
+        {
+          "repeat": 1,
+          "target_elapsed_seconds": 27.52639676,
+          "hit_insn_per_second": 871890.3607055325,
+          "received_insn_per_second_during_target_interval": 871890.3607055325,
+          "hits": 24000000,
+          "received": 24000000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "loss_fraction": 0.0,
+          "incomplete": false,
+          "cpu_ticks": 2324,
+          "tool_rss_kib": 71136,
+          "submitted_bytes": 1536000000,
+          "full_snapshots": 0
+        },
+        {
+          "repeat": 2,
+          "target_elapsed_seconds": 27.793558948,
+          "hit_insn_per_second": 863509.4211900854,
+          "received_insn_per_second_during_target_interval": 863509.4211900854,
+          "hits": 24000000,
+          "received": 24000000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "loss_fraction": 0.0,
+          "incomplete": false,
+          "cpu_ticks": 2336,
+          "tool_rss_kib": 71260,
+          "submitted_bytes": 1536000000,
+          "full_snapshots": 0
+        }
+      ]
+    },
+    {
+      "mode": "regs",
+      "median_hit_insn_per_second": 686238.8205720489,
+      "median_received_insn_per_second_during_target_interval": 686238.8205720489,
+      "hit_rate_min": 668265.3758012949,
+      "hit_rate_max": 687787.1844391195,
+      "total_hits": 72000000,
+      "total_received": 72000000,
+      "total_ring_lost": 0,
+      "total_state_failed": 0,
+      "runs": [
+        {
+          "repeat": 0,
+          "target_elapsed_seconds": 34.973247331,
+          "hit_insn_per_second": 686238.8205720489,
+          "received_insn_per_second_during_target_interval": 686238.8205720489,
+          "hits": 24000000,
+          "received": 24000000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "loss_fraction": 0.0,
+          "incomplete": false,
+          "cpu_ticks": 2911,
+          "tool_rss_kib": 71152,
+          "submitted_bytes": 2141788232,
+          "full_snapshots": 23438
+        },
+        {
+          "repeat": 1,
+          "target_elapsed_seconds": 35.913876237,
+          "hit_insn_per_second": 668265.3758012949,
+          "received_insn_per_second_during_target_interval": 668265.3758012949,
+          "hits": 24000000,
+          "received": 24000000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "loss_fraction": 0.0,
+          "incomplete": false,
+          "cpu_ticks": 2978,
+          "tool_rss_kib": 71192,
+          "submitted_bytes": 2141794176,
+          "full_snapshots": 23438
+        },
+        {
+          "repeat": 2,
+          "target_elapsed_seconds": 34.894514674,
+          "hit_insn_per_second": 687787.1844391195,
+          "received_insn_per_second_during_target_interval": 687787.1844391195,
+          "hits": 24000000,
+          "received": 24000000,
+          "ring_lost": 0,
+          "state_failed": 0,
+          "sequence_missing": 0,
+          "loss_fraction": 0.0,
+          "incomplete": false,
+          "cpu_ticks": 2894,
+          "tool_rss_kib": 71172,
+          "submitted_bytes": 2141788088,
+          "full_snapshots": 23438
+        }
+      ]
+    },
+    {
+      "mode": "pc-json",
+      "median_hit_insn_per_second": 1491356.8159405214,
+      "median_received_insn_per_second_during_target_interval": 113159.61898325162,
+      "hit_rate_min": 1387162.9758175628,
+      "hit_rate_max": 1516460.6028304654,
+      "total_hits": 72000000,
+      "total_received": 5574360,
+      "total_ring_lost": 66425640,
+      "total_state_failed": 0,
+      "runs": [
+        {
+          "repeat": 0,
+          "target_elapsed_seconds": 16.092728275,
+          "hit_insn_per_second": 1491356.8159405214,
+          "received_insn_per_second_during_target_interval": 113159.61898325162,
+          "hits": 24000000,
+          "received": 1821047,
+          "ring_lost": 22178953,
+          "state_failed": 0,
+          "sequence_missing": 22178221,
+          "loss_fraction": 0.9241230416666667,
+          "incomplete": true,
+          "cpu_ticks": 203,
+          "tool_rss_kib": 71316,
+          "submitted_bytes": 116547008,
+          "full_snapshots": 0
+        },
+        {
+          "repeat": 1,
+          "target_elapsed_seconds": 15.826326088,
+          "hit_insn_per_second": 1516460.6028304654,
+          "received_insn_per_second_during_target_interval": 113792.86575963542,
+          "hits": 24000000,
+          "received": 1800923,
+          "ring_lost": 22199077,
+          "state_failed": 0,
+          "sequence_missing": 22195450,
+          "loss_fraction": 0.9249615416666667,
+          "incomplete": true,
+          "cpu_ticks": 201,
+          "tool_rss_kib": 71432,
+          "submitted_bytes": 115259072,
+          "full_snapshots": 0
+        },
+        {
+          "repeat": 2,
+          "target_elapsed_seconds": 17.301499837,
+          "hit_insn_per_second": 1387162.9758175628,
+          "received_insn_per_second_during_target_interval": 112845.13009818547,
+          "hits": 24000000,
+          "received": 1952390,
+          "ring_lost": 22047610,
+          "state_failed": 0,
+          "sequence_missing": 22047609,
+          "loss_fraction": 0.9186504166666667,
+          "incomplete": true,
+          "cpu_ticks": 224,
+          "tool_rss_kib": 71468,
+          "submitted_bytes": 124952960,
+          "full_snapshots": 0
+        }
+      ]
+    },
+    {
+      "mode": "regs-json",
+      "median_hit_insn_per_second": 1420094.7017275656,
+      "median_received_insn_per_second_during_target_interval": 76081.67504193683,
+      "hit_rate_min": 1390159.9805408095,
+      "hit_rate_max": 1441722.430805277,
+      "total_hits": 72000000,
+      "total_received": 3856882,
+      "total_ring_lost": 68143118,
+      "total_state_failed": 0,
+      "runs": [
+        {
+          "repeat": 0,
+          "target_elapsed_seconds": 17.264200046,
+          "hit_insn_per_second": 1390159.9805408095,
+          "received_insn_per_second_during_target_interval": 75450.64332718981,
+          "hits": 24000000,
+          "received": 1302595,
+          "ring_lost": 22697405,
+          "state_failed": 0,
+          "sequence_missing": 22679617,
+          "loss_fraction": 0.9457252083333333,
+          "incomplete": true,
+          "cpu_ticks": 189,
+          "tool_rss_kib": 71440,
+          "submitted_bytes": 163298528,
+          "full_snapshots": 186282
+        },
+        {
+          "repeat": 1,
+          "target_elapsed_seconds": 16.646754942,
+          "hit_insn_per_second": 1441722.430805277,
+          "received_insn_per_second_during_target_interval": 76081.67504193683,
+          "hits": 24000000,
+          "received": 1266513,
+          "ring_lost": 22733487,
+          "state_failed": 0,
+          "sequence_missing": 22715584,
+          "loss_fraction": 0.947228625,
+          "incomplete": true,
+          "cpu_ticks": 183,
+          "tool_rss_kib": 71384,
+          "submitted_bytes": 162003912,
+          "full_snapshots": 193635
+        },
+        {
+          "repeat": 2,
+          "target_elapsed_seconds": 16.900281348,
+          "hit_insn_per_second": 1420094.7017275656,
+          "received_insn_per_second_during_target_interval": 76198.37643427141,
+          "hits": 24000000,
+          "received": 1287774,
+          "ring_lost": 22712226,
+          "state_failed": 0,
+          "sequence_missing": 22703226,
+          "loss_fraction": 0.94634275,
+          "incomplete": true,
+          "cpu_ticks": 187,
+          "tool_rss_kib": 71432,
+          "submitted_bytes": 164427248,
+          "full_snapshots": 195865
+        }
+      ]
+    }
+  ],
+  "new_kernel_warnings": 0,
+  "files": [
+    {
+      "path": "artifacts/insn-throughput-20261125.json",
+      "bytes": 38920,
+      "sha256": "7e038e6ef371e9247c981fdee390ae3c27dd292c47400c7e21e55bf018ddccb4"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125.log",
+      "bytes": 466,
+      "sha256": "eaf07562131b74ca4c47087336d9cfdc5b5b8849a1cf496fe54ec4c02161dcd7"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125-method.json",
+      "bytes": 503,
+      "sha256": "93912df477089205c1f8f3da77973bb32a7bdb6b00abf565a28b75eadf37dba4"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-0-pc-json.stderr",
+      "bytes": 310,
+      "sha256": "f3979556ceac0dacbe7cfd3d8e8f76d55b144098ee971a66d313fb7e8feb5e2c"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-0-pc.stderr",
+      "bytes": 301,
+      "sha256": "e97f3b8de0d9b5e8a812cb94ea4635a3f831a61f45d096f5a716430defd53cf8"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-0-regs-json.stderr",
+      "bytes": 315,
+      "sha256": "65bd3637d2f4334e0ad4fc226b79725bef2018154f995c8b219f4500219a37ab"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-0-regs.stderr",
+      "bytes": 305,
+      "sha256": "2d22c1388ede7ee86bb4cc106716082f0e01f1518a122f2c66acc48e99f553da"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-1-pc-json.stderr",
+      "bytes": 310,
+      "sha256": "e8b9bc9951276e5e57f7876c47812b0701e06518002155691f9d8dc40f14f09c"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-1-pc.stderr",
+      "bytes": 301,
+      "sha256": "9cfb12b2a451ef0a600e44e6e94d740558b36ee8d23f70190aa5c937d945aca6"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-1-regs-json.stderr",
+      "bytes": 315,
+      "sha256": "179a8049894e15c80bc152dad0ad0483e172560c7bf23c1ab95d21eb8f702148"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-1-regs.stderr",
+      "bytes": 305,
+      "sha256": "99fa45ce3392e86c765971ce2963e32a3d652f57271d418d0771be43bcfb3790"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-2-pc-json.stderr",
+      "bytes": 310,
+      "sha256": "7a14f5d1b036a67ed2888a0e27b2afc2b263b6a22fc8481995829c8b87a1c982"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-2-pc.stderr",
+      "bytes": 301,
+      "sha256": "db9832679f00fb7a5d03339f63bdda4b11ccdb9a966670f15138977c94bda696"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-2-regs-json.stderr",
+      "bytes": 315,
+      "sha256": "824bcdc099cb57a0679e36fe62246d1e5e94de9c915bbc312ee0d65a1e70491e"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125/0-2-regs.stderr",
+      "bytes": 305,
+      "sha256": "939ffa158454025164cb0ae69b13c308d1b60edf50cb5e50a751b8bb5eac58d5"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125-after-device.log",
+      "bytes": 58375,
+      "sha256": "cdccec10e055b312e95da08611c1631346bc9c3853fa55d9139742f70748752f"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125-before-device.log",
+      "bytes": 8934,
+      "sha256": "1fc8244a6b4cbfa0b2ef032c69e9de621348731b0287532beecc174381dcbe3f"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125-after-dmesg.log",
+      "bytes": 2122256,
+      "sha256": "36aa935d57e130307c96ad853947c5597c313a11be47994d500cf645aeab39db"
+    },
+    {
+      "path": "artifacts/insn-throughput-20261125-before-dmesg.log",
+      "bytes": 2124189,
+      "sha256": "1daa4debc7a2e81a2e1d1d91f9f52a497eeef424fc00e453b5f30675e578249f"
+    },
+    {
+      "path": "artifacts/amtracer",
+      "bytes": 2918608,
+      "sha256": "ca6f69563d0ce5e452cb9a5c105825d9fb38281286309b80e449e9ce47ac28ff"
+    },
+    {
+      "path": "artifacts/amtracer-itrace.o",
+      "bytes": 7592,
+      "sha256": "8e39122cd55e3887dee59a77cf34c7ce0472852b9c908d96d85a4223e40a6793"
+    },
+    {
+      "path": "target/amtracer-instruction-fixture",
+      "bytes": 70080,
+      "sha256": "7d0fd892d8c7348fb0381ac9c54e28b7b2b0b5273d21176edd4a941e7944e3e4"
+    },
+    {
+      "path": "artifacts/summarize-insn-throughput-20261125.py",
+      "bytes": 10291,
+      "sha256": "b87bdee9838307e7d66ab61bc682bae4966af357e22710d2e68a4d47ec6002d1"
+    }
+  ],
+  "finished": "2026-11-25T22:45:39.711163+08:00"
+}
