@@ -2,7 +2,64 @@ use super::plan::{Plan, Point};
 use amtracer_abi::instruction::{self, Header, REGISTER_COUNT, RegisterHeader};
 use anyhow::{Context, Result, ensure};
 use serde::{Serialize, Serializer, ser::SerializeMap};
-use std::{collections::HashMap, io::Write};
+use serde_json::value::{RawValue, to_raw_value};
+use std::{
+    collections::{BTreeMap, HashMap},
+    io::Write,
+};
+
+pub struct Writer<'a> {
+    plan: &'a Plan,
+    json: Option<Vec<BTreeMap<u64, JsonMetadata>>>,
+}
+
+struct JsonMetadata {
+    pc: Box<RawValue>,
+    module: Box<RawValue>,
+    elf_address: Box<RawValue>,
+    opcode: Box<RawValue>,
+    instruction: Box<RawValue>,
+}
+
+impl<'a> Writer<'a> {
+    pub fn new(plan: &'a Plan, json: bool) -> Result<Self> {
+        // Metadata is immutable for the capture. Encode strings once, including
+        // JSON escaping, rather than allocating and scanning them for every hit.
+        let metadata = json
+            .then(|| {
+                plan.points
+                    .iter()
+                    .map(|point| {
+                        let target = &plan.targets[point.target];
+                        point
+                            .instructions
+                            .iter()
+                            .map(|(pc, instruction)| {
+                                Ok((
+                                    *pc,
+                                    JsonMetadata {
+                                        pc: to_raw_value(&format!("{pc:#x}"))?,
+                                        module: to_raw_value(&target.path.to_string_lossy())?,
+                                        elf_address: to_raw_value(&format!(
+                                            "{:#x}",
+                                            point.elf_address
+                                        ))?,
+                                        opcode: to_raw_value(&format!("{:08x}", instruction.word))?,
+                                        instruction: to_raw_value(&instruction.assembly)?,
+                                    },
+                                ))
+                            })
+                            .collect::<Result<BTreeMap<_, _>>>()
+                    })
+                    .collect::<Result<Vec<_>>>()
+            })
+            .transpose()?;
+        Ok(Self {
+            plan,
+            json: metadata,
+        })
+    }
+}
 
 pub struct Event {
     pub header: Header,
@@ -21,12 +78,15 @@ impl RegisterChanges {
     }
 
     fn iter(&self) -> impl Iterator<Item = (&'static str, u64)> + '_ {
-        instruction::REGISTER_NAMES
+        let mut mask = self.header.changed_mask;
+        self.values[..mask.count_ones() as usize]
             .iter()
-            .enumerate()
-            .filter(|(bit, _)| self.header.changed_mask & (1 << bit) != 0)
-            .map(|(_, name)| *name)
-            .zip(self.values.iter().copied())
+            .map(move |value| {
+                // Decode validates the mask; each packed value has one set bit.
+                let bit = mask.trailing_zeros() as usize;
+                mask &= mask - 1;
+                (instruction::REGISTER_NAMES[bit], *value)
+            })
     }
 }
 
@@ -128,54 +188,60 @@ impl Event {
             regs: registers,
         })
     }
+}
 
+impl Writer<'_> {
     pub fn write(
         &self,
-        plan: &Plan,
+        event: &Event,
         missed: u64,
         incomplete: bool,
-        json: bool,
         output: &mut impl Write,
     ) -> Result<()> {
-        let point = point(plan, self.header.cookie)?;
-        let target = &plan.targets[point.target];
-        let instruction = point
-            .instructions
-            .get(&self.header.pc)
-            .context("instruction trace PC outside declared range")?;
-        if json {
-            let event = Output {
+        let header = &event.header;
+        if let Some(cache) = &self.json {
+            let metadata = cache
+                .get(point_index(header.cookie)?)
+                .and_then(|point| point.get(&header.pc))
+                .context("instruction trace PC outside declared range")?;
+            let record = Output {
                 source: "instruction",
-                timestamp_ns: self.header.timestamp_ns,
-                tgid: self.header.tgid,
-                tid: self.header.tid,
-                cpu: self.header.cpu,
-                sequence: self.header.sequence,
-                thread_epoch: self.header.thread_epoch,
-                probe: self.header.cookie,
-                pc: format!("{:#x}", self.header.pc),
-                module: target.path.to_string_lossy(),
-                elf_address: format!("{:#x}", point.elf_address),
-                opcode: format!("{:08x}", instruction.word),
-                instruction: &instruction.assembly,
+                timestamp_ns: header.timestamp_ns,
+                tgid: header.tgid,
+                tid: header.tid,
+                cpu: header.cpu,
+                sequence: header.sequence,
+                thread_epoch: header.thread_epoch,
+                probe: header.cookie,
+                pc: &metadata.pc,
+                module: &metadata.module,
+                elf_address: &metadata.elf_address,
+                opcode: &metadata.opcode,
+                instruction: &metadata.instruction,
                 missed_before: missed,
                 incomplete,
-                registers: self.regs.as_ref().map(|regs| RegisterOutput {
+                registers: event.regs.as_ref().map(|regs| RegisterOutput {
                     kind: regs.kind(),
                     base_sequence: regs.header.base_sequence,
                     values: ChangedValues(regs),
                 }),
             };
-            serde_json::to_writer(&mut *output, &event)?;
+            serde_json::to_writer(&mut *output, &record)?;
             writeln!(output)?;
         } else {
+            let point = point(self.plan, header.cookie)?;
+            let target = &self.plan.targets[point.target];
+            let instruction = point
+                .instructions
+                .get(&header.pc)
+                .context("instruction trace PC outside declared range")?;
             writeln!(
                 output,
                 "{}:{} #{} {:#x} {}+{:#x} {:08x} {} missed_before={} incomplete={}",
-                self.header.tgid,
-                self.header.tid,
-                self.header.sequence,
-                self.header.pc,
+                header.tgid,
+                header.tid,
+                header.sequence,
+                header.pc,
                 target.path.display(),
                 point.elf_address,
                 instruction.word,
@@ -183,7 +249,7 @@ impl Event {
                 missed,
                 incomplete
             )?;
-            if let Some(regs) = &self.regs {
+            if let Some(regs) = &event.regs {
                 write!(
                     output,
                     " registers={} base_sequence={}",
@@ -200,13 +266,16 @@ impl Event {
     }
 }
 
-fn point(plan: &Plan, cookie: u64) -> Result<&Point> {
-    let index = cookie
+fn point_index(cookie: u64) -> Result<usize> {
+    cookie
         .checked_sub(1)
         .and_then(|n| usize::try_from(n).ok())
-        .context("invalid instruction trace cookie")?;
+        .context("invalid instruction trace cookie")
+}
+
+fn point(plan: &Plan, cookie: u64) -> Result<&Point> {
     plan.points
-        .get(index)
+        .get(point_index(cookie)?)
         .context("unknown instruction trace cookie")
 }
 
@@ -220,11 +289,11 @@ struct Output<'a> {
     sequence: u64,
     thread_epoch: u64,
     probe: u64,
-    pc: String,
-    module: std::borrow::Cow<'a, str>,
-    elf_address: String,
-    opcode: String,
-    instruction: &'a str,
+    pc: &'a RawValue,
+    module: &'a RawValue,
+    elf_address: &'a RawValue,
+    opcode: &'a RawValue,
+    instruction: &'a RawValue,
     missed_before: u64,
     incomplete: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -409,14 +478,53 @@ mod tests {
                 assembly: "sub sp, sp, #0x90".into(),
             },
         );
+        let writer = Writer::new(&plan, true).unwrap();
         for (pc, opcode) in [(0x7000, "d503201f"), (0x9000, "d10243ff")] {
             let h = Header { pc, ..header() };
             let event = Event::decode(bytes(&h), 10, false, &plan).unwrap();
             let mut output = Vec::new();
-            event.write(&plan, 0, false, true, &mut output).unwrap();
+            writer.write(&event, 0, false, &mut output).unwrap();
             let json: serde_json::Value = serde_json::from_slice(&output).unwrap();
             assert_eq!(json["opcode"], opcode);
             assert_eq!(json["pc"], format!("{pc:#x}"));
+        }
+    }
+
+    #[test]
+    fn cached_json_preserves_escaping_and_changing_event_fields() {
+        let mut plan = plan();
+        let module = "/test\"\\\n雪.so";
+        let assembly = "text \"quoted\"\\\n雪";
+        plan.targets[0].path = module.into();
+        plan.points[0]
+            .instructions
+            .get_mut(&0x7000)
+            .unwrap()
+            .assembly = assembly.into();
+        let writer = Writer::new(&plan, true).unwrap();
+        for sequence in [1, 9] {
+            let event = pc_event(Header {
+                sequence,
+                timestamp_ns: sequence * 100,
+                ..header()
+            });
+            let mut output = Vec::new();
+            writer
+                .write(&event, sequence - 1, sequence != 1, &mut output)
+                .unwrap();
+            let actual: serde_json::Value = serde_json::from_slice(&output).unwrap();
+            assert_eq!(
+                actual,
+                serde_json::json!({
+                    "source": "instruction", "timestamp_ns": sequence * 100,
+                    "tgid": 10, "tid": 11, "cpu": 0, "sequence": sequence,
+                    "thread_epoch": 55, "probe": 1, "pc": "0x7000",
+                    "module": module, "elf_address": "0x1000", "opcode": "d503201f",
+                    "instruction": assembly, "missed_before": sequence - 1,
+                    "incomplete": sequence != 1,
+                })
+            );
+            assert!(output.ends_with(b"\n"));
         }
     }
 
@@ -428,7 +536,10 @@ mod tests {
         let event = Event::decode(&unaligned[1..], 10, true, &plan()).unwrap();
         assert_eq!(event.regs.as_ref().unwrap().iter().count(), REGISTER_COUNT);
         let mut output = Vec::new();
-        event.write(&plan(), 2, true, true, &mut output).unwrap();
+        Writer::new(&plan(), true)
+            .unwrap()
+            .write(&event, 2, true, &mut output)
+            .unwrap();
         let json: serde_json::Value = serde_json::from_slice(&output).unwrap();
         assert_eq!(json["missed_before"], 2);
         assert_eq!(json["registers"]["kind"], "full");
@@ -453,7 +564,10 @@ mod tests {
         assert_eq!(changed.header.length, 104);
         let event = decode(&changed).unwrap();
         let mut output = Vec::new();
-        event.write(&plan(), 0, false, true, &mut output).unwrap();
+        Writer::new(&plan(), true)
+            .unwrap()
+            .write(&event, 0, false, &mut output)
+            .unwrap();
         let json: serde_json::Value = serde_json::from_slice(&output).unwrap();
         assert_eq!(
             json["registers"],

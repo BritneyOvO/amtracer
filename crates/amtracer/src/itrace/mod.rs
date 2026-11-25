@@ -172,6 +172,7 @@ pub fn run(options: Options) -> Result<()> {
             .context("IT_EVENTS map missing")?,
     )?;
     let mut sequences = event::Sequences::default();
+    let writer = event::Writer::new(&plan, options.common.json)?;
     let stdout = io::stdout();
     let mut output = BufWriter::with_capacity(256 * 1024, stdout.lock());
     control.started = Instant::now();
@@ -196,35 +197,36 @@ pub fn run(options: Options) -> Result<()> {
                 break;
             }
             backend.check()?;
-            while control.running() {
-                if !process.check()?
-                    || matches!(mappings.check(false)?, MappingChange::ProbeRemoved)
+            let mut empty = false;
+            // Bound lifecycle/timer polling without reading several clocks for
+            // every record. Signals and the exact count limit remain per event.
+            for _ in 0..256 {
+                if control.stop.load(Ordering::Relaxed)
+                    || (control.limit != 0 && control.events >= control.limit)
                 {
                     break 'capture;
                 }
-                backend.check()?;
                 let Some(record) = events.next() else {
+                    empty = true;
                     break;
                 };
                 received += 1;
                 let event = event::Event::decode(&record, pid, options.regs, &plan)?;
+                // Release the ring slot before potentially blocking on output.
+                drop(record);
                 let missed = sequences.observe(&event)?;
                 if !options.summary_only {
-                    event.write(
-                        &plan,
-                        missed,
-                        sequences.incomplete,
-                        options.common.json,
-                        &mut output,
-                    )?;
+                    writer.write(&event, missed, sequences.incomplete, &mut output)?;
                 }
                 control.emitted();
             }
-            output.flush()?;
-            if !control.running() {
-                break;
+            if empty {
+                output.flush()?;
+                if !control.running() {
+                    break;
+                }
+                wait_readable(events.as_raw_fd())?;
             }
-            wait_readable(events.as_raw_fd())?;
         }
         Ok(())
     })();
@@ -251,13 +253,7 @@ pub fn run(options: Options) -> Result<()> {
             let event = event::Event::decode(&record, pid, options.regs, &plan)?;
             let missed = sequences.observe(&event)?;
             if !options.summary_only {
-                event.write(
-                    &plan,
-                    missed,
-                    sequences.incomplete,
-                    options.common.json,
-                    &mut output,
-                )?;
+                writer.write(&event, missed, sequences.incomplete, &mut output)?;
             }
             control.emitted();
             Ok(())

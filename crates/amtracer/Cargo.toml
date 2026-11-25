@@ -14,7 +14,7 @@ framehop = { version = "0.16.0", default-features = false, features = ["std"] }
 libc = "0.2.191"
 object = { version = "0.41.0", default-features = false, features = ["read_core", "elf", "std", "compression"] }
 serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.154"
+serde_json = { version = "1.0.154", features = ["raw_value"] }
 yaxpeax-arch = { version = "0.3.3", default-features = false, features = ["std"] }
 yaxpeax-arm = { version = "0.5.0", default-features = false, features = ["std", "fmt"] }
 
