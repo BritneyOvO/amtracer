@@ -171,8 +171,8 @@ class Device:
         if path == expected:
             self.shell("kill", f"-{name}", str(pid), check=False)
 
-    def tracer(self, name, ranges, regs=False, summary=False, count=0):
-        trace = Trace(self, name, ranges, regs, summary, count)
+    def tracer(self, name, ranges, regs=False, summary=False, count=0, output_sink="file"):
+        trace = Trace(self, name, ranges, regs, summary, count, output_sink)
         self.children.append(trace)
         return trace
 
@@ -195,11 +195,12 @@ class Device:
 
 
 class Trace:
-    def __init__(self, device, name, ranges, regs, summary, count):
+    def __init__(self, device, name, ranges, regs, summary, count, output_sink="file"):
         self.device = device
         self.path = device.output / f"{name}.jsonl"
         self.error_path = device.output / f"{name}.stderr"
-        self.output = self.path.open("w")
+        self.output_sink = output_sink
+        self.output = Path("/dev/null").open("w") if output_sink == "host-null" else self.path.open("w")
         self.error = self.error_path.open("w")
         args = [f"{device.remote}/amtracer", "itrace", "-p", str(device.info["pid"]), "--duration", "120"]
         for scope in ranges:
@@ -212,10 +213,13 @@ class Trace:
         self.command = args
         # Record the shell's PID before exec so setup failures can be cleaned too.
         shell = 'echo "AMTRACER_PID=$$" >&2\nexec ' + shlex.join(args)
+        if output_sink == "device-null":
+            shell += " > /dev/null"
         device.report["commands"].append(device.adb + ["shell", "-T", shell])
         self.process = subprocess.Popen(device.adb + ["shell", "-T", shell], stdout=self.output, stderr=self.error, text=True)
         self.pid = None
         self.finished = None
+        self.ready_at = None
 
     def ready(self, timeout=30):
         deadline = time.monotonic() + timeout
@@ -224,6 +228,7 @@ class Trace:
             if match := re.search(r"AMTRACER_PID=(\d+)", text):
                 self.pid = int(match[1])
             if "itrace: ready " in text:
+                self.ready_at = time.monotonic_ns()
                 return text
             if self.process.poll() is not None:
                 raise RuntimeError(text)
@@ -241,6 +246,7 @@ class Trace:
             self.device.signal(self.pid, "INT")
         try:
             code = self.process.wait(timeout=20)
+            finished_at = time.monotonic_ns()
         except subprocess.TimeoutExpired:
             if self.pid is not None:
                 self.device.signal(self.pid, "KILL")
@@ -251,7 +257,10 @@ class Trace:
             self.output.close()
             self.error.close()
         self.finished = {"returncode": code, "stderr": self.error_path.read_text(),
-                         "output_bytes": self.path.stat().st_size, "command": self.command}
+                         "output_bytes": 0 if self.output_sink == "host-null" else self.path.stat().st_size,
+                         "output_sink": self.output_sink,
+                         "ready_to_exit_ns": finished_at - self.ready_at if self.ready_at is not None else None,
+                         "command": self.command}
         return self.finished
 
     def events(self):

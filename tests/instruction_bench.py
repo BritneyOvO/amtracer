@@ -27,6 +27,8 @@ def main():
     parser.add_argument("--event-rates", default="0,1000,10000,50000", help="0 means unpaced throughput")
     parser.add_argument("--modes", default="baseline,pc,regs,pc-json", help="baseline,pc,regs,pc-json,regs-json")
     parser.add_argument("--unpaced-rounds", type=int, default=2000)
+    parser.add_argument("--json-sink", choices=("file", "host-null", "device-null"), default="file",
+                        help="JSON destination: file, ADB to host /dev/null, or device /dev/null")
     args = parser.parse_args()
     modes = args.modes.split(",")
     rates = [int(x) for x in args.event_rates.split(",")]
@@ -59,7 +61,8 @@ def main():
                         before = None
                         if mode != "baseline":
                             trace = device.tracer(name, ["fixture+amtracer_trace..amtracer_trace_end"],
-                                                  regs=mode.startswith("regs"), summary=not mode.endswith("json"))
+                                                  regs=mode.startswith("regs"), summary=not mode.endswith("json"),
+                                                  output_sink=args.json_sink if mode.endswith("json") else "file")
                             trace.ready()
                             before = process_usage(device, trace.pid)
                         measurement = device.run_fixture(rounds=rounds, rate=call_rate, timeout=max(30, args.seconds * 10))
@@ -77,6 +80,8 @@ def main():
                             sample |= {"trace": result, "stats": stats, "tool_cpu_ticks": after["cpu_ticks"] - before["cpu_ticks"],
                                        "tool_maxrss_kb": after["maxrss_kb"],
                                        "loss_fraction": (stats["ring_lost"] + stats["state_failed"]) / stats["hits"]}
+                            sample["hit_insn_per_second"] = stats["hits"] * 1e9 / measurement["elapsed_ns"]
+                            sample["received_per_second_ready_to_exit"] = stats["received"] * 1e9 / result["ready_to_exit_ns"]
                         report["samples"].append(sample)
                         print(f"{name}: {sample['calls_per_second']:.1f} calls/s")
                         device.stop_fixture()
