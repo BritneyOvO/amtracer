@@ -42,8 +42,8 @@ UXN 后端状态，不声称标准 uprobe 挂载成功必然使用 recomp；若�
 消费端检查 ABI、点位归属与序号，丢失后标记 trace 不完整，不补造事件或执行后结果。
 序号只覆盖采集程序实际执行；不能检测没有触发 consumer 的指令遗漏。
 
-解析原始 ELF 代码并预先反汇编，输出原始 PC、模块/ELF 偏移、opcode 和汇编。
-单独维护范围点位表，避免每条事件重复读 ELF 或反汇编。stdout 为文本或 JSONL，
+从目标进程内存读取完整原页并预先反汇编，输出原始 PC、模块/ELF 偏移、opcode 和汇编。
+文件用于定位及符号，范围点位表按运行时 PC 保存指令，避免每条事件重复读内存或反汇编。stdout 为文本或 JSONL，
 诊断、ready 和统计写 stderr。停止时先关闭采集，再排空已提交记录并报告未输出记录；
 count、目标退出、映射变化、信号、输出错误均释放挂载资源。
 
@@ -134,3 +134,21 @@ fuxi smoke 和写满缓冲区后的恢复测试。60 组同参数性能用例共
 无丢失；旧版丢失 43.35% 的不节流寄存器 JSONL 三轮，新版完整输出 144,000 条。
 平均载荷减少 73.34%，单条 JSON 减少 40.08%；组合优化的独立贡献未拆分，CPU
 降耗和持续零丢失不由该结果保证，见[增量设备报告](instruction-delta-2026-11-25.md)。
+
+## 内存指令准备（2026-11-25）
+
+内核先尝试 UXN 实时内存快照及站点验证，再准备原生文件/XOL 指令。每个 mm/原页保留
+独立 generation，UXN 命中和卸载不依赖全局 `UPROBE_COPY_INSN`。原生回退保留，但在写
+BRK 前比较真实内存指令与原生缓存；不一致返回 ESTALE。UXN 准备失败时不能执行或恢复
+文件中的密文。文件仍是 perf/uprobe 的 inode+offset 定位依据，并未增加匿名 JIT 后端。
+
+`Plan` 从 `/proc/PID/mem` 读取每个接触页，排他指令检查也针对内存整页。安装前后复核
+整页字节及原映射，之后继续使用 UXN STAT 代际检查。每个 inode/offset 只挂一个 perf
+事件，但按 PC 保存多个 `Instruction`，输出 opcode/assembly 对应实际命中的映射。
+`resolve --range` 预览格式采用 `instruction_source=runtime` 和每点 `instances` 数组；
+普通 resolve/uprobe 以及 BPF 指令事件 ABI v2 保持现有格式。
+
+私有 RX 稳定明文是本次边界。mmap 锁与前后复核不等于停止所有线程，不能保证别名写、
+持续自修改或瞬时改回原字节时的一致性。内存读取失败明确终止，不拿文件字节代替。
+
+复现与本轮验证见 [runtime-instructions-2026-11-25.md](runtime-instructions-2026-11-25.md)。
