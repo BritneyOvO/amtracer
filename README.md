@@ -217,14 +217,33 @@ uprobe 与 syscall 共用 framehop 解栈，使用 DWARF CFI / FP，输出 `stac
 
 事件的 `source` 为 `instruction`，包含原始运行时 `pc`、`module`、`elf_address`、
 `opcode`、反汇编 `instruction`、TID、`thread_epoch` 和 `sequence`。默认内核记录
-为 64 字节；`--regs` 后为 336 字节，附带 x0–x30、sp、pc、pstate。
+为 64 字节；`--regs` 按线程记录 x0–x30、sp、pstate 的增量，PC 每条保留在事件头。
+首条、丢失后的下一条成功记录，以及每隔 1024 次命中的检查点发送完整快照。
+完整快照为 344 字节，增量为 `80 + 8 × 变更寄存器数` 字节，例如只变更 1 项时为 88 字节。
+ringbuf 容量为 **32 MiB**；容量固定用于该次 itrace 会话，仍可能因持续慢输出而耗尽。
 `--summary-only` 消费并校验事件，仅输出 stderr 统计，供衡量采集/消费开销使用。
 指令模式暂不接入 `run --config`，也不在每条指令上采集表达式、内存窗口或调用栈。
+
+`--regs` 的 JSONL 同样只输出变更值：`registers.kind` 为 `full` / `delta`，
+`registers.base_sequence` 为 0 / 前一条已提交事件序号，`registers.values` 使用
+`x0`…`x30`、`sp`、`pstate` 作为键。比如：
+
+```json
+{"kind":"delta","base_sequence":1,"values":{"x1":0}}
+```
+
+这段为 `registers` 字段的内容；没有变化时 `values` 为 `{}`。按 `tid` + `thread_epoch`
+维护状态：`full` 替换全部值，`delta` 在基线序号匹配后覆盖对应值，PC 取当前事件。
+值变为 0 也会显式输出；缺少基线时应等待完整快照，不能把旧状态接到增量上。
+**这是 itrace 寄存器 JSON 格式变更**，不再使用旧的完整 `registers.x` 数组；
+指令 ABI 升为 v2，需要一起更新工具和 `amtracer-itrace.o`。普通 uprobe 的格式保持现有约定。
+变化表示两次采集状态的差异，可能包含范围外调用或信号处理的影响，不等同于上条指令的写集合。
 
 事件表示执行前命中，不保证指令成功完成；故障重试可能重复 PC。序号只在同一
 `tid` + `thread_epoch` 中比较；线程退出 hook 清理内核状态，避免 TID 重用串接。
 `missed_before` 表示发现的序号缺口，之后事件的 `incomplete` 保持 true。
-最终统计还包含 `ring_lost`、`state_failed`、`discarded`、`queued` 和 `incomplete`；
+最终统计还包含 `ring_lost`、`state_failed`、`discarded`、`queued`、`incomplete`、
+成功提交的载荷字节数 `submitted_bytes`（不含 ringbuf 内部头）和 `full_snapshots`；
 序号检测不到最后一条之后的丢失，也不能证明 consumer 从未触发的点位没有遗漏。
 
 安装时采集门控关闭；全部挂载、原始指令字节/映射复核和 UXN `INFO/STAT` 查询通过后才打印
@@ -243,7 +262,7 @@ uprobe 与 syscall 共用 framehop 解栈，使用 DWARF CFI / FP，输出 `stac
 多线程、CPU 0/1/2 迁移、81 点位、跨页和访存异常恢复，共核对 601 条完整事件，
 没有 ringbuf 丢失或序号缺口；排他/SVC/原生回退拒绝、count 和目标退出检查通过。
 这项结果不覆盖任意用户代码、PAC/BTI 完整矩阵或持续高负载下零丢失。
-同日完成 60 组性能对照，目标 1k/10k/50k 指令事件率下均无丢失；不节流的完整寄存器
+同日旧版固定 336 字节记录、8 MiB 缓冲区的 60 组性能对照中，目标 1k/10k/50k 指令事件率下均无丢失；不节流的完整寄存器
 JSONL 短突发出现约 43.35% ringbuf 丢失。数据及限制见
 [fuxi 测试报告](docs/instruction-device-2026-11-25.md)。预留 NOP 的非命中开销尚未单独测量。
 设备测试与性能复现见 [testing.md](docs/testing.md)，设计见 [instruction-trace.md](docs/instruction-trace.md)。

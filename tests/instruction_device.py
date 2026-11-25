@@ -35,6 +35,65 @@ def expected_offsets(zero=False):
     return path + [40, 44, 60, 64, 48, 52, 56]
 
 
+class RegisterDecoder:
+    names = {f"x{i}" for i in range(31)} | {"sp", "pstate"}
+
+    def __init__(self):
+        self.threads = {}
+
+    def observe(self, event):
+        key = event["tid"], event["thread_epoch"]
+        block = event["registers"]
+        values = block["values"]
+        assert set(values) <= self.names, block
+        assert all(type(v) is int and 0 <= v < 1 << 64 for v in values.values()), block
+        if block["kind"] == "full":
+            assert block["base_sequence"] == 0 and set(values) == self.names, block
+            current = values.copy()
+        else:
+            assert block["kind"] == "delta" and key in self.threads, block
+            sequence, previous = self.threads[key]
+            assert block["base_sequence"] == sequence and event["sequence"] == sequence + 1, event
+            assert all(previous[name] != value for name, value in values.items()), block
+            current = previous | values
+        self.threads[key] = event["sequence"], current
+        return current
+
+
+def check_register_step(info, previous, before, event, current):
+    if previous is None or event["sequence"] != previous["sequence"] + 1:
+        return
+    offset = int(previous["pc"], 16) - int(info["trace"], 16)
+    if offset == 56:
+        # The fixture executes untraced C code between calls.
+        return
+    expected = before.copy()
+    if offset == 0:
+        expected["x9"] = before["x30"]
+    elif offset == 4:
+        expected["x1"] = 0
+    elif offset == 8:
+        expected["x2"] = 3
+    elif offset in (12, 60):
+        expected["x1"] = before["x1"] + (1 if offset == 12 else 7)
+    elif offset == 16:
+        expected["x2"] = before["x2"] - 1
+        expected["pstate"] = (before["pstate"] & ~0xf0000000) | (0x60000000 if expected["x2"] == 0 else 0x20000000)
+    elif offset in (28, 44):
+        expected["x30"] = int(info["trace"], 16) + offset + 4
+    elif offset == 36:
+        expected["x1"] = 99
+    elif offset == 40:
+        expected["x3"] = int(info["leaf"], 16)
+    elif offset == 48:
+        expected["x30"] = before["x9"]
+    elif offset == 52:
+        expected["x0"] = before["x1"]
+    else:
+        assert offset in (20, 24, 32, 64), offset
+    assert current == expected, (previous, event, {k: (expected[k], current[k]) for k in expected if expected[k] != current[k]})
+
+
 class Device:
     def __init__(self, serial, output, fixture=None):
         self.root = Path(__file__).resolve().parents[1]
@@ -196,4 +255,9 @@ class Trace:
         return self.finished
 
     def events(self):
-        return [json.loads(line) for line in self.path.read_text().splitlines()]
+        return list(self.iter_events())
+
+    def iter_events(self):
+        with self.path.open() as source:
+            for line in source:
+                yield json.loads(line)

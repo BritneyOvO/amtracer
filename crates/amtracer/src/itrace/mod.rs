@@ -35,6 +35,7 @@ pub struct Options {
     pub common: Common,
     #[arg(long)]
     pub object: Option<PathBuf>,
+    /// Record per-thread register changes, with full initial/recovery snapshots.
     #[arg(long)]
     pub regs: bool,
     /// Collect and validate records, reporting statistics without writing each event.
@@ -207,7 +208,7 @@ pub fn run(options: Options) -> Result<()> {
                 };
                 received += 1;
                 let event = event::Event::decode(&record, pid, options.regs, &plan)?;
-                let missed = sequences.observe(&event.header)?;
+                let missed = sequences.observe(&event)?;
                 if !options.summary_only {
                     event.write(
                         &plan,
@@ -248,7 +249,7 @@ pub fn run(options: Options) -> Result<()> {
         }
         let drain = (|| -> Result<()> {
             let event = event::Event::decode(&record, pid, options.regs, &plan)?;
-            let missed = sequences.observe(&event.header)?;
+            let missed = sequences.observe(&event)?;
             if !options.summary_only {
                 event.write(
                     &plan,
@@ -274,6 +275,8 @@ pub fn run(options: Options) -> Result<()> {
     let submitted = stats.iter().map(|s| s.0.submitted).sum::<u64>();
     let ring_lost = stats.iter().map(|s| s.0.ring_lost).sum::<u64>();
     let state_failed = stats.iter().map(|s| s.0.state_failed).sum::<u64>();
+    let submitted_bytes = stats.iter().map(|s| s.0.submitted_bytes).sum::<u64>();
+    let full_snapshots = stats.iter().map(|s| s.0.full_snapshots).sum::<u64>();
     let queued = submitted.saturating_sub(received);
     let incomplete = sequences.incomplete
         || ring_lost != 0
@@ -286,7 +289,7 @@ pub fn run(options: Options) -> Result<()> {
         || drain_error.is_some()
         || flush_result.is_err();
     eprintln!(
-        "itrace: sites={} events={} received={} hits={} submitted={} ring_lost={ring_lost} state_failed={state_failed} sequence_missing={} discarded={discarded} queued={queued} incomplete={incomplete}",
+        "itrace: sites={} events={} received={} hits={} submitted={} ring_lost={ring_lost} state_failed={state_failed} sequence_missing={} discarded={discarded} queued={queued} submitted_bytes={submitted_bytes} full_snapshots={full_snapshots} incomplete={incomplete}",
         plan.points.len(),
         control.events,
         received,

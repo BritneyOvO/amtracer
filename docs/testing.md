@@ -117,6 +117,7 @@ python3 tests/binder_pair_smoke.py --serial "$SERIAL"
   -o target/amtracer-instruction-fixture
 
 python3 tests/instruction_smoke.py --serial "$SERIAL"
+python3 tests/instruction_delta.py --serial "$SERIAL"
 ```
 
 脚本使用唯一的 `/data/local/tmp/amtracer-itrace-*` 目录，上传工具、`amtracer-itrace.o`
@@ -125,6 +126,12 @@ python3 tests/instruction_smoke.py --serial "$SERIAL"
 跨页、信号异常、排他/SVC 拒绝、原生后端回退、count、目标退出与再次安装。
 它不使用系统进程；清理仅向仍指向自己目录下程序的 PID 发信号。
 输出为 `artifacts/instruction-smoke.json`，原始 JSONL/stderr 留在同名子目录。
+
+`instruction_delta.py` 校验 ABI v2 增量的完整重建、空变更和周期快照，并仅暂停自己的
+消费进程，让 BPF 在 32 MiB 缓冲区写满后持续失败。恢复消费并再次驱动目标，核对缺口
+之后的完整快照、后续寄存器值、载荷字节统计及 sticky incomplete。它产生数十万条
+记录，需要为本地 JSONL 留出空间。每次测试的原始文件目录取 `--report` 去掉扩展名，
+使用不同报告名即可保留旧结果。
 
 性能脚本每组使用新目标 mm，先预热，再比较基线、PC/寄存器 summary-only、PC JSONL。
 默认重复三次，包含不节流吞吐以及目标 1k/10k/50k 指令事件率：

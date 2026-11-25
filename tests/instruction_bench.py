@@ -42,7 +42,7 @@ def main():
                         "cpu_ticks uses the device CLK_TCK; raw counters are retained without assuming 100 Hz.",
                         "This benchmark includes consumer validation and uses summary-only to omit formatting where selected."]}
     try:
-        with Device(args.serial, args.report.parent / "instruction-bench", args.fixture) as device:
+        with Device(args.serial, args.report.with_suffix(""), args.fixture) as device:
             report["environment"] = device.report
             clock = device.shell("getconf", "CLK_TCK", check=False).stdout.strip()
             report["clk_tck"] = int(clock) if clock.isdecimal() else None

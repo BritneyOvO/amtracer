@@ -4,7 +4,7 @@ import argparse
 from collections import defaultdict
 import json
 from pathlib import Path
-from instruction_device import Device, expected_offsets, statistics
+from instruction_device import Device, RegisterDecoder, check_register_step, expected_offsets, statistics
 
 
 def check_trace(trace, info, expected, rounds, threads, regs=False, value=17):
@@ -22,15 +22,19 @@ def check_trace(trace, info, expected, rounds, threads, regs=False, value=17):
         assert [e["sequence"] for e in records] == list(range(1, len(records) + 1))
         if regs:
             start = int(info["trace"], 16)
+            decoder = RegisterDecoder()
+            previous, before = None, None
             for event in records:
-                assert event["registers"]["pc"] == int(event["pc"], 16)
+                registers = decoder.observe(event)
+                check_register_step(info, previous, before, event, registers)
+                previous, before = event, registers
                 pc = int(event["pc"], 16)
                 if pc == start + 44:
-                    assert event["registers"]["x"][3] == int(info["leaf"], 16)
+                    assert registers["x3"] == int(info["leaf"], 16)
                 if pc == start + 60:
-                    assert event["registers"]["x"][30] in (start + 32, start + 48)
+                    assert registers["x30"] in (start + 32, start + 48)
                 if pc == start + 56:
-                    assert event["registers"]["x"][0] == value
+                    assert registers["x0"] == value
     stats = statistics(result["stderr"])
     assert stats["events"] == len(events) and stats["submitted"] == len(events), stats
     assert stats["ring_lost"] == stats["state_failed"] == stats["queued"] == stats["discarded"] == 0, stats
@@ -46,7 +50,7 @@ def main():
     args = parser.parse_args()
     records = {}
     try:
-        with Device(args.serial, args.report.parent / "instruction-smoke", args.fixture) as device:
+        with Device(args.serial, args.report.with_suffix(""), args.fixture) as device:
             records["environment"] = device.report
             info = device.start_fixture()
             scope = "fixture+amtracer_trace..amtracer_trace_end"
@@ -54,7 +58,7 @@ def main():
             assert preview["sites"] == 17, preview
             records["resolve"] = preview
             for name, value, threads, migrate, regs in [("flow", 3, 1, 0, True), ("zero", 0, 1, 0, True),
-                                                        ("threads", 3, 3, 0, False), ("migration", 3, 1, 1, False)]:
+                                                        ("threads", 3, 3, 0, True), ("migration", 3, 1, 1, True)]:
                 trace = device.tracer(name, [scope, scope], regs=regs)
                 trace.ready()
                 call = device.run_fixture(rounds=3, threads=threads, value=value, migrate=migrate)
