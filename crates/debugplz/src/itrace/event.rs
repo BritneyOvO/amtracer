@@ -1,6 +1,6 @@
 use super::plan::{Plan, Point};
-use amtracer_abi::instruction::{self, Header, REGISTER_COUNT, RegisterHeader};
 use anyhow::{Context, Result, ensure};
+use debugplz_abi::instruction::{self, Header, REGISTER_COUNT, RegisterHeader};
 use serde::{Serialize, Serializer, ser::SerializeMap};
 use serde_json::value::{RawValue, to_raw_value};
 use std::{
@@ -360,7 +360,7 @@ impl Sequences {
 mod tests {
     use super::*;
     use crate::target::ResolvedProbe;
-    use amtracer_abi::instruction::Record;
+    use debugplz_abi::instruction::Record;
     use std::fs::File;
 
     fn plan() -> Plan {

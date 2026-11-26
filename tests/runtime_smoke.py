@@ -21,12 +21,12 @@ def request(device, command):
 
 def ordinary_probe(device, info):
     """Exercise the unchanged ordinary uprobe CLI against private plaintext."""
-    source = device.root / "artifacts/amtracer-ebpf.o"
-    remote_object = f"{device.remote}/amtracer-ebpf.o"
+    source = device.root / "artifacts/debugplz-ebpf.o"
+    remote_object = f"{device.remote}/debugplz-ebpf.o"
     subprocess.run(device.adb + ["push", str(source), remote_object], check=True, capture_output=True)
     output = device.output / "runtime-uprobe.jsonl"
     error = device.output / "runtime-uprobe.stderr"
-    command = [f"{device.remote}/amtracer", "uprobe", "-p", str(info["pid"]),
+    command = [device.tool_path, "uprobe", "-p", str(info["pid"]),
                "--probe", info["point"], "--print", "r0", "--print", "*sp",
                "--print", f"bytes({info['point']},4)", "--stack", "--regs",
                "--duration", "8", "--count", "3", "--json"]
@@ -35,11 +35,11 @@ def ordinary_probe(device, info):
     try:
         with output.open("w") as stdout, error.open("w") as stderr:
             process = subprocess.Popen(device.adb + ["shell", "-T",
-                'echo "AMTRACER_PID=$$" >&2\nexec ' + shlex.join(command)],
+                'echo "DEBUGPLZ_PID=$$" >&2\nexec ' + shlex.join(command)],
                 stdout=stdout, stderr=stderr, text=True)
             deadline = time.monotonic() + 12
             while process.poll() is None and time.monotonic() < deadline:
-                if match := re.search(r"AMTRACER_PID=(\d+)", error.read_text()):
+                if match := re.search(r"DEBUGPLZ_PID=(\d+)", error.read_text()):
                     pid = int(match[1])
                 request(device, "run 2")
                 time.sleep(0.1)
@@ -66,7 +66,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--serial", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--fixture", type=Path, default=Path("target/amtracer-runtime-fixture"))
+    parser.add_argument("--fixture", type=Path, default=Path("target/debugplz-runtime-fixture"))
     parser.add_argument("--resolve-only", action="store_true")
     args = parser.parse_args()
     report = {"mode": "resolve-only" if args.resolve_only else "hook"}
@@ -76,7 +76,7 @@ def main():
             report["device"] = device.report
             report["fixture"] = info
             report["baseline"] = request(device, "run 2")
-            executable = f"{device.remote}/amtracer"
+            executable = device.tool_path
             scope = "fixture+amtracer_runtime_point:8"
             resolved = json.loads(device.shell(executable, "resolve", "-p", str(info["pid"]),
                                                "--range", scope).stdout)

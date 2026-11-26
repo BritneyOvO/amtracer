@@ -15,8 +15,8 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     adb = ["adb", "-s", args.serial]
-    remote = "/data/local/tmp/amtracer-smoke"
-    subprocess.run(adb + ["push", str(root / "target/amtracer-binder-fixture"),
+    remote = "/data/local/tmp/debugplz-smoke"
+    subprocess.run(adb + ["push", str(root / "target/debugplz-binder-fixture"),
                           remote + "/binder-fixture"], capture_output=True, check=True)
     subprocess.run(adb + ["shell", "chmod", "700", remote + "/binder-fixture"], check=True)
     fixture = subprocess.Popen(adb + ["shell", remote + "/binder-fixture"], text=True,
@@ -27,7 +27,7 @@ def main():
         assert select.select([fixture.stdout], [], [], 5)[0], "fixture not ready"
         info = json.loads(fixture.stdout.readline())
         pid = info["pid"]
-        command = [remote + "/amtracer", "binder", "-p", str(pid), "--duration", "3", "--json"]
+        command = [remote + "/debugplz", "binder", "-p", str(pid), "--duration", "3", "--json"]
         trace = subprocess.Popen(adb + ["shell", shlex.join(command)], text=True,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         time.sleep(0.5)

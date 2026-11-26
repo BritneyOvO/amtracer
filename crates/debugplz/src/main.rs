@@ -22,7 +22,7 @@ use std::{
 #[derive(Parser)]
 #[command(
     version,
-    about = "Android ARM64 tracer: Aya uprobes and ktools trace drivers"
+    about = "DebugPlz for Android ARM64: Aya uprobes and ktools trace drivers"
 )]
 struct Cli {
     #[command(subcommand)]

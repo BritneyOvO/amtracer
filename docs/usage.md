@@ -14,11 +14,11 @@
 | Binder | 同步 / oneway、事务结果、最多 256 字节数据、interface token、可选回复关联 | ktools 控制 ABI v1 与 binder_trace v3 |
 | 混合会话 | JSON 配置、来源组合、全局 duration / count、JSONL 汇总、退出传播 | 按启用的来源满足上述要求 |
 
-**syscall 和 Binder 依赖配套内核驱动。** 本仓库包含用户态工具、eBPF 程序及固定的 UAPI 快照，不包含驱动安装包。普通 Android 内核不会因为安装 amtracer 就获得这两个接口。对应内核配置为 `CONFIG_KTOOLS`、`CONFIG_KTOOLS_SYSCALL_TRACE` 和 `CONFIG_KTOOLS_BINDER_TRACE`。
+**syscall 和 Binder 依赖配套内核驱动。** 本仓库包含用户态工具、eBPF 程序及固定的 UAPI 快照，不包含驱动安装包。普通 Android 内核不会因为安装 DebugPlz 就获得这两个接口。对应内核配置为 `CONFIG_KTOOLS`、`CONFIG_KTOOLS_SYSCALL_TRACE` 和 `CONFIG_KTOOLS_BINDER_TRACE`。
 
 设备端通常需要 root。两种 trace 驱动检查 `CAP_SYS_ADMIN`；读取目标 `/proc`、加载 BPF 和附加 perf 事件还受内核与 SELinux 权限约束。纯 uprobe 不调用 ktools 控制接口，纯 syscall / Binder 不加载 eBPF 对象。
 
-工具通过现有 `PR_KTOOLS` 获取 trace FD，不创建 `/dev` 控制节点。使用已集成 UXN-uprobe 的内核时，注册、激活与清理由内核 uprobe 路径处理，amtracer 无需手动执行 UXN `prctl`。
+工具通过现有 `PR_KTOOLS` 获取 trace FD，不创建 `/dev` 控制节点。使用已集成 UXN-uprobe 的内核时，注册、激活与清理由内核 uprobe 路径处理，DebugPlz 无需手动执行 UXN `prctl`。
 
 ## 构建
 
@@ -36,8 +36,8 @@
 Rust 依赖由 `Cargo.lock` 固定；尚未声明最低 Rust 版本，也未固定 nightly 日期。
 
 ```sh
-git clone https://github.com/BritneyOvO/amtracer.git
-cd amtracer
+git clone https://github.com/BritneyOvO/debugplz.git
+cd debugplz
 
 rustup toolchain install stable
 rustup toolchain install nightly --component rust-src
@@ -63,9 +63,9 @@ cargo xtask build
 
 ```text
 artifacts/
-├── amtracer         # Android ARM64 可执行文件
-├── amtracer-ebpf.o  # 普通 uprobe 采集程序
-└── amtracer-itrace.o # 指令 trace 采集程序
+├── debugplz         # Android ARM64 可执行文件
+├── debugplz-ebpf.o  # 普通 uprobe 采集程序
+└── debugplz-itrace.o # 指令 trace 采集程序
 ```
 
 普通构建使用已提交的 UAPI 绑定，不需要父内核源码或单独运行 bindgen。`xtask` 包含绑定生成依赖；只有显式生成绑定时才需要可用的 libclang。`artifacts/` 和 `target/` 不进入 Git。
@@ -76,9 +76,9 @@ artifacts/
 
 ```sh
 SERIAL=your-device-serial
-adb -s "$SERIAL" shell mkdir -p /data/local/tmp/amtracer
-adb -s "$SERIAL" push artifacts/amtracer artifacts/amtracer-ebpf.o /data/local/tmp/amtracer/
-adb -s "$SERIAL" shell chmod 700 /data/local/tmp/amtracer/amtracer
+adb -s "$SERIAL" shell mkdir -p /data/local/tmp/debugplz
+adb -s "$SERIAL" push artifacts/debugplz artifacts/debugplz-*.o /data/local/tmp/debugplz/
+adb -s "$SERIAL" shell chmod 700 /data/local/tmp/debugplz/debugplz
 adb -s "$SERIAL" shell
 ```
 
@@ -86,18 +86,18 @@ adb -s "$SERIAL" shell
 
 ```sh
 su
-cd /data/local/tmp/amtracer
+cd /data/local/tmp/debugplz
 
-./amtracer doctor
-./amtracer uprobe -p 1234 --probe 'libfoo.so+target_func' \
+./debugplz doctor
+./debugplz uprobe -p 1234 --probe 'libfoo.so+target_func' \
   --regs --duration 5 --json
 ```
 
 示例中的 `1234`、库名、符号和地址均需替换为实际目标。`doctor` 显示架构、内核 BTF 文件是否存在及 ktools ABI / 功能位；其中 `ktools.error` 表示该接口不可用或访问失败，不等同于 uprobe 不可用。它不执行 BPF 加载或探针附加测试。
 
-默认从可执行文件同目录加载 `amtracer-ebpf.o`，uprobe 也可用 `--object /path/to/amtracer-ebpf.o` 指定路径。所有命令的完整参数可通过 `./amtracer <命令> --help` 查看。
+默认从可执行文件同目录加载 `debugplz-ebpf.o`，uprobe 也可用 `--object /path/to/debugplz-ebpf.o` 指定路径。所有命令的完整参数可通过 `./debugplz <命令> --help` 查看。
 
-使用 `itrace` 时同样部署 `amtracer-itrace.o` 到可执行文件目录，或用该命令的 `--object` 指定。
+使用 `itrace` 时同样部署 `debugplz-itrace.o` 到可执行文件目录，或用该命令的 `--object` 指定。
 
 ## uprobe：定位、多探针与表达式
 
@@ -113,7 +113,7 @@ cd /data/local/tmp/amtracer
 `libfoo.so+0x1234` 的数值不是直接传给内核的文件偏移。需要核对转换结果时，先运行：
 
 ```sh
-./amtracer resolve -p 1234 --probe 'libfoo.so+0x1234'
+./debugplz resolve -p 1234 --probe 'libfoo.so+0x1234'
 ```
 
 输出包含 `path`、`elf_address` 和 `file_offset`。地址必须 4 字节对齐并落在可执行映射 / ELF 段中。库名有多个候选时会报错，可改用目标映射中的完整路径，例如 `'/data/local/tmp/libfoo.so+target_func'`。目标库需要已经加载，当前没有等待加载功能。
@@ -123,7 +123,7 @@ cd /data/local/tmp/amtracer
 重复 `--probe` 即可，单次会话最多 **64 个**，可以混用三类定位方式：
 
 ```sh
-./amtracer uprobe -p 1234 \
+./debugplz uprobe -p 1234 \
   --probe 'libfoo.so+func_a' \
   --probe 'libfoo.so+0x1234' \
   --probe '0x7a12345678' \
@@ -137,7 +137,7 @@ cd /data/local/tmp/amtracer
 `--regs` 输出 x0–x30、sp、pc、pstate；`--print` 可重复指定需要观察的值。表达式放在单引号中，避免 `*` 和括号被 shell 解释：
 
 ```sh
-./amtracer uprobe -p 1234 --probe 'libfoo.so+target_func' \
+./debugplz uprobe -p 1234 --probe 'libfoo.so+target_func' \
   --print 'r13' \
   --print '*r13' \
   --print '*(r13 + 1W):u16' \
@@ -170,7 +170,7 @@ cd /data/local/tmp/amtracer
 ### 原生调用栈
 
 ```sh
-./amtracer uprobe -p 1234 --probe 'libfoo.so+target_func' \
+./debugplz uprobe -p 1234 --probe 'libfoo.so+target_func' \
   --stack --stack-bytes 8192 --duration 5 --json
 ```
 
@@ -187,10 +187,10 @@ uprobe 与 syscall 共用 framehop 解栈，使用 DWARF CFI / FP，输出 `stac
 先预览点位，再挂载。范围左闭右开，起点沿用普通 uprobe 的地址语义：
 
 ```sh
-./amtracer resolve -p 1234 --range 'libfoo.so+func..func_end'
-./amtracer itrace -p 1234 --range 'libfoo.so+func..func_end' --duration 5 --json
-./amtracer itrace -p 1234 --range 'libfoo.so+0x1200:0x40' --regs --count 1000 --json
-./amtracer itrace -p 1234 --range '0x7a12345000..0x7a12345040' --duration 5
+./debugplz resolve -p 1234 --range 'libfoo.so+func..func_end'
+./debugplz itrace -p 1234 --range 'libfoo.so+func..func_end' --duration 5 --json
+./debugplz itrace -p 1234 --range 'libfoo.so+0x1200:0x40' --regs --count 1000 --json
+./debugplz itrace -p 1234 --range '0x7a12345000..0x7a12345040' --duration 5
 ```
 
 `START:BYTES` 使用显式字节长度，必须为正的 4 字节倍数。`START..END` 的 END
@@ -224,7 +224,7 @@ ringbuf 容量为 **32 MiB**；容量固定用于该次 itrace 会话，仍可�
 维护状态：`full` 替换全部值，`delta` 在基线序号匹配后覆盖对应值，PC 取当前事件。
 值变为 0 也会显式输出；缺少基线时应等待完整快照，不能把旧状态接到增量上。
 **这是 itrace 寄存器 JSON 格式变更**，不再使用旧的完整 `registers.x` 数组；
-指令 ABI 升为 v2，需要一起更新工具和 `amtracer-itrace.o`。普通 uprobe 的格式保持现有约定。
+指令 ABI 升为 v2，需要一起更新工具和 `debugplz-itrace.o`。普通 uprobe 的格式保持现有约定。
 变化表示两次采集状态的差异，可能包含范围外调用或信号处理的影响，不等同于上条指令的写集合。
 
 事件表示执行前命中，不保证指令成功完成；故障重试可能重复 PC。序号只在同一
@@ -253,10 +253,10 @@ ringbuf 容量为 **32 MiB**；容量固定用于该次 itrace 会话，仍可�
 ## syscall：过滤、参数与调用栈
 
 ```sh
-./amtracer syscall -p 1234 --syscalls openat,read,write \
+./debugplz syscall -p 1234 --syscalls openat,read,write \
   --duration 5 --json
 
-./amtracer syscall -p 1234 --syscalls getpid \
+./debugplz syscall -p 1234 --syscalls getpid \
   --stack --stack-bytes 1024 --count 10 --json
 ```
 
@@ -267,7 +267,7 @@ ringbuf 容量为 **32 MiB**；容量固定用于该次 itrace 会话，仍可�
 ### 自定义参数采集
 
 ```sh
-./amtracer syscall -p 1234 \
+./debugplz syscall -p 1234 \
   --capture openat:1:string:128 \
   --capture write:1:bytes:32 \
   --capture openat:stack:1024 \
@@ -292,7 +292,7 @@ ringbuf 容量为 **32 MiB**；容量固定用于该次 itrace 会话，仍可�
 默认按事件发生进程过滤：
 
 ```sh
-./amtracer binder -p 1234 --duration 5 --json
+./debugplz binder -p 1234 --duration 5 --json
 ```
 
 输出事务 ID、reply-to ID、code、flags、发送者、target handle、结果和最多 256 字节数据。数据被截断时标记 `truncated`；Android 13 Parcel 的 SYST / String16 interface token 在结构与长度有效时尽力解析，其他布局保留原始数据。
@@ -302,7 +302,7 @@ ringbuf 容量为 **32 MiB**；容量固定用于该次 itrace 会话，仍可�
 ### 捕获目标请求的服务端回复
 
 ```sh
-./amtracer binder -p 1234 --with-replies --duration 5 --json
+./debugplz binder -p 1234 --with-replies --duration 5 --json
 ```
 
 默认的单 PID 过滤无法保证收到另一进程发出的 reply。`--with-replies` 显式扩大为全局 Binder 采集，再由用户态只输出目标发起的请求及已确认匹配的回复。它要求驱动提供事务结果 / debug ID 能力，内核队列会承受其他进程的 Binder 流量。
@@ -346,7 +346,7 @@ ringbuf 容量为 **32 MiB**；容量固定用于该次 itrace 会话，仍可�
 ```
 
 ```sh
-./amtracer run --config ./session.json > events.jsonl 2> trace.log
+./debugplz run --config ./session.json > events.jsonl 2> trace.log
 ```
 
 `pid` 为必填项；`duration` / `count` 默认 0，分别为不限时长 / 不限条数。只保留需要的 `uprobe`、`syscall`、`binder` 配置段即可，至少启用一项。未知字段会报错。完整示例见 [session-example.json](session-example.json)，使用前需替换 PID 和探针位置。
@@ -401,9 +401,9 @@ cargo xtask gen-uapi
 [uapi/SOURCE.md](../uapi/SOURCE.md) 保存内核头来源和哈希，生成绑定包含 ARM64 ABI 布局断言。源码按以下边界组织：
 
 ```text
-crates/amtracer/       CLI、地址解析、表达式、驱动接入、解栈与会话管理
-crates/amtracer-ebpf/  uprobe 命中时的寄存器、栈及内存采集
-crates/amtracer-abi/   用户态与 eBPF 共用的固定布局
+crates/debugplz/       CLI、地址解析、表达式、驱动接入、解栈与会话管理
+crates/debugplz-ebpf/  uprobe 命中时的寄存器、栈及内存采集
+crates/debugplz-abi/   用户态与 eBPF 共用的固定布局
 xtask/                Android / eBPF 构建、UAPI 同步和生成
 uapi/                 固化的内核 UAPI
 tests/                主机外的设备 smoke 脚本与受控 fixture

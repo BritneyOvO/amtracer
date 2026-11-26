@@ -98,11 +98,17 @@ class Device:
     def __init__(self, serial, output, fixture=None, *, tool_dir=None, target_cpu=None, tracer_cpu=None):
         self.root = Path(__file__).resolve().parents[1]
         self.adb = ["adb", "-s", serial]
-        self.remote = f"/data/local/tmp/amtracer-itrace-{uuid.uuid4().hex[:10]}"
+        self.remote = f"/data/local/tmp/debugplz-itrace-{uuid.uuid4().hex[:10]}"
         self.output = Path(output)
         self.output.mkdir(parents=True, exist_ok=True)
-        self.fixture_path = fixture or self.root / "target/amtracer-instruction-fixture"
+        self.fixture_path = fixture or self.root / "target/debugplz-instruction-fixture"
         self.tool_dir = tool_dir or self.root / "artifacts"
+        self.tool_name = "debugplz"
+        # Saved benchmark builds use the names expected by their own loader.
+        if (tool_dir is not None and not (self.tool_dir / self.tool_name).is_file()
+                and (self.tool_dir / "amtracer").is_file()):
+            self.tool_name = "amtracer"
+        self.tool_path = f"{self.remote}/{self.tool_name}"
         self.target_cpu = target_cpu
         self.tracer_cpu = tracer_cpu
         self.children = []
@@ -118,15 +124,16 @@ class Device:
 
     def __enter__(self):
         self.shell("mkdir", "-p", self.remote)
-        files = [(self.tool_dir / "amtracer", "amtracer"),
-                 (self.tool_dir / "amtracer-itrace.o", "amtracer-itrace.o"),
+        object_name = f"{self.tool_name}-itrace.o"
+        files = [(self.tool_dir / self.tool_name, self.tool_name),
+                 (self.tool_dir / object_name, object_name),
                  (self.fixture_path, "fixture")]
         self.report["sha256"] = {}
         try:
             for source, name in files:
                 self.report["sha256"][name] = hashlib.sha256(source.read_bytes()).hexdigest()
                 subprocess.run(self.adb + ["push", str(source), f"{self.remote}/{name}"], check=True, capture_output=True)
-            self.shell("chmod", "700", f"{self.remote}/amtracer", f"{self.remote}/fixture")
+            self.shell("chmod", "700", self.tool_path, f"{self.remote}/fixture")
             self.report["boot_id"] = self.shell("cat", "/proc/sys/kernel/random/boot_id").stdout.strip()
             self.report["kernel"] = self.shell("uname", "-a").stdout.strip()
             self.report["selinux"] = self.shell("getenforce").stdout.strip()
@@ -180,9 +187,9 @@ class Device:
         assert result["failures"] == 0 and result["fault_bad_pc"] == 0, result
         return result
 
-    def signal(self, pid, name, executable="amtracer"):
+    def signal(self, pid, name, executable=None):
         # Refuse to signal a reused PID or another test's process.
-        expected = f"{self.remote}/{executable}"
+        expected = self.tool_path if executable is None else f"{self.remote}/{executable}"
         path = self.shell("readlink", f"/proc/{pid}/exe", check=False).stdout.strip()
         if path == expected:
             self.shell("kill", f"-{name}", str(pid), check=False)
@@ -204,7 +211,7 @@ class Device:
         except Exception as error:
             errors.append(repr(error))
         finally:
-            self.shell("rm", "-f", f"{self.remote}/fixture", f"{self.remote}/amtracer", f"{self.remote}/amtracer-itrace.o", check=False)
+            self.shell("rm", "-f", f"{self.remote}/fixture", self.tool_path, f"{self.tool_path}-itrace.o", check=False)
             self.shell("rmdir", self.remote, check=False)
         if errors and exception is None:
             raise RuntimeError(f"instruction test cleanup failed: {errors}")
@@ -218,7 +225,7 @@ class Trace:
         self.output_sink = output_sink
         self.output = Path("/dev/null").open("w") if output_sink == "host-null" else self.path.open("w")
         self.error = self.error_path.open("w")
-        args = [f"{device.remote}/amtracer", "itrace", "-p", str(device.info["pid"]), "--duration", "120"]
+        args = [device.tool_path, "itrace", "-p", str(device.info["pid"]), "--duration", "120"]
         for scope in ranges:
             args += ["--range", scope]
         args += ["--summary-only"] if summary else ["--json"]
@@ -230,7 +237,7 @@ class Trace:
             args = ["taskset", f"{1 << device.tracer_cpu:x}"] + args
         self.command = args
         # Record the shell's PID before exec so setup failures can be cleaned too.
-        shell = 'echo "AMTRACER_PID=$$" >&2\nexec ' + shlex.join(args)
+        shell = 'echo "DEBUGPLZ_PID=$$" >&2\nexec ' + shlex.join(args)
         if output_sink == "device-null":
             shell += " > /dev/null"
         device.report["commands"].append(device.adb + ["shell", "-T", shell])
@@ -243,7 +250,7 @@ class Trace:
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             text = self.error_path.read_text()
-            if match := re.search(r"AMTRACER_PID=(\d+)", text):
+            if match := re.search(r"DEBUGPLZ_PID=(\d+)", text):
                 self.pid = int(match[1])
             if "itrace: ready " in text:
                 self.ready_at = time.monotonic_ns()
@@ -257,7 +264,7 @@ class Trace:
         if self.finished is not None:
             return self.finished
         if self.pid is None:
-            match = re.search(r"AMTRACER_PID=(\d+)", self.error_path.read_text())
+            match = re.search(r"DEBUGPLZ_PID=(\d+)", self.error_path.read_text())
             if match:
                 self.pid = int(match[1])
         # A disconnected adb client can exit before the remote tracer. Verify

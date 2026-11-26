@@ -122,7 +122,7 @@ artifacts/session-smoke.json，哈希见 validation-2026-11-24.json。Binder 可
 
 ## recomp 指令 trace
 
-新增独立 `itrace` 命令、`resolve --range` 与 `amtracer-itrace.o`。范围支持
+新增独立 `itrace` 命令、`resolve --range` 与 `debugplz-itrace.o`。范围支持
 `START..END`/`START:BYTES`，按原始文件位置去重，预先反汇编、检查映射/段/对齐及
 不支持指令。1024 个文件点位、4096 个运行时地址上限与普通 uprobe 的 64 项配置独立。
 不修改内核，不增加 /dev，不手动注册或激活 UXN；通过现有 prctl INFO/STAT 只读确认

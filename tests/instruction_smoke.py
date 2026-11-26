@@ -55,7 +55,7 @@ def main():
             records["environment"] = device.report
             info = device.start_fixture()
             scope = "fixture+amtracer_trace..amtracer_trace_end"
-            preview = json.loads(device.shell(f"{device.remote}/amtracer", "resolve", "-p", info["pid"], "--range", scope).stdout)
+            preview = json.loads(device.shell(device.tool_path, "resolve", "-p", info["pid"], "--range", scope).stdout)
             assert preview["sites"] == 17, preview
             records["resolve"] = preview
             for name, value, threads, migrate, regs in [("flow", 3, 1, 0, True), ("zero", 0, 1, 0, True),

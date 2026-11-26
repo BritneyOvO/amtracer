@@ -25,7 +25,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--serial", required=True)
     parser.add_argument("--fixture", type=Path)
-    parser.add_argument("--tool-dir", type=Path, help="directory containing the selected amtracer and BPF objects")
+    parser.add_argument("--tool-dir", type=Path, help="directory containing the selected tracer and its BPF object")
     parser.add_argument("--target-cpu", type=int)
     parser.add_argument("--tracer-cpu", type=int)
     parser.add_argument("--report", type=Path, default=Path("artifacts/instruction-bench.json"))

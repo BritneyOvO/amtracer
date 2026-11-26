@@ -18,36 +18,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "amtracer"
-version = "0.1.0"
-dependencies = [
- "amtracer-abi",
- "anyhow",
- "aya",
- "clap",
- "ctrlc",
- "framehop",
- "libc",
- "object 0.41.0",
- "serde",
- "serde_json",
- "yaxpeax-arch",
- "yaxpeax-arm",
-]
-
-[[package]]
-name = "amtracer-abi"
-version = "0.1.0"
-
-[[package]]
-name = "amtracer-ebpf"
-version = "0.1.0"
-dependencies = [
- "amtracer-abi",
- "aya-ebpf",
-]
-
-[[package]]
 name = "anstream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -420,6 +390,36 @@ dependencies = [
  "dispatch2",
  "nix",
  "windows-sys",
+]
+
+[[package]]
+name = "debugplz"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aya",
+ "clap",
+ "ctrlc",
+ "debugplz-abi",
+ "framehop",
+ "libc",
+ "object 0.41.0",
+ "serde",
+ "serde_json",
+ "yaxpeax-arch",
+ "yaxpeax-arm",
+]
+
+[[package]]
+name = "debugplz-abi"
+version = "0.1.0"
+
+[[package]]
+name = "debugplz-ebpf"
+version = "0.1.0"
+dependencies = [
+ "aya-ebpf",
+ "debugplz-abi",
 ]
 
 [[package]]

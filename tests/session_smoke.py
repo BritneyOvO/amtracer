@@ -15,16 +15,16 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     adb = ["adb", "-s", args.serial]
-    remote = "/data/local/tmp/amtracer-smoke"
+    remote = "/data/local/tmp/debugplz-smoke"
     subprocess.run(adb + ["shell", "mkdir", "-p", remote], check=True, capture_output=True)
     for source, name in [
-        (root / "artifacts/amtracer", "amtracer"),
-        (root / "artifacts/amtracer-ebpf.o", "amtracer-ebpf.o"),
-        (root / "target/amtracer-fixture", "fixture"),
+        (root / "artifacts/debugplz", "debugplz"),
+        (root / "artifacts/debugplz-ebpf.o", "debugplz-ebpf.o"),
+        (root / "target/debugplz-fixture", "fixture"),
     ]:
         subprocess.run(adb + ["push", str(source), f"{remote}/{name}"], check=True,
                        capture_output=True)
-    subprocess.run(adb + ["shell", "chmod", "700", f"{remote}/amtracer",
+    subprocess.run(adb + ["shell", "chmod", "700", f"{remote}/debugplz",
                           f"{remote}/fixture"], check=True)
 
     fixture = subprocess.Popen(adb + ["shell", f"{remote}/fixture 40"], text=True,
@@ -47,7 +47,7 @@ def main():
             source.flush()
             subprocess.run(adb + ["push", source.name, config_path], check=True,
                            capture_output=True)
-        command = [remote + "/amtracer", "run", "--config", config_path]
+        command = [remote + "/debugplz", "run", "--config", config_path]
         trace = subprocess.Popen(adb + ["shell", shlex.join(command)], text=True,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = trace.communicate(timeout=20)
@@ -81,7 +81,7 @@ def main():
         failed_config = {
             "pid": pid,
             "duration": 10,
-            "uprobe": {"probes": ["amtracer-no-such-library.so+missing"]},
+            "uprobe": {"probes": ["debugplz-no-such-library.so+missing"]},
             "syscall": {"syscalls": ["getpid"]},
         }
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as source:
@@ -91,10 +91,10 @@ def main():
                            capture_output=True)
         failed = subprocess.run(adb + ["shell", shlex.join(command)], text=True,
                                 capture_output=True, timeout=20)
-        assert failed.returncode != 0 and "amtracer-no-such-library.so" in failed.stderr, failed
+        assert failed.returncode != 0 and "debugplz-no-such-library.so" in failed.stderr, failed
 
         retry = subprocess.run(
-            adb + ["shell", shlex.join([remote + "/amtracer", "syscall", "-p", str(pid),
+            adb + ["shell", shlex.join([remote + "/debugplz", "syscall", "-p", str(pid),
                                         "--syscalls", "getpid", "--count", "2", "--json"])],
             text=True, capture_output=True, timeout=10)
         assert retry.returncode == 0, retry.stderr

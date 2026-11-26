@@ -212,7 +212,7 @@ fn supervise(config: Config) -> Result<()> {
     };
     let mut control = crate::RunControl::new(&common)?;
     let specs = config.workers();
-    let executable = std::env::current_exe().context("locating amtracer executable")?;
+    let executable = std::env::current_exe().context("locating debugplz executable")?;
     let mut workers = Vec::with_capacity(specs.len());
     for spec in specs {
         let mut command = Command::new(&executable);

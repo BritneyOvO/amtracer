@@ -106,7 +106,7 @@
 
 ## 复现和原始记录
 
-在 amtracer 仓库运行，先按构建文档生成相同工具和夹具：
+在 DebugPlz 仓库运行，先按构建文档生成相同工具和夹具：
 
 ```sh
 python3 tests/runtime_smoke.py --serial 282eb4e4 --output artifacts/runtime-device-check

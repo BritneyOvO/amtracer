@@ -1,11 +1,10 @@
-# amtracer 设计
+# DebugPlz 设计
 
 状态：已确认方向，开始实现。日期：2026-11-24。
 
 ## 目标和边界
 
-面向 Android AArch64 的进程追踪工具，使用 Rust 和 Aya。项目位于
-`common/tools/amtracer`，是独立 Git 仓库；普通构建不依赖父内核源码树。
+面向 Android AArch64 的进程追踪工具，使用 Rust 和 Aya。项目作为独立 Git 仓库维护，普通构建不依赖父内核源码树。
 
 | 功能 | 事件来源 | 用户态工作 |
 | --- | --- | --- |
@@ -45,9 +44,9 @@ ELF/maps 缓存、解栈、输出；不把三种不同的原始 ABI 合并成一
 ## 仓库结构
 
 ```text
-crates/amtracer/       用户态 CLI 和业务模块
-crates/amtracer-ebpf/  no_std 的 uprobe 采集程序
-crates/amtracer-abi/   no_std 的 uprobe 配置、事件布局
+crates/debugplz/       用户态 CLI 和业务模块
+crates/debugplz-ebpf/  no_std 的 uprobe 采集程序
+crates/debugplz-abi/   no_std 的 uprobe 配置、事件布局
 xtask/                构建、UAPI 同步及验证入口
 uapi/                 原样保存的驱动 UAPI、来源和哈希
 tests/fixtures/       受控 native 和 Binder 测试程序
@@ -64,10 +63,10 @@ Builder、插件注册器或多套传输抽象。
 ## uprobe 定位
 
 ```sh
-amtracer uprobe -p 1234 --probe 'libfoo.so+0x1234' --regs --stack
-amtracer uprobe -p 1234 --probe 'libfoo.so+target_func' --stack
-amtracer uprobe -p 1234 --probe 'libfoo.so+target_func+0x10'
-amtracer uprobe -p 1234 --probe '0x7a12345678'
+debugplz uprobe -p 1234 --probe 'libfoo.so+0x1234' --regs --stack
+debugplz uprobe -p 1234 --probe 'libfoo.so+target_func' --stack
+debugplz uprobe -p 1234 --probe 'libfoo.so+target_func+0x10'
+debugplz uprobe -p 1234 --probe '0x7a12345678'
 ```
 
 三种输入最终都归一化为原始文件 inode 与文件偏移。

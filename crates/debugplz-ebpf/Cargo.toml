@@ -1,21 +1,21 @@
 [package]
-name = "amtracer-ebpf"
+name = "debugplz-ebpf"
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
 
 [dependencies]
-amtracer-abi = { path = "../amtracer-abi" }
+debugplz-abi = { path = "../debugplz-abi" }
 aya-ebpf = "0.3.0"
 
 [[bin]]
-name = "amtracer-ebpf"
+name = "debugplz-ebpf"
 path = "src/main.rs"
 test = false
 bench = false
 
 [[bin]]
-name = "amtracer-itrace"
+name = "debugplz-itrace"
 path = "src/itrace.rs"
 test = false
 bench = false

@@ -67,14 +67,14 @@ UXN 不适用时保留原生路径，但原生文件分析必须成功，并且�
 
 ## 复现命令
 
-在 amtracer 仓库构建设备夹具，NDK 路径按实际环境设置：
+在 DebugPlz 仓库构建设备夹具，NDK 路径按实际环境设置：
 
 ```sh
 ANDROID_NDK_HOME=/path/to/android-ndk
 "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang" \
   -O2 -Wall -Wextra -Werror -fPIE -pie -Wl,-z,max-page-size=4096 \
   tests/fixtures/runtime.c tests/fixtures/runtime.S \
-  -o target/amtracer-runtime-fixture
+  -o target/debugplz-runtime-fixture
 cargo xtask build
 python3 tests/runtime_smoke.py --serial 282eb4e4 \
   --output artifacts/runtime-resolve --resolve-only

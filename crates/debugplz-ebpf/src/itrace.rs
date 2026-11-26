@@ -1,7 +1,6 @@
 #![no_std]
 #![no_main]
 
-use amtracer_abi::instruction::*;
 use aya_ebpf::{
     EbpfContext,
     bindings::{BPF_RB_FORCE_WAKEUP, BPF_RB_NO_WAKEUP},
@@ -13,6 +12,7 @@ use aya_ebpf::{
     maps::{Array, HashMap, PerCpuArray, RingBuf},
     programs::{ProbeContext, RawTracePointContext},
 };
+use debugplz_abi::instruction::*;
 
 #[map]
 static IT_SETTINGS: Array<Config> = Array::with_max_entries(1, 0);

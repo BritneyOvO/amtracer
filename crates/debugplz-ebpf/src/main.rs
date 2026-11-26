@@ -1,7 +1,6 @@
 #![no_std]
 #![no_main]
 
-use amtracer_abi::*;
 use aya_ebpf::{
     EbpfContext,
     helpers::{
@@ -13,6 +12,7 @@ use aya_ebpf::{
     maps::{HashMap, PerCpuArray, RingBuf},
     programs::ProbeContext,
 };
+use debugplz_abi::*;
 
 #[map]
 static CONFIGS: HashMap<u64, ProbeConfig> = HashMap::with_max_entries(MAX_PROBES, 0);

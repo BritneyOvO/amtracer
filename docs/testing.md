@@ -21,21 +21,21 @@ cargo xtask build
 
 ```sh
 export ANDROID_NDK_HOME=/path/to/android-ndk
-AMTRACER_CC="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang"
+DEBUGPLZ_CC="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang"
 SERIAL=your-device-serial
 
 adb -s "$SERIAL" get-state
 mkdir -p target
 ```
 
-已有记录的验证设备为 fuxi，序列号 `282eb4e4`。测试前先完成 `cargo xtask build`，确保 `artifacts/amtracer` 与 `artifacts/amtracer-ebpf.o` 来自同一次构建。
+已有记录的验证设备为 fuxi，序列号 `282eb4e4`。测试前先完成 `cargo xtask build`，确保 `artifacts/debugplz` 与 `artifacts/debugplz-ebpf.o` 来自同一次构建。
 
 ## uprobe、表达式、syscall 与原生栈
 
 ```sh
-"$AMTRACER_CC" -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls \
+"$DEBUGPLZ_CC" -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls \
   -Wl,--export-dynamic -pthread \
-  tests/fixtures/native.c tests/fixtures/native.S -o target/amtracer-fixture
+  tests/fixtures/native.c tests/fixtures/native.S -o target/debugplz-fixture
 
 python3 tests/device_smoke.py --serial "$SERIAL"
 python3 tests/process_smoke.py --serial "$SERIAL"
@@ -48,17 +48,17 @@ python3 tests/session_smoke.py --serial "$SERIAL"
 | `process_smoke.py` | 三类会话在目标退出后结束，syscall / Binder 可以再次打开 |
 | `session_smoke.py` | uprobe + syscall 同时采集、syscall + 空闲 Binder 的全局 count、无效 uprobe 启动后的会话回收 |
 
-`device_smoke.py` 和 `session_smoke.py` 会上传工具和 fixture。`process_smoke.py` 复用 `/data/local/tmp/amtracer-smoke/` 中的文件，因此应在 `device_smoke.py` 后执行。
+`device_smoke.py` 和 `session_smoke.py` 会上传工具和 fixture。`process_smoke.py` 复用 `/data/local/tmp/debugplz-smoke/` 中的文件，因此应在 `device_smoke.py` 后执行。
 
 无帧指针的 fixture 可单独编译并另存报告：
 
 ```sh
-"$AMTRACER_CC" -O1 -g -fomit-frame-pointer -fno-optimize-sibling-calls \
+"$DEBUGPLZ_CC" -O1 -g -fomit-frame-pointer -fno-optimize-sibling-calls \
   -Wl,--export-dynamic -pthread \
-  tests/fixtures/native.c tests/fixtures/native.S -o target/amtracer-fixture-no-fp
+  tests/fixtures/native.c tests/fixtures/native.S -o target/debugplz-fixture-no-fp
 
 python3 tests/device_smoke.py --serial "$SERIAL" \
-  --fixture target/amtracer-fixture-no-fp --report device-smoke-no-fp.json
+  --fixture target/debugplz-fixture-no-fp --report device-smoke-no-fp.json
 ```
 
 这会将远端 `fixture` 替换为无帧指针版本；需要恢复时，重新执行默认的 `device_smoke.py`。
@@ -66,43 +66,43 @@ python3 tests/device_smoke.py --serial "$SERIAL" \
 ## 动态映射
 
 ```sh
-"$AMTRACER_CC" -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls \
+"$DEBUGPLZ_CC" -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls \
   -shared -fPIC tests/fixtures/mapping_lib.c -o target/libmap_a.so
-"$AMTRACER_CC" -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls \
+"$DEBUGPLZ_CC" -O1 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls \
   -shared -fPIC tests/fixtures/mapping_lib.c -o target/libmap_b.so
-"$AMTRACER_CC" -O1 -g -fno-omit-frame-pointer -Wall -Wextra \
+"$DEBUGPLZ_CC" -O1 -g -fno-omit-frame-pointer -Wall -Wextra \
   tests/fixtures/mapping_runner.c -ldl -pthread -o target/mapping-runner
 
 python3 tests/mapping_smoke.py --serial "$SERIAL"
 ```
 
-脚本使用独立目录 `/data/local/tmp/amtracer-mapping/`，验证 dlopen 后 syscall 栈识别新库，以及 dlclose 后对应 uprobe 会话停止。
+脚本使用独立目录 `/data/local/tmp/debugplz-mapping/`，验证 dlopen 后 syscall 栈识别新库，以及 dlclose 后对应 uprobe 会话停止。
 
 ## Binder 失败事务与成功配对
 
 先验证无效句柄的同步 / oneway 失败请求、发送者、截断和 interface token。该脚本只上传自己的 Binder fixture，因此先显式部署工具：
 
 ```sh
-"$AMTRACER_CC" -O2 -Wall -Wextra \
-  tests/fixtures/binder.c -o target/amtracer-binder-fixture
+"$DEBUGPLZ_CC" -O2 -Wall -Wextra \
+  tests/fixtures/binder.c -o target/debugplz-binder-fixture
 
-adb -s "$SERIAL" shell mkdir -p /data/local/tmp/amtracer-smoke
-adb -s "$SERIAL" push artifacts/amtracer /data/local/tmp/amtracer-smoke/amtracer
-adb -s "$SERIAL" shell chmod 700 /data/local/tmp/amtracer-smoke/amtracer
+adb -s "$SERIAL" shell mkdir -p /data/local/tmp/debugplz-smoke
+adb -s "$SERIAL" push artifacts/debugplz /data/local/tmp/debugplz-smoke/debugplz
+adb -s "$SERIAL" shell chmod 700 /data/local/tmp/debugplz-smoke/debugplz
 python3 tests/binder_smoke.py --serial "$SERIAL"
 ```
 
 再验证私有 client / service 的同步成功、回复 ID 配对和 oneway：
 
 ```sh
-"$AMTRACER_CC" -O2 -Wall -Wextra \
-  tests/fixtures/binder_pair.c -o target/amtracer-binder-pair
+"$DEBUGPLZ_CC" -O2 -Wall -Wextra \
+  tests/fixtures/binder_pair.c -o target/debugplz-binder-pair
 python3 tests/binder_pair_smoke.py --serial "$SERIAL"
 ```
 
 成功配对测试要求可访问 `/dev/binderfs/binder-control`，允许创建私有 binderfs 设备并注册 context manager。fixture 使用唯一的临时设备，不连接系统服务，结束后清理设备节点。
 
-`binder_pair_smoke.py` 会自行上传工具，并在结束时删除共享测试目录中的 `amtracer`、`amtracer-ebpf.o` 和 `binder-pair`。依赖这些文件的其他脚本应先执行，或在之后重新部署。
+`binder_pair_smoke.py` 会自行上传工具，并在结束时删除共享测试目录中的 `debugplz`、`debugplz-ebpf.o` 和 `binder-pair`。依赖这些文件的其他脚本应先执行，或在之后重新部署。
 
 ## recomp 指令 trace
 
@@ -112,16 +112,16 @@ python3 tests/binder_pair_smoke.py --serial "$SERIAL"
 按 4 KiB 页隔离，含分支/循环、间接调用、跨页调用、80 NOP、可恢复访存异常和拒绝样例：
 
 ```sh
-"$AMTRACER_CC" -O2 -g -Wall -Wextra -Werror \
+"$DEBUGPLZ_CC" -O2 -g -Wall -Wextra -Werror \
   -Wl,--export-dynamic -Wl,-z,max-page-size=4096 -pthread \
   tests/fixtures/instruction.c tests/fixtures/instruction.S \
-  -o target/amtracer-instruction-fixture
+  -o target/debugplz-instruction-fixture
 
 python3 tests/instruction_smoke.py --serial "$SERIAL"
 python3 tests/instruction_delta.py --serial "$SERIAL"
 ```
 
-脚本使用唯一的 `/data/local/tmp/amtracer-itrace-*` 目录，上传工具、`amtracer-itrace.o`
+脚本使用唯一的 `/data/local/tmp/debugplz-itrace-*` 目录，上传工具、`debugplz-itrace.o`
 和 fixture；等待 `itrace: ready` 后再驱动目标。核对每 TID 的实际 PC 序列、序号、
 原始 LR、寄存器返回值和丢失统计，覆盖重复范围、已有/新线程、跨 CPU、超过 64 点、
 跨页、信号异常、排他/SVC 拒绝、原生后端回退、count、目标退出与再次安装。
@@ -182,7 +182,7 @@ AArch64 GNU 工具链及运行库；NDK fixture 仍按前面的命令构建：
 aarch64-linux-gnu-gcc -O2 -g -Wall -Wextra -Werror \
   -Wl,--export-dynamic -Wl,-z,max-page-size=4096 -pthread \
   tests/fixtures/instruction.c tests/fixtures/instruction.S \
-  -o target/amtracer-instruction-fixture-linux
+  -o target/debugplz-instruction-fixture-linux
 python3 tests/instruction_host.py
 ```
 

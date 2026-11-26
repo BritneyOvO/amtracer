@@ -47,7 +47,7 @@ fn build(root: &Path) -> Result<()> {
         "+nightly",
         "build",
         "-p",
-        "amtracer-ebpf",
+        "debugplz-ebpf",
         "--target",
         "bpfel-unknown-none",
         "--release",
@@ -63,7 +63,7 @@ fn build(root: &Path) -> Result<()> {
         .args([
             "build",
             "-p",
-            "amtracer",
+            "debugplz",
             "--release",
             "--target",
             "aarch64-linux-android",
@@ -72,16 +72,16 @@ fn build(root: &Path) -> Result<()> {
     let output = root.join("artifacts");
     fs::create_dir_all(&output)?;
     fs::copy(
-        root.join("target/aarch64-linux-android/release/amtracer"),
-        output.join("amtracer"),
+        root.join("target/aarch64-linux-android/release/debugplz"),
+        output.join("debugplz"),
     )?;
     fs::copy(
-        root.join("target/bpfel-unknown-none/release/amtracer-ebpf"),
-        output.join("amtracer-ebpf.o"),
+        root.join("target/bpfel-unknown-none/release/debugplz-ebpf"),
+        output.join("debugplz-ebpf.o"),
     )?;
     fs::copy(
-        root.join("target/bpfel-unknown-none/release/amtracer-itrace"),
-        output.join("amtracer-itrace.o"),
+        root.join("target/bpfel-unknown-none/release/debugplz-itrace"),
+        output.join("debugplz-itrace.o"),
     )?;
     eprintln!("Android artifacts: {}", output.display());
     Ok(())
@@ -154,7 +154,7 @@ fn generate_uapi(root: &Path) -> Result<()> {
         .generate_comments(true)
         .generate()
         .context("generating ARM64 UAPI bindings")?;
-    bindings.write_to_file(root.join("crates/amtracer/src/ktools/bindings.rs"))?;
+    bindings.write_to_file(root.join("crates/debugplz/src/ktools/bindings.rs"))?;
     generate_syscall_names(root)?;
     Ok(())
 }
@@ -214,7 +214,7 @@ fn generate_syscall_names(root: &Path) -> Result<()> {
     }
     source.push_str("];\n");
     fs::write(
-        root.join("crates/amtracer/src/ktools/syscall_names.rs"),
+        root.join("crates/debugplz/src/ktools/syscall_names.rs"),
         source,
     )?;
     Ok(())

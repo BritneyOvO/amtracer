@@ -16,16 +16,16 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     adb = ["adb", "-s", args.serial]
-    remote = "/data/local/tmp/amtracer-smoke"
+    remote = "/data/local/tmp/debugplz-smoke"
     subprocess.run(adb + ["shell", "mkdir", "-p", remote], capture_output=True, check=True)
-    subprocess.run(adb + ["push", str(root / "target/amtracer-binder-pair"),
+    subprocess.run(adb + ["push", str(root / "target/debugplz-binder-pair"),
                           remote + "/binder-pair"], capture_output=True, check=True)
-    subprocess.run(adb + ["push", str(root / "artifacts/amtracer"),
-                          remote + "/amtracer"], capture_output=True, check=True)
-    subprocess.run(adb + ["push", str(root / "artifacts/amtracer-ebpf.o"),
-                          remote + "/amtracer-ebpf.o"], capture_output=True, check=True)
+    subprocess.run(adb + ["push", str(root / "artifacts/debugplz"),
+                          remote + "/debugplz"], capture_output=True, check=True)
+    subprocess.run(adb + ["push", str(root / "artifacts/debugplz-ebpf.o"),
+                          remote + "/debugplz-ebpf.o"], capture_output=True, check=True)
     subprocess.run(adb + ["shell", "chmod", "700", remote + "/binder-pair"], check=True)
-    subprocess.run(adb + ["shell", "chmod", "700", remote + "/amtracer"], check=True)
+    subprocess.run(adb + ["shell", "chmod", "700", remote + "/debugplz"], check=True)
 
     fixture = subprocess.Popen(adb + ["shell", remote + "/binder-pair"], text=True,
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -35,7 +35,7 @@ def main():
     try:
         assert select.select([fixture.stdout], [], [], 10)[0], "private Binder fixture did not start"
         info = json.loads(fixture.stdout.readline())
-        command = [remote + "/amtracer", "binder", "-p", str(info["pid"]),
+        command = [remote + "/debugplz", "binder", "-p", str(info["pid"]),
                    "--with-replies", "--duration", "3", "--json"]
         trace = subprocess.Popen(adb + ["shell", shlex.join(command)], text=True,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -89,8 +89,8 @@ def main():
                 subprocess.run(adb + ["shell", "kill", "-TERM", str(info["service_pid"])],
                                capture_output=True)
             fixture.wait(timeout=5)
-        subprocess.run(adb + ["shell", "rm", "-f", remote + "/amtracer",
-                              remote + "/amtracer-ebpf.o", remote + "/binder-pair"],
+        subprocess.run(adb + ["shell", "rm", "-f", remote + "/debugplz",
+                              remote + "/debugplz-ebpf.o", remote + "/binder-pair"],
                        capture_output=True)
 
 

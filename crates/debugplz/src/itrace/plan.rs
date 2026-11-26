@@ -6,8 +6,8 @@ use std::{collections::BTreeMap, fs::File, os::unix::fs::FileExt, str::FromStr};
 use yaxpeax_arch::{Decoder, U8Reader};
 use yaxpeax_arm::armv8::a64::InstDecoder;
 
-pub const MAX_SITES: usize = amtracer_abi::instruction::MAX_SITES as usize;
-pub const MAX_ADDRESSES: usize = amtracer_abi::instruction::MAX_ADDRESSES as usize;
+pub const MAX_SITES: usize = debugplz_abi::instruction::MAX_SITES as usize;
+pub const MAX_ADDRESSES: usize = debugplz_abi::instruction::MAX_ADDRESSES as usize;
 const PAGE_BYTES: u64 = 4096;
 
 #[derive(Clone, Debug)]
@@ -463,7 +463,7 @@ mod tests {
                 assert_eq!(unsafe { libc::munmap(self.0, 4096) }, 0);
             }
         }
-        let path = std::env::temp_dir().join(format!("amtracer-range-test-{}", std::process::id()));
+        let path = std::env::temp_dir().join(format!("debugplz-range-test-{}", std::process::id()));
         let mut bytes = vec![0_u8; 8192];
         bytes[..7].copy_from_slice(b"\x7fELF\x02\x01\x01");
         for (offset, value) in [

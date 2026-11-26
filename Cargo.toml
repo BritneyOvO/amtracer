@@ -1,6 +1,6 @@
 [workspace]
-members = ["crates/amtracer", "crates/amtracer-abi", "crates/amtracer-ebpf", "xtask"]
-default-members = ["crates/amtracer", "crates/amtracer-abi", "xtask"]
+members = ["crates/debugplz", "crates/debugplz-abi", "crates/debugplz-ebpf", "xtask"]
+default-members = ["crates/debugplz", "crates/debugplz-abi", "xtask"]
 resolver = "3"
 
 [workspace.package]
@@ -17,6 +17,6 @@ undocumented_unsafe_blocks = "warn"
 lto = "thin"
 codegen-units = 1
 
-[profile.release.package.amtracer-ebpf]
+[profile.release.package.debugplz-ebpf]
 debug = 2
 codegen-units = 1

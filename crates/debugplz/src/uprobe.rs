@@ -5,10 +5,6 @@ use crate::{
     unwind::{NativeUnwinder, Snapshot},
     wait_readable,
 };
-use amtracer_abi::{
-    CaptureResult, Header, KIND_SCALAR, KIND_STRING, MAX_CAPTURE_BYTES, MAX_CAPTURES, PREFIX_SIZE,
-    ProbeConfig,
-};
 use anyhow::{Context, Result, ensure};
 use aya::{
     Ebpf,
@@ -19,6 +15,10 @@ use aya::{
     },
 };
 use clap::Args;
+use debugplz_abi::{
+    CaptureResult, Header, KIND_SCALAR, KIND_STRING, MAX_CAPTURE_BYTES, MAX_CAPTURES, PREFIX_SIZE,
+    ProbeConfig,
+};
 use serde_json::json;
 use std::{num::NonZeroU32, os::fd::AsRawFd, path::PathBuf};
 
@@ -66,7 +66,7 @@ pub fn run(options: Options) -> Result<()> {
         "expression byte budget exceeds {MAX_CAPTURE_BYTES}"
     );
     ensure!(
-        options.probe.len() <= amtracer_abi::MAX_PROBES as usize,
+        options.probe.len() <= debugplz_abi::MAX_PROBES as usize,
         "too many probes"
     );
     let resolved = options
@@ -83,7 +83,7 @@ pub fn run(options: Options) -> Result<()> {
     );
     let object = match options.object {
         Some(path) => path,
-        None => std::env::current_exe()?.with_file_name("amtracer-ebpf.o"),
+        None => std::env::current_exe()?.with_file_name("debugplz-ebpf.o"),
     };
     let mut ebpf =
         Ebpf::load_file(&object).with_context(|| format!("loading {}", object.display()))?;
@@ -161,13 +161,13 @@ pub fn run(options: Options) -> Result<()> {
             // patterns are valid and the complete prefix was checked above.
             let header = unsafe { record.as_ptr().cast::<Header>().read_unaligned() };
             ensure!(
-                header.magic == amtracer_abi::EVENT_MAGIC
-                    && header.version == amtracer_abi::EVENT_VERSION,
+                header.magic == debugplz_abi::EVENT_MAGIC
+                    && header.version == debugplz_abi::EVENT_VERSION,
                 "unsupported uprobe ABI"
             );
             ensure!(
                 header.length as usize == record.len()
-                    && header.stack_len as usize <= amtracer_abi::MAX_STACK
+                    && header.stack_len as usize <= debugplz_abi::MAX_STACK
                     && header.capture_bytes as usize <= MAX_CAPTURE_BYTES
                     && header.stack_len as usize + header.capture_bytes as usize
                         == record.len() - PREFIX_SIZE
@@ -209,14 +209,14 @@ pub fn run(options: Options) -> Result<()> {
                     )
                     .context("capture outside record")?;
                 let status = match result.status {
-                    amtracer_abi::STATUS_OK => "ok",
-                    amtracer_abi::STATUS_FAULT => "fault",
-                    amtracer_abi::STATUS_OVERFLOW => "overflow",
-                    amtracer_abi::STATUS_TRUNCATED => "truncated",
+                    debugplz_abi::STATUS_OK => "ok",
+                    debugplz_abi::STATUS_FAULT => "fault",
+                    debugplz_abi::STATUS_OVERFLOW => "overflow",
+                    debugplz_abi::STATUS_TRUNCATED => "truncated",
                     _ => "unknown",
                 };
                 let value = if expression.kind() == KIND_SCALAR {
-                    if result.status == amtracer_abi::STATUS_OK {
+                    if result.status == debugplz_abi::STATUS_OK {
                         expression.format_scalar(result.value)
                     } else {
                         serde_json::Value::Null

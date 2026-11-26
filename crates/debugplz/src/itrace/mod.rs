@@ -7,7 +7,6 @@ use crate::{
     process::{MappingChange, MappingMonitor, ProcessMonitor},
     wait_readable_for,
 };
-use amtracer_abi::instruction::{self, Address, Config, Stats};
 use anyhow::{Context, Result, ensure};
 use aya::{
     Ebpf,
@@ -18,6 +17,7 @@ use aya::{
     },
 };
 use clap::Args;
+use debugplz_abi::instruction::{self, Address, Config, Stats};
 use std::{
     io::{self, BufWriter, Write},
     num::NonZeroU32,
@@ -82,7 +82,7 @@ pub fn run(options: Options) -> Result<()> {
     );
     let object = match options.object {
         Some(path) => path,
-        None => std::env::current_exe()?.with_file_name("amtracer-itrace.o"),
+        None => std::env::current_exe()?.with_file_name("debugplz-itrace.o"),
     };
     let mut ebpf =
         Ebpf::load_file(&object).with_context(|| format!("loading {}", object.display()))?;

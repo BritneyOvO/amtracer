@@ -14,7 +14,7 @@ def main():
     parser.add_argument("--serial", required=True)
     args = parser.parse_args()
     adb = ["adb", "-s", args.serial]
-    remote = "/data/local/tmp/amtracer-smoke"
+    remote = "/data/local/tmp/debugplz-smoke"
 
     def shell(*command):
         return subprocess.run(adb + ["shell", shlex.join(command)], check=True,
@@ -28,7 +28,7 @@ def main():
         try:
             assert select.select([fixture.stdout], [], [], 10)[0], "fixture did not start"
             pid = json.loads(fixture.stdout.readline())["pid"]
-            command = [f"{remote}/amtracer", kind, "-p", str(pid), "--json"]
+            command = [f"{remote}/debugplz", kind, "-p", str(pid), "--json"]
             if kind == "uprobe":
                 command += ["--probe", "fixture+amtracer_point"]
             if kind == "syscall":

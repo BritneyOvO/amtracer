@@ -17,21 +17,21 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     adb = ["adb", "-s", args.serial]
-    remote = "/data/local/tmp/amtracer-smoke"
+    remote = "/data/local/tmp/debugplz-smoke"
 
     def shell(*command, timeout=20):
         return subprocess.run(adb + ["shell", shlex.join(command)], text=True,
                               capture_output=True, timeout=timeout, check=True)
 
     shell("mkdir", "-p", remote)
-    for source, name in [(root / "artifacts/amtracer", "amtracer"),
-                         (root / "artifacts/amtracer-ebpf.o", "amtracer-ebpf.o"),
-                         (args.fixture or root / "target/amtracer-fixture", "fixture")]:
+    for source, name in [(root / "artifacts/debugplz", "debugplz"),
+                         (root / "artifacts/debugplz-ebpf.o", "debugplz-ebpf.o"),
+                         (args.fixture or root / "target/debugplz-fixture", "fixture")]:
         subprocess.run(adb + ["push", str(source), f"{remote}/{name}"], check=True,
                        capture_output=True, text=True)
-    shell("chmod", "700", f"{remote}/amtracer", f"{remote}/fixture")
+    shell("chmod", "700", f"{remote}/debugplz", f"{remote}/fixture")
     results = {"serial": args.serial, "boot_id": shell("cat", "/proc/sys/kernel/random/boot_id").stdout.strip(),
-               "doctor": json.loads(shell(f"{remote}/amtracer", "doctor").stdout)}
+               "doctor": json.loads(shell(f"{remote}/debugplz", "doctor").stdout)}
     fixture = subprocess.Popen(adb + ["shell", f"{remote}/fixture 45"],
                                text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     pid = None
@@ -42,7 +42,7 @@ def main():
         info = json.loads(fixture.stdout.readline())
         pid = info["pid"]
         results["fixture"] = info
-        tool = f"{remote}/amtracer"
+        tool = f"{remote}/debugplz"
         resolve = json.loads(shell(tool, "resolve", "-p", str(pid), "--probe", "fixture+amtracer_point").stdout)
         results["resolve"] = resolve
         for name, probe in [("symbol", "fixture+amtracer_point"), ("absolute", info["point"]),

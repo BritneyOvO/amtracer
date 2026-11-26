@@ -32,7 +32,7 @@ JSONL 两项是命中速度，**不能当成完整记录吞吐**。不节流生�
 
 ## 复现
 
-在 amtracer 仓库准备好工具和指令 fixture 后运行：
+在 DebugPlz 仓库准备好工具和指令 fixture 后运行：
 
 ```sh
 python3 - <<'PY'

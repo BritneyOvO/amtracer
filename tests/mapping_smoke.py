@@ -17,21 +17,21 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     adb = ["adb", "-s", args.serial]
-    remote = "/data/local/tmp/amtracer-mapping"
+    remote = "/data/local/tmp/debugplz-mapping"
 
     def shell(*args):
         return subprocess.run(adb + ["shell", shlex.join(args)], check=True,
                               capture_output=True, text=True, timeout=15)
 
     shell("mkdir", "-p", remote)
-    for source, name in [("artifacts/amtracer", "amtracer"),
-                         ("artifacts/amtracer-ebpf.o", "amtracer-ebpf.o"),
+    for source, name in [("artifacts/debugplz", "debugplz"),
+                         ("artifacts/debugplz-ebpf.o", "debugplz-ebpf.o"),
                          ("target/mapping-runner", "runner"),
                          ("target/libmap_a.so", "libmap_a.so"),
                          ("target/libmap_b.so", "libmap_b.so")]:
         subprocess.run(adb + ["push", str(root / source), f"{remote}/{name}"],
                        check=True, capture_output=True)
-    shell("chmod", "700", f"{remote}/amtracer", f"{remote}/runner")
+    shell("chmod", "700", f"{remote}/debugplz", f"{remote}/runner")
     fixture = subprocess.Popen(adb + ["shell", shlex.join([f"{remote}/runner",
         f"{remote}/libmap_a.so", f"{remote}/libmap_b.so"])], stdin=subprocess.PIPE,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
@@ -46,9 +46,9 @@ def main():
                 traces.append(proc)
                 return proc
 
-            uprobe = launch([f"{remote}/amtracer", "uprobe", "-p", str(pid), "--probe",
+            uprobe = launch([f"{remote}/debugplz", "uprobe", "-p", str(pid), "--probe",
                              "libmap_a.so+mapping_call", "--json"], uout)
-            syscall = launch([f"{remote}/amtracer", "syscall", "-p", str(pid), "--syscalls",
+            syscall = launch([f"{remote}/debugplz", "syscall", "-p", str(pid), "--syscalls",
                               "getpid", "--stack", "--stack-bytes", "512", "--json"], sout)
             deadline = time.monotonic() + 20
             while (uout.tell() == 0 or sout.tell() == 0) and time.monotonic() < deadline:

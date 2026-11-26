@@ -76,8 +76,8 @@ def run_fixture(binary, qemu, sysroot):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--android-fixture", type=Path, default=Path("target/amtracer-instruction-fixture"))
-    parser.add_argument("--linux-fixture", type=Path, default=Path("target/amtracer-instruction-fixture-linux"))
+    parser.add_argument("--android-fixture", type=Path, default=Path("target/debugplz-instruction-fixture"))
+    parser.add_argument("--linux-fixture", type=Path, default=Path("target/debugplz-instruction-fixture-linux"))
     parser.add_argument("--nm", default="aarch64-linux-gnu-nm")
     parser.add_argument("--qemu", default="qemu-aarch64")
     parser.add_argument("--sysroot", type=Path, default=Path("/usr/aarch64-linux-gnu"))
