@@ -5,6 +5,7 @@
 mod binder;
 #[allow(dead_code, non_upper_case_globals, clippy::undocumented_unsafe_blocks)]
 pub mod bindings;
+pub mod mem;
 mod syscall;
 mod syscall_names;
 
@@ -23,6 +24,9 @@ use std::{
 
 pub struct Control(OwnedFd);
 impl Control {
+    pub fn as_raw_fd(&self) -> std::os::fd::RawFd {
+        self.0.as_raw_fd()
+    }
     pub fn open() -> Result<Self> {
         // SAFETY: PR_KTOOLS returns a fresh owned descriptor or -1/errno.
         let fd = unsafe {

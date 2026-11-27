@@ -36,11 +36,12 @@ struct kt_touch_open {
 	__u32 reserved;
 };
 
-/* Mutually exclusive READ modes in kt_mem_io.flags; WRITE requires zero. */
-#define KT_MEM_READ_GUP		0U
-#define KT_MEM_READ_VMAP		1U
-/* Experimental ARM64 Device-nGnRnE alias; requires CAP_SYS_ADMIN. */
-#define KT_MEM_READ_DEVICE	2U
+/* Mutually exclusive READ/WRITE modes in kt_mem_io.flags. */
+#define KT_MEM_MODE_PROCESS_VM	0U
+#define KT_MEM_MODE_PGTABLE	1U
+#define KT_MEM_MODE_AT		2U
+#define KT_MEM_MODE_DEVICE	3U
+#define KT_MEM_MODE_MAX		KT_MEM_MODE_DEVICE
 
 struct kt_mem_io {
 	__u32 size;

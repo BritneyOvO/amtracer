@@ -99,6 +99,16 @@ cd /data/local/tmp/debugplz
 
 使用 `itrace` 时同样部署 `debugplz-itrace.o` 到可执行文件目录，或用该命令的 `--object` 指定。
 
+## rwmem 驱动检查
+
+`debugplz mem info` 查询驱动是否可用和单次请求的字节上限。`debugplz mem check` 在 DebugPlz 自己的缓冲区执行读、写和回读，全部传输并比对成功后输出 `{"ok":true,"bytes":8}`。需要启用 `CONFIG_KTOOLS_RWMEM` 的内核。
+
+可用 `--mode process-vm`（默认）、`--mode pgtable`、`--mode at` 或 `--mode device` 选择读写模式。
+
+## 指针链扫描
+
+`debugplz scan pointer <TARGET...>` 支持在线扫描目标进程（`-p/--pid`）或离线 JSON 快照（`--input`），支持 `--bits 32|64`、`--depth 0..256`、`--max-offset`、`--modules`、`--reader syscall|pread|<custom.so>`、`--layer-limits`、`--auto-offset`、`--budget-ms`、`--align4`、`--cross-page-step4`、`--negative-offsets`、`--pagemap`、`--restricted` 等完整参数。详见 [指针链扫描](pointer-scan.md)。
+
 ## uprobe：定位、多探针与表达式
 
 ### 选择命中位置

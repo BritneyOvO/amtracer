@@ -6,6 +6,7 @@ Android ARM64 进程追踪工具，基于 Rust / Aya。
 - **itrace**：指定范围逐指令追踪，输出反汇编与寄存器增量。
 - **syscall / Binder**：复用 ktools 驱动，支持系统调用栈与 Binder 回复关联。
 - **混合会话**：JSON 配置，统一 JSONL 输出，按时长或事件数停止。
+- **指针链**：支持在线进程内存（`syscall`/`pread`/自定义 `.so`）与离线快照反向回溯到模块根段，输出二进制结果。
 
 需要 root 及相应内核权限。uprobe 需要 eBPF / perf 支持；itrace 需要配套 UXN-uprobe 内核；syscall / Binder 需要 ktools trace 驱动。当前支持独立 ARM64 ELF，不支持 APK 内直接映射的库或匿名 JIT。
 
@@ -56,5 +57,6 @@ cd /data/local/tmp/debugplz
 
 - [使用指南](docs/usage.md)：定位语法、表达式、参数采集、输出与限制。
 - [混合会话配置](docs/session-example.json) · [指令追踪设计](docs/instruction-trace.md)
+- [指针链扫描](docs/pointer-scan.md)
 - [构建检查与实机测试](docs/testing.md) · [性能报告](docs/itrace-efficiency-2026-11-25.md)
 - [整体设计](docs/design.md) · [实施记录](docs/implementation.md) · [Roadmap](docs/roadmap.md)

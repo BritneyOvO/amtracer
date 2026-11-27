@@ -7,6 +7,11 @@ pub const KT_FEATURE_VTOUCH: u32 = 2;
 pub const KT_FEATURE_SYSCALL_TRACE: u32 = 4;
 pub const KT_FEATURE_BINDER_TRACE: u32 = 8;
 pub const KT_FEATURE_UXN: u32 = 16;
+pub const KT_MEM_MODE_PROCESS_VM: u32 = 0;
+pub const KT_MEM_MODE_PGTABLE: u32 = 1;
+pub const KT_MEM_MODE_AT: u32 = 2;
+pub const KT_MEM_MODE_DEVICE: u32 = 3;
+pub const KT_MEM_MODE_MAX: u32 = 3;
 pub const PR_UXN_PROBE: u32 = 1398032459;
 pub const PR_KTOOLS: u32 = 1263816524;
 pub const SCT_EVENT_MAGIC: u32 = 1398031173;
@@ -84,6 +89,48 @@ const _: () = {
         [::std::mem::offset_of!(kt_info, max_io_bytes) - 8usize];
     ["Offset of field: kt_info::max_touch_slots"]
         [::std::mem::offset_of!(kt_info, max_touch_slots) - 12usize];
+};
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct kt_target_open {
+    pub size: __u32,
+    pub flags: __u32,
+    pub pid: __s32,
+    pub reserved: __u32,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of kt_target_open"][::std::mem::size_of::<kt_target_open>() - 16usize];
+    ["Alignment of kt_target_open"][::std::mem::align_of::<kt_target_open>() - 4usize];
+    ["Offset of field: kt_target_open::size"]
+        [::std::mem::offset_of!(kt_target_open, size) - 0usize];
+    ["Offset of field: kt_target_open::flags"]
+        [::std::mem::offset_of!(kt_target_open, flags) - 4usize];
+    ["Offset of field: kt_target_open::pid"][::std::mem::offset_of!(kt_target_open, pid) - 8usize];
+    ["Offset of field: kt_target_open::reserved"]
+        [::std::mem::offset_of!(kt_target_open, reserved) - 12usize];
+};
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct kt_mem_io {
+    pub size: __u32,
+    pub flags: __u32,
+    pub address: __u64,
+    pub buffer: __u64,
+    pub length: __u64,
+    pub transferred: __u64,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of kt_mem_io"][::std::mem::size_of::<kt_mem_io>() - 40usize];
+    ["Alignment of kt_mem_io"][::std::mem::align_of::<kt_mem_io>() - 8usize];
+    ["Offset of field: kt_mem_io::size"][::std::mem::offset_of!(kt_mem_io, size) - 0usize];
+    ["Offset of field: kt_mem_io::flags"][::std::mem::offset_of!(kt_mem_io, flags) - 4usize];
+    ["Offset of field: kt_mem_io::address"][::std::mem::offset_of!(kt_mem_io, address) - 8usize];
+    ["Offset of field: kt_mem_io::buffer"][::std::mem::offset_of!(kt_mem_io, buffer) - 16usize];
+    ["Offset of field: kt_mem_io::length"][::std::mem::offset_of!(kt_mem_io, length) - 24usize];
+    ["Offset of field: kt_mem_io::transferred"]
+        [::std::mem::offset_of!(kt_mem_io, transferred) - 32usize];
 };
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
@@ -648,8 +695,11 @@ const _: () = {
         [::std::mem::offset_of!(uxn_probe_info, vma_events) - 56usize];
 };
 pub const AMT_KT_IOC_GET_INFO: _bindgen_ty_1 = 2148551424;
+pub const AMT_KT_IOC_OPEN_MEM: _bindgen_ty_1 = 1074809601;
 pub const AMT_KT_IOC_OPEN_SYSCALL_TRACE: _bindgen_ty_1 = 19203;
 pub const AMT_KT_IOC_OPEN_BINDER_TRACE: _bindgen_ty_1 = 19204;
+pub const AMT_KT_IOC_MEM_READ: _bindgen_ty_1 = 3223866128;
+pub const AMT_KT_IOC_MEM_WRITE: _bindgen_ty_1 = 3223866129;
 pub const AMT_KT_IOC_TRACE_GET_STATS: _bindgen_ty_1 = 2149075760;
 pub const AMT_SCT_IOC_SET_CONFIG: _bindgen_ty_1 = 1075335937;
 pub const AMT_SCT_IOC_START: _bindgen_ty_1 = 21251;

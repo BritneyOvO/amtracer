@@ -145,9 +145,9 @@ fn generate_uapi(root: &Path) -> Result<()> {
         .clang_arg("--target=aarch64-linux-android30")
         .clang_arg(format!("--sysroot={}", sysroot.display()))
         .clang_arg(format!("-I{}", root.join("uapi").display()))
-        .allowlist_type("(kt_info|kt_trace_stats|sct_.*|bt_.*|uxn_probe_.*)")
+        .allowlist_type("(kt_info|kt_target_open|kt_mem_io|kt_trace_stats|sct_.*|bt_.*|uxn_probe_.*)")
         .allowlist_var(
-            "(AMT_.*|SCT_.*|BT_.*|KT_FEATURE_.*|KT_ABI_VERSION|KT_OPEN_CONTROL|PR_KTOOLS|PR_UXN_PROBE|UXN_.*)",
+            "(AMT_.*|SCT_.*|BT_.*|KT_FEATURE_.*|KT_ABI_VERSION|KT_OPEN_CONTROL|KT_MEM_MODE_.*|PR_KTOOLS|PR_UXN_PROBE|UXN_.*)",
         )
         .derive_default(true)
         .layout_tests(true)

@@ -2,6 +2,7 @@ mod expr;
 mod itrace;
 mod ktools;
 mod process;
+mod scan;
 mod session;
 mod target;
 mod unwind;
@@ -31,6 +32,16 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     Doctor,
+    /// Query and check the ktools rwmem driver.
+    Mem {
+        #[command(subcommand)]
+        command: ktools::mem::Command,
+    },
+    /// Analyze pointer records exported by an application.
+    Scan {
+        #[command(subcommand)]
+        command: scan::Command,
+    },
     Run {
         #[arg(long)]
         config: PathBuf,
@@ -157,6 +168,8 @@ fn main() -> Result<()> {
                 true,
             )
         }
+        Command::Mem { command } => ktools::mem::run(command),
+        Command::Scan { command } => command.run(),
         Command::Run { config } => session::run(config),
         Command::Resolve { pid, probe, range } => {
             let maps = target::ProcessMaps::read(pid)?;
