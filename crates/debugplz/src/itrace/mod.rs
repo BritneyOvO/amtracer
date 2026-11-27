@@ -98,6 +98,19 @@ pub fn run(options: Options) -> Result<()> {
     };
     settings(&mut ebpf, config)?;
     {
+        let mut site_pc = Array::<_, u64>::try_from(
+            ebpf.map_mut("IT_SITE_PC")
+                .context("IT_SITE_PC map missing")?,
+        )?;
+        for (index, point) in plan.points.iter().enumerate() {
+            if point.instructions.len() == 1
+                && let Some(pc) = point.instructions.keys().next()
+            {
+                site_pc.set(u32::try_from(index)?, pc, 0)?;
+            }
+        }
+    }
+    {
         let mut allowed = HashMap::<_, MapAddress, u8>::try_from(
             ebpf.map_mut("IT_ALLOWED")
                 .context("IT_ALLOWED map missing")?,

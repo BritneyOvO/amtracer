@@ -1,5 +1,5 @@
 use crate::{
-    Common, RunControl, emit,
+    Common, RunControl,
     process::{MappingChange, MappingMonitor, ProcessMonitor},
     target::{ProbeSpec, ProcessMaps},
     unwind::{NativeUnwinder, Snapshot},
@@ -20,7 +20,12 @@ use debugplz_abi::{
     ProbeConfig,
 };
 use serde_json::json;
-use std::{num::NonZeroU32, os::fd::AsRawFd, path::PathBuf};
+use std::{
+    io::{self, BufWriter, Write},
+    num::NonZeroU32,
+    os::fd::AsRawFd,
+    path::PathBuf,
+};
 
 #[derive(Args)]
 pub struct Options {
@@ -142,20 +147,39 @@ pub fn run(options: Options) -> Result<()> {
         }
         MappingChange::ProbeRemoved => anyhow::bail!("probe mapping changed during setup"),
     }
-    while control.running() {
-        while let Some(record) = events.next() {
-            if !process.check()? {
-                break;
-            }
-            match mappings.check(false)? {
-                MappingChange::Unchanged => {}
-                MappingChange::Changed(maps) => {
-                    if options.stack {
-                        unwinder = Some(NativeUnwinder::new(&maps));
-                    }
+    let stdout = io::stdout();
+    let mut out = BufWriter::with_capacity(64 * 1024, stdout.lock());
+    'capture: while control.running() {
+        if !process.check()? {
+            break;
+        }
+        match mappings.check(false)? {
+            MappingChange::Unchanged => {}
+            MappingChange::Changed(maps) => {
+                if options.stack {
+                    unwinder = Some(NativeUnwinder::new(&maps));
                 }
-                MappingChange::ProbeRemoved => break,
             }
+            MappingChange::ProbeRemoved => break,
+        }
+        let mut batch = 0_usize;
+        while let Some(record) = events.next() {
+            if batch >= 64 {
+                batch = 0;
+                if !process.check()? {
+                    break 'capture;
+                }
+                match mappings.check(false)? {
+                    MappingChange::Unchanged => {}
+                    MappingChange::Changed(maps) => {
+                        if options.stack {
+                            unwinder = Some(NativeUnwinder::new(&maps));
+                        }
+                    }
+                    MappingChange::ProbeRemoved => break 'capture,
+                }
+            }
+            batch += 1;
             ensure!(record.len() >= PREFIX_SIZE, "short uprobe record");
             // SAFETY: Header is repr(C) with integer/array fields only; all bit
             // patterns are valid and the complete prefix was checked above.
@@ -188,7 +212,7 @@ pub fn run(options: Options) -> Result<()> {
                     bytes: &record[PREFIX_SIZE..PREFIX_SIZE + header.stack_len as usize],
                 });
             }
-            let mut captures = Vec::new();
+            let mut captures = Vec::with_capacity(options.expressions.len());
             let memory = &record[PREFIX_SIZE + header.stack_len as usize..];
             for (index, expression) in options.expressions.iter().enumerate() {
                 let start = size_of::<Header>() + index * size_of::<CaptureResult>();
@@ -228,30 +252,26 @@ pub fn run(options: Options) -> Result<()> {
                 };
                 captures.push(json!({"expression":expression.text,"value":value,"address":format!("{:#x}",result.address),"length":result.data_len,"status":status}));
             }
+            drop(record);
             event["captures"] = json!(captures);
-            emit(&event, options.common.json)?;
+            if options.common.json {
+                serde_json::to_writer(&mut out, &event)?;
+                writeln!(out)?;
+            } else {
+                writeln!(out, "{event:#}")?;
+            }
             control.emitted();
             if !control.running() {
-                break;
+                break 'capture;
             }
         }
+        out.flush()?;
         if !control.running() {
             break;
         }
-        if !process.check()? {
-            break;
-        }
-        match mappings.check(false)? {
-            MappingChange::Unchanged => {}
-            MappingChange::Changed(maps) => {
-                if options.stack {
-                    unwinder = Some(NativeUnwinder::new(&maps));
-                }
-            }
-            MappingChange::ProbeRemoved => break,
-        }
         wait_readable(events.as_raw_fd())?;
     }
+    out.flush()?;
     let lost = PerCpuArray::<_, u64>::try_from(ebpf.map("LOST").context("LOST map missing")?)?
         .get(&0, 0)?;
     eprintln!(

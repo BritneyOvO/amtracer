@@ -10,7 +10,12 @@ use std::{
 
 pub struct Writer<'a> {
     plan: &'a Plan,
-    json: Option<Vec<BTreeMap<u64, JsonMetadata>>>,
+    json: Option<Vec<PointJsonCache>>,
+}
+
+struct PointJsonCache {
+    primary: Option<(u64, JsonMetadata)>,
+    aliases: BTreeMap<u64, JsonMetadata>,
 }
 
 struct JsonMetadata {
@@ -19,6 +24,17 @@ struct JsonMetadata {
     elf_address: Box<RawValue>,
     opcode: Box<RawValue>,
     instruction: Box<RawValue>,
+}
+
+impl PointJsonCache {
+    fn get(&self, pc: u64) -> Option<&JsonMetadata> {
+        if let Some((primary_pc, ref meta)) = self.primary
+            && primary_pc == pc
+        {
+            return Some(meta);
+        }
+        self.aliases.get(&pc)
+    }
 }
 
 impl<'a> Writer<'a> {
@@ -31,7 +47,7 @@ impl<'a> Writer<'a> {
                     .iter()
                     .map(|point| {
                         let target = &plan.targets[point.target];
-                        point
+                        let mut entries = point
                             .instructions
                             .iter()
                             .map(|(pc, instruction)| {
@@ -49,7 +65,16 @@ impl<'a> Writer<'a> {
                                     },
                                 ))
                             })
-                            .collect::<Result<BTreeMap<_, _>>>()
+                            .collect::<Result<BTreeMap<_, _>>>()?;
+                        let primary = if entries.len() == 1 {
+                            entries.pop_first()
+                        } else {
+                            None
+                        };
+                        Ok(PointJsonCache {
+                            primary,
+                            aliases: entries,
+                        })
                     })
                     .collect::<Result<Vec<_>>>()
             })
@@ -137,10 +162,15 @@ impl Event {
             "invalid instruction trace identity/sequence"
         );
         let point = point(plan, header.cookie)?;
-        ensure!(
-            point.instructions.contains_key(&header.pc),
-            "instruction trace PC outside declared range"
-        );
+        let valid_pc = if point.instructions.len() == 1 {
+            point
+                .instructions
+                .first_key_value()
+                .is_some_and(|(&pc, _)| pc == header.pc)
+        } else {
+            point.instructions.contains_key(&header.pc)
+        };
+        ensure!(valid_pc, "instruction trace PC outside declared range");
         let payload = &bytes[size_of::<Header>()..];
         let registers = if regs {
             ensure!(
@@ -202,7 +232,7 @@ impl Writer<'_> {
         if let Some(cache) = &self.json {
             let metadata = cache
                 .get(point_index(header.cookie)?)
-                .and_then(|point| point.get(&header.pc))
+                .and_then(|point| point.get(header.pc))
                 .context("instruction trace PC outside declared range")?;
             let record = Output {
                 source: "instruction",
@@ -309,6 +339,9 @@ struct RegisterOutput<'a> {
 
 #[derive(Default)]
 pub struct Sequences {
+    hot_tid: u32,
+    hot_epoch: u64,
+    hot_sequence: u64,
     threads: HashMap<u32, (u64, u64)>,
     pub missed: u64,
     pub incomplete: bool,
@@ -317,21 +350,34 @@ pub struct Sequences {
 impl Sequences {
     pub fn observe(&mut self, event: &Event) -> Result<u64> {
         let header = &event.header;
-        let previous = match self.threads.get(&header.tid) {
-            Some((epoch, sequence)) if *epoch == header.thread_epoch => *sequence,
-            Some((epoch, _)) => {
+        let previous = if self.hot_tid == header.tid && self.hot_tid != 0 {
+            if self.hot_epoch == header.thread_epoch {
+                self.hot_sequence
+            } else {
                 ensure!(
-                    header.thread_epoch > *epoch,
+                    header.thread_epoch > self.hot_epoch,
                     "instruction trace thread epoch moved backwards"
                 );
                 0
             }
-            None => {
-                ensure!(
-                    self.threads.len() < instruction::MAX_THREADS as usize,
-                    "instruction trace exceeded userspace thread identity budget"
-                );
-                0
+        } else {
+            match self.threads.get(&header.tid) {
+                Some(&(epoch, sequence)) if epoch == header.thread_epoch => sequence,
+                Some(&(epoch, _)) => {
+                    ensure!(
+                        header.thread_epoch > epoch,
+                        "instruction trace thread epoch moved backwards"
+                    );
+                    0
+                }
+                None => {
+                    let existing = usize::from(self.hot_tid != 0) + self.threads.len();
+                    ensure!(
+                        existing < instruction::MAX_THREADS as usize,
+                        "instruction trace exceeded userspace thread identity budget"
+                    );
+                    0
+                }
             }
         };
         ensure!(
@@ -350,8 +396,13 @@ impl Sequences {
         let missed = header.sequence - previous - 1;
         self.missed += missed;
         self.incomplete |= missed != 0;
-        self.threads
-            .insert(header.tid, (header.thread_epoch, header.sequence));
+        if self.hot_tid != header.tid && self.hot_tid != 0 {
+            self.threads
+                .insert(self.hot_tid, (self.hot_epoch, self.hot_sequence));
+        }
+        self.hot_tid = header.tid;
+        self.hot_epoch = header.thread_epoch;
+        self.hot_sequence = header.sequence;
         Ok(missed)
     }
 }

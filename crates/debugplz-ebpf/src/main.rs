@@ -75,7 +75,6 @@ unsafe fn try_capture(ctx: &ProbeContext) {
         h.regs.pc = user.pc;
         h.regs.sp = user.sp;
         h.regs.pstate = user.pstate;
-        (*record).results = [CaptureResult::default(); MAX_CAPTURES];
         let bytes = (config.stack_bytes as usize).min(MAX_STACK);
         let captured_len = copy_pages::<MAX_STACK, 5>(user.sp, record, 0, bytes);
         if captured_len < bytes {
@@ -89,6 +88,7 @@ unsafe fn try_capture(ctx: &ProbeContext) {
             if index >= count {
                 break;
             }
+            (*record).results[index] = CaptureResult::default();
             let read_len = amt_capture_item(
                 cookie,
                 u32::try_from(index).unwrap_or(0),

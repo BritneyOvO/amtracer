@@ -141,12 +141,13 @@ impl NativeUnwinder {
         let mut unwinder = UnwinderAarch64::new();
         let mut images = Vec::new();
         let mut files = BTreeMap::new();
-        let executable = maps
+        let mut executable = maps
             .mappings
             .iter()
             .filter(|m| m.executable)
             .map(|m| m.start..m.end)
             .collect::<Vec<_>>();
+        executable.sort_unstable_by_key(|r| r.start);
         for mapping in maps
             .mappings
             .iter()
@@ -185,6 +186,7 @@ impl NativeUnwinder {
                 image,
             });
         }
+        images.sort_unstable_by_key(|img| img.range.start);
         // Derive the address width from this process's executable mappings.
         // Every returned address is also checked against those mappings.
         let highest = executable
@@ -199,6 +201,21 @@ impl NativeUnwinder {
             executable,
             mask: PtrAuthMask::from_max_known_address(highest),
         }
+    }
+
+    fn is_executable(executable: &[Range<u64>], address: u64) -> bool {
+        let after = executable.partition_point(|r| r.start <= address);
+        after
+            .checked_sub(1)
+            .is_some_and(|idx| address < executable[idx].end)
+    }
+
+    fn find_image(images: &[LoadedImage], address: u64) -> Option<&LoadedImage> {
+        let after = images.partition_point(|img| img.range.start <= address);
+        after
+            .checked_sub(1)
+            .map(|idx| &images[idx])
+            .filter(|img| address < img.range.end)
     }
 
     pub fn unwind(&mut self, snapshot: Snapshot<'_>) -> Value {
@@ -220,22 +237,22 @@ impl NativeUnwinder {
             match frames.next() {
                 Ok(Some(frame)) => {
                     let address = frame.address_for_lookup();
-                    if !self.executable.iter().any(|r| r.contains(&address)) {
+                    if !Self::is_executable(&self.executable, address) {
                         break format!("unmapped_code:{address:#x}");
                     }
                     let mut entry = json!({"pc":format!("{:#x}",frame.address()),"lookup_pc":format!("{address:#x}"),"return_address":frame.is_return_address()});
-                    if let Some(module) = self.images.iter().find(|i| i.range.contains(&address)) {
+                    if let Some(module) = Self::find_image(&self.images, address) {
                         let svma = address - module.bias;
-                        entry["module"] = json!(module.path);
+                        entry["module"] = json!(module.path.as_str());
                         entry["module_offset"] = json!(format!("{svma:#x}"));
-                        entry["build_id"] = json!(module.image.build_id);
+                        entry["build_id"] = json!(module.image.build_id.as_deref());
                         let index = module.image.symbols.partition_point(|s| s.address <= svma);
                         if let Some(symbol) = index
                             .checked_sub(1)
                             .and_then(|i| module.image.symbols.get(i))
                             && (symbol.size == 0 || svma - symbol.address < symbol.size)
                         {
-                            entry["symbol"] = json!(symbol.name);
+                            entry["symbol"] = json!(symbol.name.as_str());
                             entry["symbol_offset"] = json!(format!("{:#x}", svma - symbol.address));
                         }
                     }

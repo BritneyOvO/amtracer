@@ -17,6 +17,8 @@ use debugplz_abi::instruction::*;
 #[map]
 static IT_SETTINGS: Array<Config> = Array::with_max_entries(1, 0);
 #[map]
+static IT_SITE_PC: Array<u64> = Array::with_max_entries(MAX_SITES, 0);
+#[map]
 static IT_ALLOWED: HashMap<Address, u8> = HashMap::with_max_entries(MAX_ADDRESSES, 0);
 #[map]
 static IT_THREADS: HashMap<u64, ThreadState> = HashMap::with_max_entries(MAX_THREADS, 0);
@@ -32,7 +34,6 @@ static IT_STATS: PerCpuArray<Stats> = PerCpuArray::with_max_entries(1, 0);
 #[repr(C)]
 struct Scratch {
     record: Record,
-    current: [u64; REGISTER_COUNT],
 }
 
 #[uprobe]
@@ -62,13 +63,19 @@ unsafe fn capture(ctx: &ProbeContext) {
     if cookie == 0 || cookie > u64::from(config.site_count) {
         return;
     }
-    let address = Address {
-        cookie,
-        pc: user.pc,
-    };
-    // SAFETY: the address allowlist is immutable from enable through detach.
-    if unsafe { IT_ALLOWED.get(&address) }.is_none() {
-        return;
+    let site_index = (cookie - 1) as u32;
+    let primary_match = IT_SITE_PC
+        .get(site_index)
+        .is_some_and(|&expected_pc| expected_pc != 0 && expected_pc == user.pc);
+    if !primary_match {
+        let address = Address {
+            cookie,
+            pc: user.pc,
+        };
+        // SAFETY: the address allowlist is immutable from enable through detach.
+        if unsafe { IT_ALLOWED.get(&address) }.is_none() {
+            return;
+        }
     }
     let Some(stats) = IT_STATS.get_ptr_mut(0) else {
         return;
@@ -138,11 +145,14 @@ unsafe fn capture(ctx: &ProbeContext) {
             let mut mask = 0_u64;
             // Constant volatile loads avoid a memmove with a variable ctx
             // pointer, which the target 5.15 verifier rejects.
+            // Update thread.values in place only for changed registers: if output()
+            // fails below, base_sequence is reset to 0 which forces a full snapshot
+            // on the next hit and overwrites all 33 register slots anyway.
             macro_rules! pack_value {
                 ($i:expr, $value:expr) => {{
                     let value = $value;
-                    (*scratch).current[$i] = value;
                     if (full || value != (*thread).values[$i]) && count < REGISTER_COUNT {
+                        (*thread).values[$i] = value;
                         (*record).values[count] = value;
                         count += 1;
                         mask |= 1_u64 << $i;
@@ -183,9 +193,6 @@ unsafe fn capture(ctx: &ProbeContext) {
             (*stats).submitted += 1;
             (*stats).submitted_bytes += length as u64;
             if regs {
-                // Commit the baseline only after submission. A failed delta
-                // forces a full snapshot, so a gap cannot poison later values.
-                (*thread).values = (*scratch).current;
                 (*thread).base_sequence = sequence;
                 if full {
                     (*thread).full_sequence = sequence;
