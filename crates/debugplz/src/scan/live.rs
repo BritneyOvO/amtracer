@@ -213,7 +213,7 @@ pub fn scan_process(config: &LiveScanConfig<'_>, spec: &ReaderSpec) -> Result<Sn
     let maps_text = fs::read_to_string(format!("/proc/{}/maps", config.pid))
         .with_context(|| format!("reading /proc/{}/maps", config.pid))?;
     let regions = VmaRegion::parse_maps(&maps_text)?;
-    let pagemap = if config.pagemap {
+    let pagemap = if config.pagemap || config.restricted {
         File::open(format!("/proc/{}/pagemap", config.pid)).ok()
     } else {
         None
@@ -222,7 +222,7 @@ pub fn scan_process(config: &LiveScanConfig<'_>, spec: &ReaderSpec) -> Result<Sn
     scan_regions(config, &regions, reader.as_mut(), pagemap.as_ref())
 }
 
-pub fn scan_regions(
+pub(super) fn scan_regions(
     config: &LiveScanConfig<'_>,
     regions: &[VmaRegion],
     reader: &mut dyn MemoryReader,
@@ -240,23 +240,37 @@ pub fn scan_regions(
     let width = usize::try_from(config.width)?;
     let page_bytes = usize::try_from(PAGE_SIZE)?;
     let mut page_buf = vec![0_u8; page_bytes];
+    let mut pm_buf = Vec::new();
     let mut pointers = Vec::new();
     let mut prev_tail: Option<(u64, [u8; 4])> = None;
 
     for region in scannable {
         let region_end = region.end.min(config.max_address);
+        let check_pagemap = config.pagemap || !region.readable;
+        let residency = if check_pagemap && let Some(pm) = pagemap {
+            Some(read_region_pagemap(
+                pm,
+                region.start,
+                region_end,
+                &mut pm_buf,
+            ))
+        } else {
+            None
+        };
         let mut page_va = region.start;
+        let mut page_idx = 0_usize;
         while page_va < region_end {
             let chunk_len = usize::try_from((region_end - page_va).min(PAGE_SIZE))?;
             if chunk_len < width {
                 prev_tail = None;
                 break;
             }
-            if let Some(pm) = pagemap
-                && !page_is_resident(pm, page_va)
+            if let Some(resident) = &residency
+                && !resident.get(page_idx).copied().unwrap_or(true)
             {
                 prev_tail = None;
                 page_va = page_va.saturating_add(PAGE_SIZE);
+                page_idx += 1;
                 continue;
             }
             let got = match reader.read_chunk(page_va, &mut page_buf[..chunk_len]) {
@@ -264,6 +278,7 @@ pub fn scan_regions(
                 _ => {
                     prev_tail = None;
                     page_va = page_va.saturating_add(PAGE_SIZE);
+                    page_idx += 1;
                     continue;
                 }
             };
@@ -309,6 +324,7 @@ pub fn scan_regions(
                 prev_tail = None;
             }
             page_va = page_va.saturating_add(PAGE_SIZE);
+            page_idx += 1;
         }
     }
 
@@ -366,13 +382,31 @@ fn is_candidate_value(value: u64, bounds: &Option<(u64, u64)>, max_address: u64)
     bounds.is_none_or(|(lo, hi)| value >= lo && value <= hi)
 }
 
-fn page_is_resident(pagemap: &File, page_va: u64) -> bool {
-    let index = (page_va / PAGE_SIZE) * 8;
-    let mut entry = [0_u8; 8];
-    if pagemap.read_at(&mut entry, index).is_ok_and(|n| n == 8) {
-        u64::from_le_bytes(entry) & PM_PRESENT_OR_SWAP != 0
+fn read_region_pagemap(
+    pagemap: &File,
+    start_va: u64,
+    end_va: u64,
+    scratch: &mut Vec<u8>,
+) -> Vec<bool> {
+    let first_vpn = start_va / PAGE_SIZE;
+    let end_vpn = end_va.div_ceil(PAGE_SIZE);
+    let Ok(pages) = usize::try_from(end_vpn.saturating_sub(first_vpn)) else {
+        return Vec::new();
+    };
+    let byte_len = pages.saturating_mul(8);
+    scratch.resize(byte_len, 0);
+    if pagemap
+        .read_at(scratch, first_vpn.saturating_mul(8))
+        .is_ok_and(|n| n == byte_len)
+    {
+        scratch
+            .as_chunks::<8>()
+            .0
+            .iter()
+            .map(|&chunk| u64::from_le_bytes(chunk) & PM_PRESENT_OR_SWAP != 0)
+            .collect()
     } else {
-        true
+        vec![true; pages]
     }
 }
 
